@@ -8,6 +8,11 @@ Get a .gitignore file suitable for a python project
 
 	curl -o .gitignore https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore
 
+Add the following lines to .gitignore so that autosaved files are ignored
+	# Other
+	*(Autosaved)
+
+
 Set the user name and email just for this repository
 
 	git config user.name "jmdwebsites"
@@ -19,14 +24,12 @@ Check that .gitignore and README.ms are detected by git
 
 Now,do the first commit
 
-	git add README.md
+	git add .
 	git commit -m "First commit"
 
 	git remote add origin https://github.com/jmdwebsites/jmdwebsites.git
 	git push -u origin master
 
-To see if any changes have been made, use
 
-	git status
 	
 	
