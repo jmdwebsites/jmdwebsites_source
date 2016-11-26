@@ -91,3 +91,6 @@ ENV/
 
 # Other
 *(Autosaved)
+__project_notes.md
+__ignore
+testsession.log

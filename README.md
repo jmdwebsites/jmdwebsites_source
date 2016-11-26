@@ -82,8 +82,5 @@ The output without the preamble is
 	Test other stuff!
 	PASSED
 
+Check this into git.
 
-
-## TODO
-
-Create a home_page.html in content, then stylesheets for it too. Test. Then move some content into .md file, and also contact details into contact_details.yaml, and continue in this vane as the site expands. A single page it the smallest viable app!
