@@ -22,3 +22,8 @@ class Website(object):
     def build(self):
         """Build the project."""
         logger.info(self.build.__doc__)
+ 
+        target = self.build_dir.join('index.html')
+        source = self.src_dir.join('developer', target.basename)
+        html = source.read()
+        target.write(html, ensure=True)
