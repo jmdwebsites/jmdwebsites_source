@@ -22,6 +22,18 @@ def test_instantiation_of_Website(setup_test_session, setup_test, tmpdir):
         build_dir = tmpdir.join('build')
         assert Website(build_dir).build_dir == build_dir
 
+def test_clobber(setup_test_session, setup_test, tmpdir):
+    with tmpdir.as_cwd():
+        build_dir = tmpdir.join('build')
+        website = Website(build_dir)
+        assert website.build_dir == build_dir
+        #Create the build dir and put a web file tree in it
+        website.build_dir.ensure('index.html')
+        website.build_dir.ensure('contact/index.html')
+        website.clobber()
+        #The build dir should now be gone
+        assert website.build_dir.check() == False, 'The build directory has not been removed: {}'.format(website.build_dir)
+
 def test_build(setup_test_session, setup_test, tmpdir):
     site_dir = py.path.local(__file__).dirpath('data/test_website/test_build')
     with site_dir.as_cwd():

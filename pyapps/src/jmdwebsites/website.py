@@ -18,6 +18,7 @@ class Website(object):
     def clobber(self):
         """Clobber the build removing everything."""
         logger.info(self.clobber.__doc__)
+        self.build_dir.remove()
 
     def build(self):
         """Build the project."""
