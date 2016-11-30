@@ -35,6 +35,11 @@ class Website(object):
         """Build the website."""
         logger.info(self.build.__doc__)
 
+        #TODO: Write code to update files only if they have changed.
+        #      But until then, clobber the build, and build everything from new.
+        self.build_dir.remove()
+        assert self.build_dir.check() == False, 'Build directory already exists.'.format(self.build_dir)
+
         web_files = self.src_dir.join('developer').visit(
             fil = ExtMatcher('.html .css'))
         for source in web_files:
@@ -42,3 +47,4 @@ class Website(object):
             logger.info("Build the file {}".format(target))
             text = source.read()
             target.write(text, ensure=True)
+            
