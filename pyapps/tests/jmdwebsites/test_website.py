@@ -14,12 +14,13 @@ def test_instantiation_of_Website(setup_test_session, setup_test, tmpdir):
 
 def test_clobber(setup_test_session, setup_test, tmpdir):
     with tmpdir.as_cwd():
+        # Create a website build including at least some dirs
         website = Website(build_dir = tmpdir)
-        #Create some web files with at least some dirs
         website.build_dir.ensure('index.html')
         website.build_dir.ensure('contact/index.html')
+        # Now clobber it
         website.clobber()
-        #The build dir should now be gone
+        # and the build dir should be gone
         assert website.build_dir.check() == False, 'The build directory has not been removed: {}'.format(website.build_dir)
 
 @pytest.mark.parametrize("test_data", [
