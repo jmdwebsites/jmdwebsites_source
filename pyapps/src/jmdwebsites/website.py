@@ -1,8 +1,19 @@
 import logging
 import os
 import py
+import six
 
 logger = logging.getLogger(__name__)
+
+class ExtMatcher:
+    def __init__(self, extensions=None):
+        if isinstance(extensions, six.string_types):
+            extensions = extensions.split()
+        self.extensions = extensions
+
+    def __call__(self, path):
+        return path.ext in self.extensions
+        
 
 class Website(object):
     
@@ -21,10 +32,13 @@ class Website(object):
         self.build_dir.remove()
 
     def build(self):
-        """Build the project."""
+        """Build the website."""
         logger.info(self.build.__doc__)
- 
-        target = self.build_dir.join('index.html')
-        source = self.src_dir.join('developer', target.basename)
-        html = source.read()
-        target.write(html, ensure=True)
+
+        web_files = self.src_dir.join('developer').visit(
+            fil = ExtMatcher('.html .css'))
+        for source in web_files:
+            target = self.build_dir.join(source.basename)
+            logger.info("Build the file {}".format(target))
+            text = source.read()
+            target.write(text, ensure=True)

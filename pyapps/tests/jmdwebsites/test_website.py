@@ -17,7 +17,6 @@ def test_instantiation_of_Website(setup_test_session, setup_test, tmpdir):
         build_dir = os.path.join(os.getcwd(), 'build')
         assert Website(build_dir).build_dir == build_dir
 
-
         # Specify the build directory
         build_dir = tmpdir.join('build')
         assert Website(build_dir).build_dir == build_dir
@@ -51,3 +50,20 @@ def test_build(setup_test_session, setup_test, tmpdir):
         expected_dir = py.path.local('expected')
         expected_home_page = expected_dir.join('index.html')
         assert filecmp.cmp(str(home_page), str(expected_home_page)), 'Home page not as expected.'
+
+def assert_file_as_expected(website, filename):
+    expected = py.path.local('expected').join(filename)
+    built = website.build_dir.join(filename)
+    assert built.check(), 'File not found: {}'.format(built)
+    assert filecmp.cmp(built.strpath, expected.strpath), 'Page not as expected: built'
+
+def test_build_home_page_and_stylesheet(setup_test_session, setup_test, tmpdir):
+    site_dir = py.path.local(__file__).dirpath('data/simple_home_page_and_stylesheet')
+    with site_dir.as_cwd():
+        logger.info("Change working directory to {}".format(os.getcwd()))
+        website = Website(build_dir = tmpdir)
+        website.build()
+        assert_file_as_expected(website, 'index.html')
+        assert_file_as_expected(website, 'page.css')
+        #TODO: Turn assert_file_as_expected into a test, that has a parametrized list of input data
+        #      Or do a directory comparison, and then focus on more detailed tests

@@ -89,6 +89,9 @@ ENV/
 # Rope project settings
 .ropeproject
 
+# Sass
+.sass-cache
+
 # Other
 *(Autosaved)
 __project_notes.md

@@ -8,7 +8,7 @@ html {
 
 
 body {
-    background: #BBFFBB;
+    background: #FFFFFF; /* BBFFBB */
     margin: 0.8em;
 }
 
@@ -18,7 +18,6 @@ Structure
 
 .header {
     background: #99AAFF;
-    min-height: 3em;
 }
 .header::after { 
     /*Clearfix*/
@@ -30,7 +29,7 @@ Structure
 .headlines {
     background: #99DDFF;
     max-width: 100%;
-    margin: 0 auto;
+    margin: 10px auto;
 }
 .headlines::after { 
     /*Clearfix*/
@@ -57,7 +56,7 @@ Modules
     background: #E2E2E2;
     display: block;
     float: left;
-    min-height: 5em;
+    /*min-height: 6em;*/
     width: 100%;
     margin: 0.5em 0 0 0;
 }
