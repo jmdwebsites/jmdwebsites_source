@@ -5,6 +5,7 @@ from jmdwebsites.website import Website
 import logging
 import filecmp
 import six
+import bs4
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,6 @@ def test_build(setup_test_session, setup_test, test_data, tmpdir):
         logger.info("Change working directory to {}".format(os.getcwd()))
 
         website = Website(build_dir = tmpdir)
-        #assert website.build_dir.check() == False, 'Build directory already exists.'.format(website.build_dir)
         website.build()
         assert website.build_dir.check(), 'Build directory does not exist.'.format(website.build_dir)
 
@@ -49,3 +49,32 @@ def test_build(setup_test_session, setup_test, test_data, tmpdir):
             assert built.check(), 'File not found: {}'.format(built)
             expected = expected_dir.join(built.basename)
             assert filecmp.cmp(built.strpath, expected.strpath), 'Page not as expected: {}'.format(built)
+
+expected = {
+    'doctype': 'html'
+}
+@pytest.mark.parametrize("test_data", [
+    ('simple_home_page_and_stylesheet', '*.html', expected)
+])
+def test_html_files(setup_test_session, setup_test, test_data, tmpdir):
+    site_dirname, file_glob, expected = test_data 
+    site_dir = py.path.local(__file__).dirpath('data', site_dirname)
+    with site_dir.as_cwd():
+        website = Website(build_dir = tmpdir)
+        website.build()
+        for html_file in website.build_dir.visit(fil = file_glob):
+            logger.info('Checking {}'.format(html_file))
+            assert html_file.ext == '.html', "Incorrect file extension: {}".format(html_file.ext)
+            soup = bs4.BeautifulSoup(html_file.read(), 'html5lib')
+
+            # doctype:
+            #   There should be just one doctype, 
+            #   and it should be the first item in the soup contents
+            doctypes = [t for t in soup.contents if isinstance(t, bs4.Doctype)]
+            doctype_count = len(doctypes)
+            assert doctype_count > 0, 'Doctype not defined: {}'.format(built)
+            assert doctype_count <= 1, 'Too many doctype tags: {} {}'.format(doctype_count, built)
+            doctype = soup.contents[0]
+            assert isinstance(doctype, bs4.Doctype), 'First element is not doctype: {} {}'.format(doctype, built)
+            assert doctype == expected['doctype'], "Doctype should be {} not {}: {}".format(expected['doctype'], doctype, built) 
+
