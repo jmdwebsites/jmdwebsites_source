@@ -47,4 +47,4 @@ class Website(object):
             logger.info("Build the file {}".format(target))
             text = source.read()
             target.write(text, ensure=True)
-            
+

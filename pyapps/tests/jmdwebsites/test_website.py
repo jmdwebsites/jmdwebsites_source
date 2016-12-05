@@ -1,11 +1,12 @@
 import pytest
 import os
 import py
-from jmdwebsites.website import Website
+from jmdwebsites import Website, HtmlTree
 import logging
 import filecmp
 import six
-import bs4
+import sys
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,7 @@ def test_build(setup_test_session, setup_test, test_data, tmpdir):
             assert filecmp.cmp(built.strpath, expected.strpath), 'Page not as expected: {}'.format(built)
 
 expected = {
+    'ext': '.html',
     'doctype': 'html'
 }
 @pytest.mark.parametrize("test_data", [
@@ -64,17 +66,7 @@ def test_html_files(setup_test_session, setup_test, test_data, tmpdir):
         website.build()
         for html_file in website.build_dir.visit(fil = file_glob):
             logger.info('Checking {}'.format(html_file))
-            assert html_file.ext == '.html', "Incorrect file extension: {}".format(html_file.ext)
-            soup = bs4.BeautifulSoup(html_file.read(), 'html5lib')
-
-            # doctype:
-            #   There should be just one doctype, 
-            #   and it should be the first item in the soup contents
-            doctypes = [t for t in soup.contents if isinstance(t, bs4.Doctype)]
-            doctype_count = len(doctypes)
-            assert doctype_count > 0, 'Doctype not defined: {}'.format(built)
-            assert doctype_count <= 1, 'Too many doctype tags: {} {}'.format(doctype_count, built)
-            doctype = soup.contents[0]
-            assert isinstance(doctype, bs4.Doctype), 'First element is not doctype: {} {}'.format(doctype, built)
-            assert doctype == expected['doctype'], "Doctype should be {} not {}: {}".format(expected['doctype'], doctype, built) 
+            assert html_file.ext == expected['ext'], "Incorrect file extension"
+            html = HtmlTree(html_file.read())
+            assert html.doctype() == expected['doctype'], 'Incorrect doctype'
 

@@ -3,8 +3,7 @@ import logging
 import logging.config
 import os
 import py
-
-logger = logging.getLogger(__name__)
+import sys
 
 def _config_logging(test_session_log_file):
     logging.config.dictConfig({
@@ -85,20 +84,18 @@ def _before_and_after(request):
     request.addfinalizer(tear_down)
 
 @pytest.fixture()
-def setup_test():
-    logger.info('Fixture: Setup the test.')
+def setup_test(request):
+    print('Fixture: Setup the test.')
+    yield
+    print('\nFixture: Tear down test.')
+
+
 
 @pytest.fixture(scope='session')
 def setup_test_session(request):
     log_file = 'testsession.log'
     remove(log_file)
     _config_logging(log_file)
-    logger.info('Fixture: Setup the test session.')
-
-    #owd = os.getcwd()
-    #os.chdir('tmptmp')
-    def tear_down():
-        print ""
-        logger.info('Fixture: Tear down the test session.')
-        #os.chdir(owd)
-    request.addfinalizer(tear_down)
+    print('Fixture: Setup the test session.')
+    yield
+    print('Fixture: Tear down the test session.')
