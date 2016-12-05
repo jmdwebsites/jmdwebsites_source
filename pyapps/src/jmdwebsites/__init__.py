@@ -13,5 +13,6 @@ __license__ = "BSD 3-Clause"
 
 from .website import Website
 from .htmltree import HtmlTree
+import log
 
 __all__ = ['Website', 'HtmlPage']
