@@ -16,12 +16,6 @@ def _config_logging(test_session_log_file):
                 "stream":"ext://sys.stdout",
                 "level":"DEBUG", #use WARNING normally
             },
-            "console_test":{
-                "class":"logging.StreamHandler",
-                "formatter":"levelname_test",
-                "stream":"ext://sys.stdout",
-                "level":"DEBUG", #use WARNING normally
-            },
             "logfile":{
                 "class":"logging.handlers.RotatingFileHandler",
                 "formatter":"debug",
@@ -29,29 +23,33 @@ def _config_logging(test_session_log_file):
                 "maxBytes":"1024",
                 "backupCount":"3",
                 "level":"DEBUG",
-            }
+            },
+            "console_jmdwebsites":{
+                "class":"logging.StreamHandler",
+                "formatter":"brief",
+                "stream":"ext://sys.stdout",
+                "level":"DEBUG", #use WARNING normally
+            },
         },
         "formatters":{
             "bare":{
-                "format":"%(message)s"
+                "format": "%(message)s"
             },
             "levelname":{
-                "format":"%(levelname)s: %(message)s"
-            },
-            "levelname_test":{
-                "format":"%(levelname)s:TEST: %(message)s"
+                "format": "%(levelname)s: %(message)s"
             },
             "brief":{
-                "format":"%(levelname)s:%(name)s: %(message)s"
+                "format": "%(levelname)s:%(name)s: %(message)s"
             },
             "precise":{
-                "format":"[%(asctime)s %(levelname)s:%(name)s]\n%(message)s"
+                "format": "[%(asctime)s %(levelname)s:%(name)s]\n%(message)s"
             },
             "debug":{
-                "format":"[%(asctime)s LOGGER=%(name)s, FILE=%(pathname)s, LINE=%(lineno)d]\n%(levelname)s: %(message)s\n"
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+                "format": "%(asctime)s %(levelname)s [%(name)s, %(lineno)d] %(message)s"
             },
             "tagged":{
-                "format":"%(message)s\t[%(levelname)s:%(name)s %(asctime)s]"
+                "format": "%(message)s\t[%(levelname)s:%(name)s %(asctime)s]"
             },
         },
         "root":{
@@ -59,8 +57,8 @@ def _config_logging(test_session_log_file):
             "level":"DEBUG",
         },
         "loggers":{
-            "tests":{
-                "handlers":["console_test", "logfile"],
+            "jmdwebsites":{
+                "handlers":["console_jmdwebsites", "logfile"],
                 "level":"DEBUG",
                 "propagate": False,
             },
