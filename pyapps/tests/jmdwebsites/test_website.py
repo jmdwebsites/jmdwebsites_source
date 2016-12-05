@@ -2,13 +2,8 @@ import pytest
 import os
 import py
 from jmdwebsites import Website, HtmlTree
-import logging
 import filecmp
 import six
-import sys
-import traceback
-
-logger = logging.getLogger(__name__)
 
 def test_instantiation_of_Website(setup_test_session, setup_test, tmpdir):
     assert Website().build_dir.strpath == os.path.join(os.getcwd(), 'build')
@@ -39,7 +34,7 @@ def test_build(setup_test_session, setup_test, test_data, tmpdir):
         build_dir = tmpdir
 
     with site_dir.as_cwd():
-        logger.info("Change working directory to {}".format(os.getcwd()))
+        print("Change working directory to {}".format(os.getcwd()))
 
         website = Website(build_dir = tmpdir)
         website.build()
@@ -65,7 +60,7 @@ def test_html_files(setup_test_session, setup_test, test_data, tmpdir):
         website = Website(build_dir = tmpdir)
         website.build()
         for html_file in website.build_dir.visit(fil = file_glob):
-            logger.info('Checking {}'.format(html_file))
+            print('Checking {}'.format(html_file))
             assert html_file.ext == expected['ext'], "Incorrect file extension"
             html = HtmlTree(html_file.read())
             assert html.doctype() == expected['doctype'], 'Incorrect doctype'
