@@ -15,3 +15,16 @@ def test_doctype(setup_test_session, html, expected_doctype):
     doctype = html_tree.doctype()
     #assert doctype == expected_doctype, 'Incorrect doctype {} expected {}'.format(doctype, expected_doctype)
     assert doctype == expected_doctype, 'Incorrect doctype'
+
+@pytest.mark.parametrize("html, expected_charset", [
+(u'''<!doctype html><html>
+  <head>
+    <meta charset='utf-8' />
+    <meta der='utf-8' />
+  </head>
+  <body>Hello</body></html>
+''', 'utf-8')
+])
+def test_assert_charset(setup_test_session, html, expected_charset):
+    HtmlTree(html).assert_charset(expected_charset)
+    assert HtmlTree(html).charset(expected_charset) == expected_charset

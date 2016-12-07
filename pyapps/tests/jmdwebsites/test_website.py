@@ -62,6 +62,5 @@ def test_html_files(setup_test_session, setup_test, test_data, tmpdir):
         for html_file in website.build_dir.visit(fil = file_glob):
             print('Checking {}'.format(html_file))
             assert html_file.ext == expected['ext'], "Incorrect file extension"
-            html = HtmlTree(html_file.read())
-            assert html.doctype() == expected['doctype'], 'Incorrect doctype'
-
+            html_tree = HtmlTree(html_file.read())
+            assert html_tree.doctype() == expected['doctype'], 'Incorrect doctype'
