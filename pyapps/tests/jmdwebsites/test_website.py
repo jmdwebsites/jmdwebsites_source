@@ -1,7 +1,7 @@
 import pytest
 import os
 import py
-from jmdwebsites import Website, HtmlTree
+from jmdwebsites import Website, HtmlPage
 import filecmp
 import six
 
@@ -62,5 +62,5 @@ def test_html_files(test_data, tmpdir):
         for html_file in website.build_dir.visit(fil = file_glob):
             print('Checking {}'.format(html_file))
             assert html_file.ext == expected['ext'], "Incorrect file extension"
-            html_tree = HtmlTree(html_file.read())
-            assert html_tree.doctype() == expected['doctype'], 'Incorrect doctype'
+            html_page = HtmlPage(html_file.read())
+            assert html_page.doctype() == expected['doctype'], 'Incorrect doctype'

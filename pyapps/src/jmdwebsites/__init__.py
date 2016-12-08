@@ -12,7 +12,7 @@ __copyright__ = "Copyright (c) 2016 jmdwebsites"
 __license__ = "BSD 3-Clause"
 
 from .website import Website
-from .htmltree import HtmlTree
+from .htmlpage import HtmlPage
 import log
 
 __all__ = ['Website', 'HtmlPage']

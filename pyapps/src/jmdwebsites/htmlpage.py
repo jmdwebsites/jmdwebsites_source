@@ -3,10 +3,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class HtmlTreeError(Exception): pass
-class CharsetError(HtmlTreeError): pass
+class HtmlPageError(Exception): pass
+class CharsetError(HtmlPageError): pass
+class DoctypeError(HtmlPageError): pass
 
-class HtmlTree(object):
+class HtmlPage(object):
     def __init__(self, html, parser='html5lib'):
         self.soup = bs.BeautifulSoup(html, parser)
 
@@ -18,7 +19,7 @@ class HtmlTree(object):
         '''
         doctype = self.soup.contents[0]
         if len([t for t in self.soup.contents if isinstance(t, bs.Doctype)]) > 1: 
-            raise HtmlTreeError('More than one doctype')
+            raise DoctypeError('More than one doctype')
         if isinstance(doctype, bs.Doctype):
             return doctype
         # By default, return None to indicate no doctype found

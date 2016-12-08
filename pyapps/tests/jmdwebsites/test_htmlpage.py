@@ -1,5 +1,5 @@
 import pytest
-from jmdwebsites import HtmlTree
+from jmdwebsites import HtmlPage
 import bs4 as bs
 
 
@@ -10,7 +10,7 @@ import bs4 as bs
     ('Hello\n<!doctype html><html>Good</html>', None, 'html5lib')
 ])
 def test_doctype(html, expected_doctype, parser):
-    assert HtmlTree(html, parser).doctype() == expected_doctype, 'Incorrect doctype'
+    assert HtmlPage(html, parser).doctype() == expected_doctype, 'Incorrect doctype'
 
 
 @pytest.mark.parametrize("html, expected_charset", [
@@ -23,7 +23,7 @@ def test_doctype(html, expected_doctype, parser):
 ''', 'utf-8')
 ])
 def test_charset(html, expected_charset):
-    charset = HtmlTree(html).charset(expected_charset)
+    charset = HtmlPage(html).charset(expected_charset)
     assert charset == expected_charset, \
         "charset: {}: Incorrect charset, expected {}".format(charset, expected_charset)
 
