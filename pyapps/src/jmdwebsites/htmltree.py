@@ -28,14 +28,14 @@ class HtmlTree(object):
         
         The charset should be the first meta tag in head tag.
         '''
-        first_tag = self.soup.head.find(True)
+        first_tag = self.soup.html.head.find(True)
         assert first_tag.name == 'meta' and first_tag.has_attr('charset'), \
             "First tag in <head>: {}: charset not defined".format(first_tag.name)
         assert first_tag['charset'] == expected, \
             "charset: {}: Incorrect charset, expected {}".format(first_tag['charset'], expected)
 
     def charset(self, expected):
-        first_tag = self.soup.head.find(True)
+        first_tag = self.soup.html.head.find(True)
         if not ((first_tag.name == 'meta') and first_tag.has_attr('charset')):
             raise CharsetError("First tag in <head>: {}: charset not defined".format(first_tag.name))
         return first_tag['charset']

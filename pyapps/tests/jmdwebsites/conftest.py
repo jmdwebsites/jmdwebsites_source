@@ -1,3 +1,4 @@
+from __future__ import print_function
 import pytest
 import logging
 import py
@@ -14,26 +15,23 @@ def remove(filename):
         else:
             raise
 
-@pytest.fixture(autouse=True)
-def _before_and_after(request):
-    print("")
-    def tear_down():
-        print("")
-    request.addfinalizer(tear_down)
-
-@pytest.fixture()
-def setup_test(request):
-    print('Fixture: Setup the test.')
-    yield
-    print('\nFixture: Tear down test.')
-
-
-
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='session', autouse=True)
 def setup_test_session(request):
+    print('\nFixture: Setup the test session.', end='')
     log_file = 'testsession.log'
     remove(log_file)
     jmdwebsites.log.config_logging(log_file)
-    print('Fixture: Setup the test session.')
     yield
-    print('Fixture: Tear down the test session.')
+    print('Fixture: Tear down the test session.', end='')
+
+@pytest.fixture(autouse=True)
+def _before_and_after(request, setup_test_session):
+    print("")
+    yield
+    print("")
+
+@pytest.fixture(autouse=True)
+def setup_test(request, _before_and_after):
+    print('Fixture: Setup the test.')
+    yield
+    print('\nFixture: Tear down test.', end='')

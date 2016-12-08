@@ -5,11 +5,11 @@ from jmdwebsites import Website, HtmlTree
 import filecmp
 import six
 
-def test_instantiation_of_Website(setup_test_session, setup_test, tmpdir):
+def test_instantiation_of_Website(tmpdir):
     assert Website().build_dir.strpath == os.path.join(os.getcwd(), 'build')
     assert Website(build_dir = tmpdir).build_dir == tmpdir
 
-def test_clobber(setup_test_session, setup_test, tmpdir):
+def test_clobber(tmpdir):
     with tmpdir.as_cwd():
         # Create a website build including at least some dirs
         website = Website(build_dir = tmpdir)
@@ -24,7 +24,7 @@ def test_clobber(setup_test_session, setup_test, tmpdir):
     'test_website/test_build',
     'simple_home_page_and_stylesheet'
 ])
-def test_build(setup_test_session, setup_test, test_data, tmpdir):
+def test_build(test_data, tmpdir):
     if isinstance(test_data, six.string_types):
         site_dir = py.path.local(__file__).dirpath('data', test_data)
         src_dir = site_dir.join('src')
@@ -53,7 +53,7 @@ expected = {
 @pytest.mark.parametrize("test_data", [
     ('simple_home_page_and_stylesheet', '*.html', expected)
 ])
-def test_html_files(setup_test_session, setup_test, test_data, tmpdir):
+def test_html_files(test_data, tmpdir):
     site_dirname, file_glob, expected = test_data 
     site_dir = py.path.local(__file__).dirpath('data', site_dirname)
     with site_dir.as_cwd():
