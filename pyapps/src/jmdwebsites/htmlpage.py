@@ -24,7 +24,7 @@ class HtmlPage(object):
             return doctype
         # By default, return None to indicate no doctype found
 
-    def charset(self, expected):
+    def charset(self):
         '''Get the charset definition from the page.
         
         The charset should be the first meta tag in head tag.

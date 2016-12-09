@@ -52,29 +52,32 @@ def test_build(site_dir, tmpdir):
                 'Page not as expected: {}'.format(built)
 
 
-@pytest.mark.parametrize("file", [
-    datapath('data/simple_home_page_and_stylesheet/expected')
-])
-def tst_html_page(file):
-    assert 0
-
 expected_html_data = {
     'ext': '.html',
-    'doctype': 'html'
+    'doctype': 'html',
+    'charset': 'utf-8'
 }
+@pytest.mark.parametrize("html_file, expected", [
+    (datapath('simple_home_page_and_stylesheet/expected/index.html'), expected_html_data)
+])
+def test_html_page(html_file, expected):
+    print('Check {}'.format(html_file))
+    assert html_file.ext == expected['ext'], \
+        "Incorrect file extension"
+    html_page = HtmlPage(html_file)
+    assert html_page.doctype() == expected['doctype'], \
+        'Incorrect doctype'
+    assert html_page.charset() == expected['charset'], \
+        'Incorrect charset'
+
+
 @pytest.mark.parametrize("input_dir, file_glob, expected", [
     (datapath('simple_home_page_and_stylesheet/expected'), '*.html', expected_html_data),
     (py.path.local('site/build'), '*.html', expected_html_data)
 ])
 def test_html_files(input_dir, file_glob, expected):
     for html_file in input_dir.visit(fil = file_glob):
-        print('Check {}'.format(html_file))
-        assert html_file.ext == expected['ext'], \
-            "Incorrect file extension"
-        #html_page = HtmlPage(html_file.read())
-        html_page = HtmlPage(html_file)
-        assert html_page.doctype() == expected['doctype'], \
-            'Incorrect doctype'
+        test_html_page(html_file, expected)
 
 @pytest.mark.parametrize("site_dir, expected", [
     (datapath('simple_home_page_and_stylesheet'), expected_html_data)

@@ -23,7 +23,7 @@ def test_doctype(html, expected_doctype, parser):
 ''', 'utf-8')
 ])
 def test_charset(html, expected_charset):
-    charset = HtmlPage(html).charset(expected_charset)
+    charset = HtmlPage(html).charset()
     assert charset == expected_charset, \
         "charset: {}: Incorrect charset, expected {}".format(charset, expected_charset)
 
