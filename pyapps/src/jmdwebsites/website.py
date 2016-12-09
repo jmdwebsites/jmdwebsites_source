@@ -44,7 +44,7 @@ class Website(object):
             fil = ExtMatcher('.html .css'))
         for source in web_files:
             target = self.build_dir.join(source.basename)
-            logger.info("Build the file {}".format(target))
+            logger.info("Build {}".format(target))
             text = source.read()
             target.write(text, ensure=True)
 
