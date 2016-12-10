@@ -4,6 +4,7 @@ import logging
 import py
 import sys
 import jmdwebsites
+from jmdwebsites import Website
 import os
 
 def remove(filename):
@@ -31,7 +32,16 @@ def _before_and_after(request, setup_test_session):
     print("")
 
 @pytest.fixture(autouse=True)
-def setup_test(request, _before_and_after):
+def setup_test(_before_and_after):
     print('Fixture: Setup the test.')
     yield
     print('\nFixture: Tear down test.', end='')
+
+@pytest.fixture()
+def website(setup_test, tmpdir, request):
+    site_dir = request.getfuncargvalue('site_dir')
+    print('cwd {}'.format(os.getcwd()))
+    with site_dir.as_cwd():
+        print('cwd {}'.format(os.getcwd()))
+        yield Website(build_dir = tmpdir)
+    print('\ncwd {}'.format(os.getcwd()), end='')

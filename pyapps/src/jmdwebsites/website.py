@@ -19,7 +19,7 @@ class Website(object):
     
     def __init__(self, build_dir='build'):
         logger.info('Instantiate {}({})'.format(self.__class__.__name__, repr(build_dir)))
-        self.src_dir = py.path.local('src')
+        self.site_dir = py.path.local()
         self.build_dir = py.path.local(build_dir)
 
     def clean(self):
@@ -40,7 +40,7 @@ class Website(object):
         self.build_dir.remove()
         assert self.build_dir.check() == False, 'Build directory already exists.'.format(self.build_dir)
 
-        web_files = self.src_dir.join('developer').visit(
+        web_files = self.site_dir.join('design').visit(
             fil = ExtMatcher('.html .css'))
         for source in web_files:
             target = self.build_dir.join(source.basename)
