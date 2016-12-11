@@ -1,8 +1,8 @@
 from __future__ import print_function
 import pytest
 import logging
-import py
-import sys
+#import py
+#import sys
 import jmdwebsites
 from jmdwebsites import Website
 import os
@@ -17,25 +17,19 @@ def remove(filename):
             raise
 
 @pytest.fixture(scope='session', autouse=True)
-def setup_test_session(request):
-    print('\nFixture: Setup the test session.', end='')
+def setup_test_session():
+    print('\nStart the test session.', end='')
     log_file = 'testsession.log'
     remove(log_file)
     jmdwebsites.log.config_logging(log_file)
     yield
-    print('Fixture: Tear down the test session.', end='')
+    print('Finished the test session.', end='')
 
 @pytest.fixture(autouse=True)
-def _before_and_after(request, setup_test_session):
-    print("")
+def setup_test():
+    print('\nStart the test.')
     yield
-    print("")
-
-@pytest.fixture(autouse=True)
-def setup_test(_before_and_after):
-    print('Fixture: Setup the test.')
-    yield
-    print('\nFixture: Tear down test.', end='')
+    print('\nFinished the test.')
 
 @pytest.fixture()
 def website(setup_test, tmpdir, request):

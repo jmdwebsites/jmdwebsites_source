@@ -30,11 +30,9 @@ def test_clobber(tmpdir):
 ])
 def test_build(site_dir, website):
     expected_dir = site_dir.join('expected')
-
     website.build()
     assert website.build_dir.check(), \
         'Build directory does not exist.'.format(website.build_dir)
-
     # Visit all files in built website and check they match the expected files
     for built in website.build_dir.visit():
         print('Check {}'.format(built))
