@@ -1,0 +1,85 @@
+/*****************************************************************************
+Base
+*/
+
+html {
+    background: green;
+}
+
+
+body {
+    background: #BBFFBB;
+    margin: 0.8em;
+}
+
+/*****************************************************************************
+Structure
+*/
+
+.header {
+    background: #99AAFF;
+    min-height: 3em;
+}
+.header::after { 
+    /*Clearfix*/
+    clear: both;
+    content: "";
+    display: block;
+}
+
+.headlines {
+    background: #99DDFF;
+    max-width: 100%;
+    margin: 0 auto;
+}
+.headlines::after { 
+    /*Clearfix*/
+    clear: both;
+    content: "";
+    display: block;
+}
+
+.main-article {
+    background: #E2E2E2;
+}
+.main-article::after { 
+    /*Clearfix*/
+    clear: both;
+    content: "";
+    display: block;
+}
+
+/*****************************************************************************
+Modules
+*/
+
+.headline {
+    background: #E2E2E2;
+    display: block;
+    float: left;
+    min-height: 5em;
+    width: 100%;
+    margin: 0.5em 0 0 0;
+}
+.headline:last-child {
+    margin-bottom: 0.5em;
+}
+@media screen and (min-width: 600px) and (max-width: 960px)  {
+    .headline {
+        width: 49%;
+        margin-right: 2%;
+    }
+    .headline:nth-child(2n) {
+        margin-right: 0;
+    }
+}
+@media screen and (min-width: 960px) {
+    .headline {
+        width: 32%;
+        margin-right: 2%;
+    }
+    .headline:nth-child(3n) {
+        margin-right: 0;
+    }
+}
+

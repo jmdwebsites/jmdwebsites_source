@@ -1,3 +1,4 @@
+from __future__ import print_function
 import pytest
 from jmdwebsites import HtmlPage
 import bs4 as bs
@@ -28,14 +29,5 @@ def test_charset(html, expected_charset):
         "charset: {}: Incorrect charset, expected {}".format(charset, expected_charset)
 
 
-# Prove that a test is skipped when no test data is supplied
-@pytest.mark.parametrize("test_data", [
-    #('Good', 'expected'),
-])
-def test_something(test_data):
-    input_data, expected_result = test_data
-    print("!!! TEST SOMETHING input={} expected={}".format(input_data, expected_result))
-
-    
 if __name__ == "__main__":
     test_something((1,2))

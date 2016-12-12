@@ -1,35 +1,23 @@
 from __future__ import print_function
 import pytest
-import logging
-#import py
-#import sys
-import jmdwebsites
 from jmdwebsites import Website
+import jmdwebsites
 import os
 
-def remove(filename):
-    try:
-        os.remove(filename)
-    except OSError as e:
-        if e.errno == 2:
-            pass
-        else:
-            raise
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_test_session():
-    print('\nStart the test session.', end='')
-    log_file = 'testsession.log'
-    remove(log_file)
-    jmdwebsites.log.config_logging(log_file)
+    print('\nSetup the test session')
+    jmdwebsites.log.config_logging(log_file_name='testsession.log')
+    print('Start the test session', end='')
     yield
-    print('Finished the test session.', end='')
+    print('Finished the test session', end='')
 
 @pytest.fixture(autouse=True)
 def setup_test():
-    print('\nStart the test.')
+    print('\nStart the test')
     yield
-    print('\nFinished the test.')
+    print('\nFinished the test')
 
 @pytest.fixture()
 def website(setup_test, tmpdir, request):
@@ -37,5 +25,5 @@ def website(setup_test, tmpdir, request):
     print('cwd {}'.format(os.getcwd()))
     with site_dir.as_cwd():
         print('cwd {}'.format(os.getcwd()))
-        yield Website(build_dir = tmpdir)
+        yield Website(build_dir = tmpdir.join('build'))
     print('\ncwd {}'.format(os.getcwd()), end='')

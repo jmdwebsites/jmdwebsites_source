@@ -1,8 +1,18 @@
 import logging.config
 import os
+import click
 
-def config_logging(test_session_log_file):
-    logging.config.dictConfig({
+def remove(filename):
+    try:
+        os.remove(filename)
+    except OSError as e:
+        if e.errno == 2:
+            pass
+        else:
+            raise
+
+def config_logging(log_file_name=None):
+    _config = {
         "version":1,
         "disable_existing_loggers":False,
         "handlers":{
@@ -10,21 +20,13 @@ def config_logging(test_session_log_file):
                 "class":"logging.StreamHandler",
                 "formatter":"levelname",
                 "stream":"ext://sys.stdout",
-                "level":"DEBUG", #use WARNING normally
-            },
-            "logfile":{
-                "class":"logging.handlers.RotatingFileHandler",
-                "formatter":"debug",
-                "filename":test_session_log_file,
-                "maxBytes":"1024",
-                "backupCount":"3",
-                "level":"DEBUG",
+                "level":"DEBUG", 
             },
             "console_jmdwebsites":{
                 "class":"logging.StreamHandler",
                 "formatter":"brief",
                 "stream":"ext://sys.stdout",
-                "level":"DEBUG", #use WARNING normally
+                "level":"DEBUG", 
             },
         },
         "formatters":{
@@ -49,15 +51,30 @@ def config_logging(test_session_log_file):
             },
         },
         "root":{
-            "handlers":["console", "logfile"],
+            "handlers":["console"],
             "level":"DEBUG",
         },
         "loggers":{
             "jmdwebsites":{
-                "handlers":["console_jmdwebsites", "logfile"],
+                "handlers":["console_jmdwebsites"],
                 "level":"DEBUG",
                 "propagate": False,
             },
         },
-    })
+    }
+    if log_file_name:
+        click.echo('Log to {}'.format(log_file_name))
+        _config['handlers']['logfile'] = {
+            "class":"logging.handlers.RotatingFileHandler",
+            "formatter":"debug",
+            "filename":log_file_name,
+            "maxBytes":"1024",
+            "backupCount":"3",
+            "level":"DEBUG",
+        }
+        _config['root']['handlers'].append('logfile')
+        _config['loggers']['jmdwebsites']['handlers'].append('logfile')
+        remove(log_file_name)
+    logging.config.dictConfig(_config)
+    
 
