@@ -5,22 +5,34 @@ import os
 
 logger = logging.getLogger(__name__)
 
-class RemoveError(Exception): pass
+class FatalError(Exception): pass
+class NonFatalError(Exception): pass
+class WebsiteError(Exception): pass
 
-def remove(path):
+class ProjectNotFoundError(WebsiteError): pass
+
+class ProtectedRemoveError(WebsiteError): pass
+class PathNotAllowedError(ProtectedRemoveError): pass
+class BasenameNotAllowedError(ProtectedRemoveError): pass
+class PathNotFoundError(ProtectedRemoveError): pass
+
+def protected_remove(path, valid_basenames=None):
+    if valid_basenames  is None:
+        valid_basenames = ['build']
     logger.info('Remove {}'.format(path))
     for disallowed in [os.getcwd(), __file__]:
         if path in py.path.local(disallowed).parts():
-            logger.error('{}: Removal not allowed'.format(path))
-            raise RemoveError
-    assert path.basename in ['build']
-    #TODO: Check that file/dir is a child of a dir containing a .jmdwebsites file, 
+            raise PathNotAllowedError, 'remove: {}: Path not allowed, protecting: {}'.format(path, disallowed)
+    if valid_basenames and path.basename not in valid_basenames:
+        raise BasenameNotAllowedError, 'remove: {}: Basename not allowed: {}: Must be one of: {}'.format(path, path.basename, valid_basenames)
+    
+    #Check that file/dir is a child of a dir containing a .jmdwebsites file, 
     # thus indicating it is part of a website project.
-    # for ancestor in path.parts():
-    #     if not ancestor.join('.jmdwebsites').check():
-    #         raise RemoveError
-    if path.check():
-        path.remove()
+    get_project_dir()
+    
+    if not path.check():
+        raise PathNotFoundError, 'protected_remove: Path not found: {}'.format(path)
+    path.remove()
 
 class ExtMatcher:
     def __init__(self, extensions=None):
@@ -32,31 +44,55 @@ class ExtMatcher:
 
     def __call__(self, path):
         return path.ext in self.extensions
-        
 
+def new_website(site_dirname):
+    """New website."""
+    site_dir = py.path.local(site_dirname)
+    logger.info('Create new website {}'.format(site_dir.strpath))
+
+def get_project_dir(config_basename = '.jmdwebsite'):
+    # Check for project file in this dir and ancestor dirs
+    for dirpath in py.path.local().parts(reverse=True):
+        for path in dirpath.listdir():
+            if path.basename == config_basename:
+                return path.dirpath()
+    raise ProjectNotFoundError, \
+        'Not a website project (or any of the parent directories): File not found: {}: {}'.format(config_basename, py.path.local())
+ 
 class Website(object):
     
-    def __init__(self, build_dir='build'):
+    def __init__(self, site_dir=None, build_dir=None):
         logger.debug('Instantiate: {}({})'.format(self.__class__.__name__, repr(build_dir)))
-        self.site_dir = py.path.local()
-        self.build_dir = py.path.local(build_dir)
+        if site_dir is None:
+            self.site_dir = get_project_dir()
+        else:
+            self.site_dir = py.path.local(site_dir)
+        if build_dir is None:
+            self.build_dir = self.site_dir.join('build')
+        else:
+            self.build_dir = py.path.local(build_dir)
         logger.info('Website root: {}'.format(self.site_dir))
 
     def clean(self):
         """Clean up the build."""
         logger.info(self.clean.__doc__)
+        raise WebsiteError, 'TODO: Write code clean the website build'
 
     def clobber(self):
         """Clobber the build removing everything."""
         logger.info(self.clobber.__doc__)
-        remove (self.build_dir)
+        if self.build_dir.check():
+            protected_remove(self.build_dir)
+        else:
+            logger.fatal('clobber: No build at path: {}'.format(self.build_dir))
 
     def build(self):
         """Build the website."""
 
         #TODO: Write code to update files only if they have changed.
         #      But until then, clobber the build first, and then build everything from new.
-        remove (self.build_dir)
+        if self.build_dir.check():
+            protected_remove(self.build_dir)
         assert self.build_dir.check() == False, 'Build directory already exists.'.format(self.build_dir)
 
         logger.info(self.build.__doc__.splitlines()[0])
@@ -67,7 +103,3 @@ class Website(object):
             logger.info("Build {}".format(target))
             text = source.read()
             target.write(text, ensure=True)
-
-#assert 0
-# Should the a build subdir be created in the testdir in the fixture
-# Then can test that it is removed first!

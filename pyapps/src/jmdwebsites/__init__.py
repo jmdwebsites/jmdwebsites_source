@@ -11,7 +11,7 @@ __version__ = "0.1.1"
 __copyright__ = "Copyright (c) 2016 jmdwebsites"
 __license__ = "BSD 3-Clause"
 
-from .website import Website
+from .website import Website, new_website
 from .htmlpage import HtmlPage
 import log
 

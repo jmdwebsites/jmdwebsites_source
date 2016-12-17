@@ -6,38 +6,68 @@ from jmdwebsites import Website, HtmlPage
 import jmdwebsites
 import filecmp
 
-
 def datapath(stem):
     return py.path.local(__file__).dirpath('data', stem)
 
-def test_remove(tmpdir):
-    path = tmpdir.join('build/readme.txt')
-    path.ensure()
-    # Check we cant remove the path if we're in a subdir of that directory
-    with path.dirpath().as_cwd():
-        with pytest.raises(jmdwebsites.website.RemoveError) as e:
-            jmdwebsites.website.remove(path.dirpath())
-        print(e)
-    assert path.check()
-    # Check the file is removed successfully
-    jmdwebsites.website.remove(path.dirpath())
-    assert not path.check()
+def test_protected_remove(tmpdir):
+    site_dir = tmpdir
+    build_dir = site_dir.join('build')
+    path = build_dir.join('readme.txt').ensure()
 
-def test_instantiation_of_Website():
-    assert Website().build_dir.strpath == os.path.join(os.getcwd(), 'build')
-    assert Website(build_dir = 'somewhereelse').build_dir == py.path.local('somewhereelse')
+    with site_dir.as_cwd():
+        # Check we're in a jmdwebsite project tree
+        with pytest.raises(jmdwebsites.website.ProjectNotFoundError) as e:
+            jmdwebsites.website.protected_remove(build_dir)
+        site_dir.ensure('.jmdwebsite', dir=1)
+        # Check we cant remove the path if we're in a subdir of that directory
+        with build_dir.as_cwd():
+            with pytest.raises(jmdwebsites.website.PathNotAllowedError) as e:
+                jmdwebsites.website.protected_remove(build_dir)
+        # Check that only a build dir can ber removed
+        with pytest.raises(jmdwebsites.website.BasenameNotAllowedError) as e:
+            jmdwebsites.website.protected_remove(path)
 
-def test_clobber(tmpdir):
-    build_dir = tmpdir.join('build')
-    with tmpdir.as_cwd():
-        # Create a website build including at least some dirs
-        website = Website(build_dir = build_dir)
-        website.build_dir.ensure('index.html')
-        website.build_dir.ensure('contact/index.html')
-        # Now clobber it
-        website.clobber()
-        # and the build dir should be gone
-        assert not website.build_dir.check(), 'The build directory has not been removed: {}'.format(website.build_dir)
+        # Check the build dir to be removed actually exists
+        assert path.check()
+        # Check the file is removed successfully
+        jmdwebsites.website.protected_remove(build_dir)
+        assert not path.check()
+
+
+class TestWebsite:
+    def test_instantiation_with_no_project_root(self, tmpdir):
+        with tmpdir.join('mysite').ensure(dir=1).as_cwd():
+            with pytest.raises(jmdwebsites.website.ProjectNotFoundError):
+                Website()
+    
+    def test_instantiation_in_empty_project(self, tmpdir):
+        site_dir = tmpdir.join('mysite').ensure(dir=1)
+        site_dir.join('.jmdwebsite').ensure(dir=1)
+        site_dir.join('build/index.html')
+        site_dir.join('build/index.html')
+        with site_dir.as_cwd():
+            assert Website().build_dir.strpath == os.path.join(os.getcwd(), 'build')
+            assert Website(build_dir = 'somewhere').build_dir == py.path.local('somewhere')
+
+    def test_clobber__no_build_dir_to_clobber(self, tmpdir):
+        tmpdir.ensure('.jmdwebsite')
+        print(list(tmpdir.visit()))
+        with tmpdir.as_cwd():
+            Website().clobber()
+        print(list(tmpdir.visit()))
+
+    def test_clobber(self, tmpdir):
+        site_dir = tmpdir.join('mysite').ensure(dir=1)
+        site_dir.ensure('.jmdwebsite')
+        build_dir = site_dir.join('build')
+        build_dir.ensure('index.html')
+        build_dir.ensure('contact/index.html')
+        with site_dir.as_cwd():
+            Website().clobber()
+            for f in site_dir.visit():
+                print(f)
+            assert not build_dir.check(), \
+                'The build directory has not been removed: {}'.format(build_dir)
 
 @pytest.mark.parametrize("site_dir", [
     datapath('test_website/test_build'),
