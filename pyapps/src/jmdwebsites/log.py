@@ -2,6 +2,7 @@ import logging.config
 import os
 import click
 
+
 def remove(filename):
     try:
         os.remove(filename)
@@ -11,7 +12,17 @@ def remove(filename):
         else:
             raise
 
-def config_logging(level=None, info=False, debug=False, verbose=0, logfile=None):
+def reset_logging(disable = logging.NOTSET):
+    _default_config = { 
+        'version': 1, 
+        "disable_existing_loggers": False, 
+        'root': {'handlers': [], 'level': 'NOTSET'},
+        'loggers': {'jmdwebsites': {'handlers': [], 'level': 'NOTSET'}}
+    }
+    logging.config.dictConfig(_default_config)
+    logging.disable(disable)
+
+def config_logging(level=None, info=False, debug=False, verbose=0, logfile=None, disable_existing_loggers=False):
     logger_level = 'DEBUG'
 
     console_handler_level = 'CRITICAL'
@@ -27,7 +38,7 @@ def config_logging(level=None, info=False, debug=False, verbose=0, logfile=None)
     
     _config = {
         "version": 1,
-        "disable_existing_loggers": False,
+        "disable_existing_loggers": disable_existing_loggers,
         "formatters":{
             "bare":{
                 "format": "%(message)s"
@@ -124,5 +135,6 @@ def config_logging(level=None, info=False, debug=False, verbose=0, logfile=None)
         }
     logging.config.dictConfig(_config)
     logging.raiseExceptions = 0
+    logging.disable(logging.NOTSET)
     
 

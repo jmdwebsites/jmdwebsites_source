@@ -3,19 +3,34 @@ import py
 import six
 import os
 
+
 logger = logging.getLogger(__name__)
 
+
+# Exceptions
+#
 class FatalError(Exception): pass
 class NonFatalError(Exception): pass
 class WebsiteError(Exception): pass
-
+# For get_project_dir()
 class ProjectNotFoundError(WebsiteError): pass
-
+# For protected_remove()
 class ProtectedRemoveError(WebsiteError): pass
 class PathNotAllowedError(ProtectedRemoveError): pass
 class BasenameNotAllowedError(ProtectedRemoveError): pass
 class PathNotFoundError(ProtectedRemoveError): pass
+class PathAlreadyExists(WebsiteError): pass
 
+
+def get_project_dir(config_basename = '.jmdwebsite'):
+    # Check for project file in this dir and ancestor dirs
+    for dirpath in py.path.local().parts(reverse=True):
+        for path in dirpath.listdir():
+            if path.basename == config_basename:
+                return path.dirpath()
+    raise ProjectNotFoundError, \
+        'Not a website project (or any of the parent directories): File not found: {}: {}'.format(config_basename, py.path.local())
+ 
 def protected_remove(path, valid_basenames=None):
     if valid_basenames  is None:
         valid_basenames = ['build']
@@ -49,16 +64,11 @@ def new_website(site_dirname):
     """New website."""
     site_dir = py.path.local(site_dirname)
     logger.info('Create new website {}'.format(site_dir.strpath))
+    if site_dir.check():
+        raise PathAlreadyExists, \
+            'Already exists: {}'.format(site_dir)
+    site_dir.ensure()
 
-def get_project_dir(config_basename = '.jmdwebsite'):
-    # Check for project file in this dir and ancestor dirs
-    for dirpath in py.path.local().parts(reverse=True):
-        for path in dirpath.listdir():
-            if path.basename == config_basename:
-                return path.dirpath()
-    raise ProjectNotFoundError, \
-        'Not a website project (or any of the parent directories): File not found: {}: {}'.format(config_basename, py.path.local())
- 
 class Website(object):
     
     def __init__(self, site_dir=None, build_dir=None):
@@ -81,10 +91,12 @@ class Website(object):
     def clobber(self):
         """Clobber the build removing everything."""
         logger.info(self.clobber.__doc__)
-        if self.build_dir.check():
-            protected_remove(self.build_dir)
-        else:
-            logger.fatal('clobber: No build at path: {}'.format(self.build_dir))
+        #if self.build_dir.check():
+        #    protected_remove(self.build_dir)
+        #else:
+        #    print('clobber: No such build dir: {}'.format(self.build_dir))
+        protected_remove(self.build_dir)
+
 
     def build(self):
         """Build the website."""

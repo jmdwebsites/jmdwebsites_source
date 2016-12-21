@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import click
 from jmdwebsites import Website, new_website
@@ -7,11 +8,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def eprint(args, **kwargs):
+    print(args, file=sys.stderr, **kwargs)
+    
+
 def handle_error(e, severity=None):
     if severity:
-        click.echo('{}: {}'.format(severity, e))
+        eprint('{}: {}'.format(severity, e))
     else:
-        click.echo(e)
+        eprint(e)
     file_logger = logging.getLogger('file')
     if file_logger.handlers:
         file_logger.exception(e)
@@ -40,9 +45,12 @@ def cli(change_dir, level, info, debug, verbose, logfile):
         os.chdir(change_dir)
 
 @cli.command()
-@click.argument('site_dir')
-def new(site_dir):
-    new_website(site_dir)
+@click.argument('site')
+def new(site):
+    try:
+        new_website(site)
+    except jmdwebsites.website.PathAlreadyExists as e:
+        eprint('new:', e)
 
 @cli.command()
 def clean():
@@ -50,7 +58,12 @@ def clean():
 
 @cli.command()
 def clobber():
-    Website().clobber()
+    try:
+        website = Website()
+        website.clobber()
+    except jmdwebsites.website.PathNotFoundError as e:
+        eprint('clobber: No such build dir: {}'.format(website.build_dir))
+        sys.exit(1)
 
 @cli.command()
 def build():

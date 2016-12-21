@@ -6,6 +6,7 @@ from jmdwebsites import Website, HtmlPage
 import jmdwebsites
 import filecmp
 
+
 def datapath(stem):
     return py.path.local(__file__).dirpath('data', stem)
 
@@ -33,6 +34,14 @@ def test_protected_remove(tmpdir):
         jmdwebsites.website.protected_remove(build_dir)
         assert not path.check()
 
+def test_new_website(tmpcwd, loginfo):
+    site = 'example-site'
+    site_dir = py.path.local(site)
+    assert not site_dir.check()
+    jmdwebsites.new_website(site_dir)
+    assert site_dir.check(), \
+        'No new site has been created: {}'.format(site_dir)
+
 
 class TestWebsite:
     def test_instantiation_with_no_project_root(self, tmpdir):
@@ -51,10 +60,10 @@ class TestWebsite:
 
     def test_clobber__no_build_dir_to_clobber(self, tmpdir):
         tmpdir.ensure('.jmdwebsite')
-        print(list(tmpdir.visit()))
         with tmpdir.as_cwd():
-            Website().clobber()
-        print(list(tmpdir.visit()))
+            website = Website()
+            with pytest.raises(jmdwebsites.website.PathNotFoundError):
+                website.clobber()
 
     def test_clobber(self, tmpdir):
         site_dir = tmpdir.join('mysite').ensure(dir=1)
@@ -64,8 +73,6 @@ class TestWebsite:
         build_dir.ensure('contact/index.html')
         with site_dir.as_cwd():
             Website().clobber()
-            for f in site_dir.visit():
-                print(f)
             assert not build_dir.check(), \
                 'The build directory has not been removed: {}'.format(build_dir)
 
@@ -110,7 +117,7 @@ expected_html_file = {
     (datapath('simple_home_page_and_stylesheet/expected/index.html'), expected_html_file)
 ])
 def test_html_file(file, expected):
-    print('Check {}'.format(file))
+    print('Validate {}'.format(file))
     assert file.ext == expected['ext'], \
         "Incorrect file extension"
     test_html_page(HtmlPage(file), expected['page'])
