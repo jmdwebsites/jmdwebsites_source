@@ -67,7 +67,8 @@ def new_website(site_dirname):
     if site_dir.check():
         raise PathAlreadyExists, \
             'Already exists: {}'.format(site_dir)
-    site_dir.ensure()
+    #site_dir.ensure(dir=1)
+    site_dir.ensure('.jmdwebsite')
 
 class Website(object):
     

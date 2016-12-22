@@ -45,7 +45,11 @@ def cli(change_dir, level, info, debug, verbose, logfile):
     if logfile:
         logger.info('Logging to {}'.format(logfile))
     if change_dir:
-        os.chdir(change_dir)
+        try:
+            os.chdir(change_dir)
+        except OSError as e:
+            eprint('{}: {}'.format(e.filename, e.strerror))
+            sys.exit(1)
 
 @cli.command()
 @click.argument('site')
