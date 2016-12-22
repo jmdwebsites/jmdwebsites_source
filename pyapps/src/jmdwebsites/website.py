@@ -29,7 +29,7 @@ def get_project_dir(config_basename = '.jmdwebsite'):
             if path.basename == config_basename:
                 return path.dirpath()
     raise ProjectNotFoundError, \
-        'Not a website project (or any of the parent directories): File not found: {}: {}'.format(config_basename, py.path.local())
+        'Not a website project (or any of the parent directories): {} not found'.format(config_basename)
  
 def protected_remove(path, valid_basenames=None):
     if valid_basenames  is None:

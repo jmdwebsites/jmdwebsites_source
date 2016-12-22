@@ -26,6 +26,9 @@ def main():
         cli()
     except jmdwebsites.website.NonFatalError as e:
         handle_error(e)
+    except jmdwebsites.website.ProjectNotFoundError as e:
+        eprint(e)
+        sys.exit(1)
     except Exception as e:
         handle_error(e, 'fatal')
         raise
