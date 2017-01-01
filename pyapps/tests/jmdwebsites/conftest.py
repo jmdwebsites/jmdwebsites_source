@@ -48,14 +48,14 @@ def setup():
 @pytest.fixture()
 def tmpcwd(tmpdir):
     with tmpdir.as_cwd():
-        yield
+        yield tmpdir
 
 @pytest.fixture()
 def loginfo():
-    print('setup logcfg')
+    print('Setup loginfo')
     jmdwebsites.log.config_logging(info = True, verbose = 1)
     yield
-    print('tear logcfg')
+    print('\nTear down loginfo')
     jmdwebsites.log.reset_logging()
 
 @pytest.fixture()

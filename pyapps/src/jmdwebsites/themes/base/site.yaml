@@ -1,0 +1,7 @@
+content:
+    content/pages:
+        /:
+            blog/:
+                first-post/:
+            contact/:
+            about:

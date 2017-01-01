@@ -1,15 +1,15 @@
 from __future__ import print_function
 import sys
 import click
-from jmdwebsites import Website, new_website
+from jmdwebsites import Website, init_website, new_website
 import jmdwebsites
 import os
 import logging
 
 logger = logging.getLogger(__name__)
 
-def eprint(args, **kwargs):
-    print(args, file=sys.stderr, **kwargs)
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
     
 
 def handle_error(e, severity=None):
@@ -52,11 +52,19 @@ def cli(change_dir, level, info, debug, verbose, logfile):
             sys.exit(1)
 
 @cli.command()
-@click.argument('site')
-def new(site):
+#@click.argument('name')
+@click.option('--name', '-n', default='', help='Select site name')
+def new(name):
     try:
-        new_website(site)
+        new_website(name)
     except jmdwebsites.website.PathAlreadyExists as e:
+        eprint('new:', e)
+
+@cli.command()
+def init():
+    try:
+        init_website()
+    except jmdwebsites.website.WebsiteProjectAlreadyExists as e:
         eprint('new:', e)
 
 @cli.command()

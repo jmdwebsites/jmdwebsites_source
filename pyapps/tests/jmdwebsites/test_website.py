@@ -41,7 +41,7 @@ def test_new_website(tmpcwd, loginfo):
     jmdwebsites.new_website(site_dir)
     assert site_dir.check(), \
         'No new site has been created: {}'.format(site_dir)
-
+    #assert site_dir.join('index').check()
 
 class TestWebsite:
     def test_instantiation_with_no_project_root(self, tmpdir):
@@ -58,6 +58,14 @@ class TestWebsite:
             assert Website().build_dir.strpath == os.path.join(os.getcwd(), 'build')
             assert Website(build_dir = 'somewhere').build_dir == py.path.local('somewhere')
 
+    def tst_init_website(self, tmpcwd, loginfo):
+        site_dir = tmpcwd
+        project_dir = site_dir.join('.jmdwebsite')
+        assert not project_dir.check()
+        jmdwebsites.init_website()
+        assert project_dir.check()
+        assert project_dir.join('themes/base/page.html').check()
+        
     def test_clobber__no_build_dir_to_clobber(self, tmpdir):
         tmpdir.ensure('.jmdwebsite')
         with tmpdir.as_cwd():
@@ -78,7 +86,8 @@ class TestWebsite:
 
 @pytest.mark.parametrize("site_dir", [
     datapath('test_website/test_build'),
-    datapath('simple_home_page_and_stylesheet')
+    datapath('simple_home_page_and_stylesheet'),
+    datapath('brochure')
 ])
 def test_build(site_dir, website):
     expected_dir = site_dir.join('expected')

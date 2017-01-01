@@ -2,6 +2,7 @@ import logging
 import py
 import six
 import os
+import yaml
 
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,7 @@ class PathNotAllowedError(ProtectedRemoveError): pass
 class BasenameNotAllowedError(ProtectedRemoveError): pass
 class PathNotFoundError(ProtectedRemoveError): pass
 class PathAlreadyExists(WebsiteError): pass
+class WebsiteProjectAlreadyExists(WebsiteError): pass
 
 
 def get_project_dir(config_basename = '.jmdwebsite'):
@@ -60,15 +62,76 @@ class ExtMatcher:
     def __call__(self, path):
         return path.ext in self.extensions
 
-def new_website(site_dirname):
+def get_paths(parent, root_path='', sep='/'):
+    for child_name, child in parent.items():
+        if root_path.endswith(sep) or child_name.startswith(sep):
+            child_path = root_path + child_name
+        else:
+            child_path = root_path + sep + child_name
+        yield child_path
+        if child:
+            for path in get_paths(child, root_path = child_path):
+                yield path
+
+ISDIR = 1
+ISFILE = 0
+def get_targets(content_dict):
+    for content_location in content_dict:
+        for path in get_paths(content_dict[content_location]):
+            if path.endswith('/'):
+                yield os.path.join(path, 'index.html'), ISFILE
+            else:
+                yield path, ISDIR
+
+
+brochure = '''
+/:
+  blog/:
+    first-post/:
+  contact:
+  about:
+    tmp.html:
+'''
+
+page = '''
+<html>
+</html>
+'''
+templates = {
+    'page': '<><>'
+}
+
+def new_website(site_dirname = ''):
     """New website."""
     site_dir = py.path.local(site_dirname)
     logger.info('Create new website {}'.format(site_dir.strpath))
     if site_dir.check():
         raise PathAlreadyExists, \
             'Already exists: {}'.format(site_dir)
-    #site_dir.ensure(dir=1)
     site_dir.ensure('.jmdwebsite')
+    for url in urls(yaml.load(brochure)):
+        logger.info(url)
+
+def get_site_design():
+    #TODO: If a site.yaml exisits in .jmdwebsites, use it otherwise use the default base theme
+    theme_dir = py.path.local(__file__).dirpath('themes','base')
+    #print(theme_dir.join('site.yaml'))
+    with theme_dir.join('site.yaml').open() as f:
+        return yaml.load(f)
+
+def init_website():
+    """Initialize website."""
+    site_dir = py.path.local()
+    logger.info('Create new website {}'.format(site_dir.strpath))
+    project_dir = py.path.local('.jmdwebsite')
+    if project_dir.check():
+        raise WebsiteProjectAlreadyExists, \
+            'Website project already exists: {}'.format(project_dir)
+    project_dir.ensure()
+    #site_design = get_site_design()
+    #for url in urls(yaml.load(brochure)):
+    #    logger.info(url)
+
 
 class Website(object):
     
@@ -99,7 +162,7 @@ class Website(object):
         protected_remove(self.build_dir)
 
 
-    def build(self):
+    def build1(self):
         """Build the website."""
 
         #TODO: Write code to update files only if they have changed.
@@ -116,3 +179,17 @@ class Website(object):
             logger.info("Build {}".format(target))
             text = source.read()
             target.write(text, ensure=True)
+
+    def build(self):
+        """Build the website."""
+        #TODO: Write code to update files only if they have changed.
+        #      But until then, clobber the build first, and then build everything from new.
+        if self.build_dir.check():
+            protected_remove(self.build_dir)
+        assert self.build_dir.check() == False, 'Build directory already exists.'.format(self.build_dir)
+
+        design = get_site_design()
+        for target, dir in get_targets(design['content']):
+            logger.info(target)
+            self.build_dir.ensure(target, dir=dir)
+            
