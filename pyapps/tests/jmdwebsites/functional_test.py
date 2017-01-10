@@ -16,7 +16,7 @@ def filt(f):
 @pytest.mark.parametrize("theme, content, expected", [
     ('','',datapath('brochure/expected'))
 ])
-def test_init_then_build(tmpcwd, loginfo, theme, content, expected):
+def tst_init_then_build(tmpcwd, loginfo, theme, content, expected):
     site_dir = tmpcwd
     build_dir = site_dir.join('build')
 
@@ -26,14 +26,14 @@ def test_init_then_build(tmpcwd, loginfo, theme, content, expected):
     print('{}{}'.format(out, err), end='')
     assert not err
     for f in site_dir.visit(rec=1):
-        print(f.strpath)
+        print('TST: ', f.strpath)
 
     p = Popen(['jmdwebsites --info -v build'], stdout=PIPE, stderr=PIPE, shell=True)
     out, err = p.communicate()
     print('{}{}'.format(out, err), end='')
     assert not err
     for f in site_dir.visit(rec=1):
-        print(f.strpath)
+        print('TST: ', f.strpath)
 
     assert build_dir.check()
     # Visit all files in built website and check they match the expected files

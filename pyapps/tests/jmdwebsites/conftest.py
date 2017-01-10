@@ -59,6 +59,14 @@ def loginfo():
     jmdwebsites.log.reset_logging()
 
 @pytest.fixture()
+def logdebug():
+    print('Setup logdebug')
+    jmdwebsites.log.config_logging(debug = True, verbose = 1)
+    yield
+    print('\nTear down logdebug')
+    jmdwebsites.log.reset_logging()
+
+@pytest.fixture()
 def website(tmpdir, request):
     site_dir = request.getfuncargvalue('site_dir')
     with site_dir.as_cwd():

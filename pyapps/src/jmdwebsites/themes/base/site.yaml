@@ -1,7 +1,30 @@
-content:
+content1:
     content/pages:
         /:
             blog/:
                 first-post/:
             contact/:
             about:
+
+content2:
+    pages:
+        /:
+        /contact:
+        /about:
+    blog:
+        $source: some/pages
+        first-post/:
+
+content:
+    pages:
+        /:
+        about:
+        contact:
+            directions:
+    blog:
+    blog2: content2/blog2 
+    blog3:
+        first-post:
+
+
+

@@ -62,27 +62,13 @@ class ExtMatcher:
     def __call__(self, path):
         return path.ext in self.extensions
 
-def get_paths(parent, root_path='', sep='/'):
-    for child_name, child in parent.items():
-        if root_path.endswith(sep) or child_name.startswith(sep):
-            child_path = root_path + child_name
-        else:
-            child_path = root_path + sep + child_name
-        yield child_path
-        if child:
-            for path in get_paths(child, root_path = child_path):
-                yield path
-
-ISDIR = 1
-ISFILE = 0
-def get_targets(content_dict):
-    for content_location in content_dict:
-        for path in get_paths(content_dict[content_location]):
-            if path.endswith('/'):
-                yield os.path.join(path, 'index.html'), ISFILE
-            else:
-                yield path, ISDIR
-
+def dict_walker(parent, parent_path=''):
+    if isinstance(parent, dict):
+        for child_name, child in parent.items():
+            child_path = os.path.join(parent_path, child_name)
+            yield child_path, child
+            for path, value in dict_walker(child, parent_path = child_path):
+                yield path, value
 
 brochure = '''
 /:
@@ -93,14 +79,6 @@ brochure = '''
     tmp.html:
 '''
 
-page = '''
-<html>
-</html>
-'''
-templates = {
-    'page': '<><>'
-}
-
 def new_website(site_dirname = ''):
     """New website."""
     site_dir = py.path.local(site_dirname)
@@ -109,28 +87,21 @@ def new_website(site_dirname = ''):
         raise PathAlreadyExists, \
             'Already exists: {}'.format(site_dir)
     site_dir.ensure('.jmdwebsite')
-    for url in urls(yaml.load(brochure)):
-        logger.info(url)
-
-def get_site_design():
-    #TODO: If a site.yaml exisits in .jmdwebsites, use it otherwise use the default base theme
-    theme_dir = py.path.local(__file__).dirpath('themes','base')
-    #print(theme_dir.join('site.yaml'))
-    with theme_dir.join('site.yaml').open() as f:
-        return yaml.load(f)
+    logger.error('TODO:')
+    #for url in urls(yaml.load(brochure)):
+    #    logger.info(url)
 
 def init_website():
     """Initialize website."""
     site_dir = py.path.local()
-    logger.info('Create new website {}'.format(site_dir.strpath))
+    logger.info('Init website {}'.format(site_dir.strpath))
     project_dir = py.path.local('.jmdwebsite')
     if project_dir.check():
         raise WebsiteProjectAlreadyExists, \
             'Website project already exists: {}'.format(project_dir)
-    project_dir.ensure()
-    #site_design = get_site_design()
-    #for url in urls(yaml.load(brochure)):
-    #    logger.info(url)
+    logger.info('Create proj dir {}'.format(project_dir.strpath))
+    project_dir.ensure(dir=1)
+    site_dir.ensure('site.yaml')
 
 
 class Website(object):
@@ -145,6 +116,7 @@ class Website(object):
             self.build_dir = self.site_dir.join('build')
         else:
             self.build_dir = py.path.local(build_dir)
+        self.content_dir = self.site_dir.join('content')
         logger.info('Website root: {}'.format(self.site_dir))
 
     def clean(self):
@@ -161,24 +133,22 @@ class Website(object):
         #    print('clobber: No such build dir: {}'.format(self.build_dir))
         protected_remove(self.build_dir)
 
-
-    def build1(self):
-        """Build the website."""
-
-        #TODO: Write code to update files only if they have changed.
-        #      But until then, clobber the build first, and then build everything from new.
-        if self.build_dir.check():
-            protected_remove(self.build_dir)
-        assert self.build_dir.check() == False, 'Build directory already exists.'.format(self.build_dir)
-
-        logger.info(self.build.__doc__.splitlines()[0])
-        design_dir = self.site_dir.join('design')
-        design_files = design_dir.visit(fil = ExtMatcher('.html .css'))
-        for source in design_files:
-            target = self.build_dir.join(source.basename)
-            logger.info("Build {}".format(target))
-            text = source.read()
-            target.write(text, ensure=True)
+    def get_site_design(self):
+        #TODO: If a site.yaml exisits in .jmdwebsites, use it otherwise use the default base theme
+        config_file = self.site_dir.join('site.yaml')
+        if config_file.check():
+            logger.info('Site config file: {}'.format(config_file))
+            with self.site_dir.join('site.yaml').open() as f:
+                config = yaml.load(f)
+        else:
+            if 0:
+                #TODO: Change this to theme.yaml and use as a default theme
+                theme_dir = py.path.local(__file__).dirpath('themes','base')
+                with theme_dir.join('site.yaml').open() as f:
+                    config = yaml.load(f)
+            config = { 'content': {'home': None, 'pages': None}}
+        logger.info('Site config: {}'.format(config))
+        return config
 
     def build(self):
         """Build the website."""
@@ -187,9 +157,48 @@ class Website(object):
         if self.build_dir.check():
             protected_remove(self.build_dir)
         assert self.build_dir.check() == False, 'Build directory already exists.'.format(self.build_dir)
+        self.build_dir.ensure(dir=1)
+        site = self.get_site_design()
+        
+        for content_name, content_path in self.get_content(site):
+            logger.info('Build content: {}: {}'.format(content_name, content_path))
+            if content_name == 'home':
+                self.build_page(content_path, '/')
+            else:
+                for source, url in self.get_source(content_path):
+                    self.build_page(source, url)
 
-        design = get_site_design()
-        for target, dir in get_targets(design['content']):
-            logger.info(target)
-            self.build_dir.ensure(target, dir=dir)
-            
+    def get_content(self, site):
+        content = 'content' 
+        for name in site[content]:
+            if name in ['home', 'pages', 'posts']:
+                dirname = site[content][name]
+                if dirname is None:
+                    dirname = os.path.join(content, name)
+                yield name, py.path.local(dirname)
+            else:
+                assert 0, \
+                    'Content not recognized: {}'.format(name)
+
+    def get_source(self, content_path):
+        for source in content_path.visit():
+            if source.check(dir=1):
+                rel_source = source.relto(content_path)
+                url = os.path.join('/', rel_source)
+                yield source, url 
+
+    def build_page(self, source_dir, url):
+        logger.info("Build page: {}".format(url))
+        target_dir = self.build_dir.join(url)
+        target_dir.ensure(dir=1)
+        source_file = source_dir.join('index.html')
+        if source_file.check():
+            source_file.copy(target_dir)
+        else:
+            logger.warning("No source file found: {}".format(source_file))
+            #TODO: Use a template to generate the file
+            target_dir.join('index.html').ensure()
+        if source_dir.check(dir=1):
+            for asset in source_dir.visit(fil='*.css'):
+                logger.info('Get asset /{} from {}'.format(target_dir.relto(self.build_dir).join(asset.basename), asset))
+                asset.copy(target_dir)

@@ -2,7 +2,7 @@ from __future__ import print_function
 import pytest
 import os
 import py
-from jmdwebsites import Website, HtmlPage
+from jmdwebsites import Website, HtmlPage, dircmp
 import jmdwebsites
 import filecmp
 
@@ -34,6 +34,14 @@ def test_protected_remove(tmpdir):
         jmdwebsites.website.protected_remove(build_dir)
         assert not path.check()
 
+def test_init_website(tmpcwd, loginfo):
+    site_dir = tmpcwd
+    project_dir = site_dir.join('.jmdwebsite')
+    assert not project_dir.check()
+    jmdwebsites.init_website()
+    assert project_dir.check()
+    assert site_dir.join('site.yaml').check()
+
 def test_new_website(tmpcwd, loginfo):
     site = 'example-site'
     site_dir = py.path.local(site)
@@ -42,6 +50,17 @@ def test_new_website(tmpcwd, loginfo):
     assert site_dir.check(), \
         'No new site has been created: {}'.format(site_dir)
     #assert site_dir.join('index').check()
+        
+
+@pytest.mark.parametrize("config, expected", [
+    (
+        { '/': {'blog': {'/first-post': None}, 'contact': None, 'about':{'tmp.html': None }}},
+        ['/', '/blog', '/first-post', '/about', '/about/tmp.html', '/contact']
+    )
+])
+def test_walker(config, expected):
+    result = [path for path, value in jmdwebsites.website.walker(config)]
+    assert result == expected
 
 class TestWebsite:
     def test_instantiation_with_no_project_root(self, tmpdir):
@@ -58,14 +77,6 @@ class TestWebsite:
             assert Website().build_dir.strpath == os.path.join(os.getcwd(), 'build')
             assert Website(build_dir = 'somewhere').build_dir == py.path.local('somewhere')
 
-    def tst_init_website(self, tmpcwd, loginfo):
-        site_dir = tmpcwd
-        project_dir = site_dir.join('.jmdwebsite')
-        assert not project_dir.check()
-        jmdwebsites.init_website()
-        assert project_dir.check()
-        assert project_dir.join('themes/base/page.html').check()
-        
     def test_clobber__no_build_dir_to_clobber(self, tmpdir):
         tmpdir.ensure('.jmdwebsite')
         with tmpdir.as_cwd():
@@ -84,24 +95,18 @@ class TestWebsite:
             assert not build_dir.check(), \
                 'The build directory has not been removed: {}'.format(build_dir)
 
-@pytest.mark.parametrize("site_dir", [
-    datapath('test_website/test_build'),
-    datapath('simple_home_page_and_stylesheet'),
-    datapath('brochure')
-])
-def test_build(site_dir, website):
-    expected_dir = site_dir.join('expected')
-    website.build()
-    assert website.build_dir.check(), \
-        'Build directory does not exist.'.format(website.build_dir)
-    # Visit all files in built website and check they match the expected files
-    for built in website.build_dir.visit():
-        print('Check {}'.format(built))
-        assert built.check(), \
-            'File not found: {}'.format(built)
-        expected = expected_dir.join(built.basename)
-        assert filecmp.cmp(built.strpath, expected.strpath), \
-            'Page not as expected: {}'.format(built)
+    @pytest.mark.parametrize("site_dir", [
+        datapath('test_website/test_build'),
+        datapath('simple_home_page_and_stylesheet'),
+        datapath('brochure')
+    ])
+    def test_build(self, site_dir, logdebug, website):
+        expected_dir = site_dir.join('expected')
+        website.build()
+        assert website.build_dir.check(), \
+            'Build directory does not exist.'.format(website.build_dir)
+        assert not dircmp.diff(website.build_dir, expected_dir), \
+            'Build dir not equal to expected dir'
 
 expected_html_page = {
     'doctype': 'html',
