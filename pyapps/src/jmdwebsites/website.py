@@ -157,7 +157,7 @@ class Website(object):
         logger.info('Site config: {}'.format(config))
         return config
 
-    def build_teplates(self):
+    def build_templates(self):
         """Build templates."""
 
     def build(self):
@@ -170,13 +170,13 @@ class Website(object):
         self.build_dir.ensure(dir=1)
         site = self.get_site_design()
         
-        for content_name, content_path in self.get_content(site):
-            logger.info('Build content: {}: {}'.format(content_name, content_path))
+        for content_name, content_dir in self.get_content(site):
+            logger.info('Build content: {}: {}'.format(content_name, content_dir))
             if content_name == HOME:
-                self.build_page(content_path, '/')
+                self.build_page('/', content_dir)
             else:
-                for source, url in self.get_source(content_path):
-                    self.build_page(source, url)
+                for url, source in self.get_source(content_dir):
+                    self.build_page(url, source)
 
     def get_content(self, site):
         for name in site[CONTENT]:
@@ -189,14 +189,14 @@ class Website(object):
                 assert 0, \
                     'Content not recognized: {}'.format(name)
 
-    def get_source(self, content_path):
-        for source in content_path.visit():
+    def get_source(self, content_dir):
+        for source in content_dir.visit():
             if source.check(dir=1):
-                rel_source = source.relto(content_path)
+                rel_source = source.relto(content_dir)
                 url = os.path.join('/', rel_source)
-                yield source, url 
+                yield url, source  
 
-    def build_page(self, source_dir, url):
+    def build_page(self, url, source_dir):
         logger.info("Build page: {}".format(url))
         target_dir = self.build_dir.join(url)
         target_dir.ensure(dir=1)
