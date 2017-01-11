@@ -29,6 +29,7 @@ class BasenameNotAllowedError(ProtectedRemoveError): pass
 class PathNotFoundError(ProtectedRemoveError): pass
 class PathAlreadyExists(WebsiteError): pass
 class WebsiteProjectAlreadyExists(WebsiteError): pass
+class SourceDirNotFoundError(WebsiteError): pass
 
 
 def get_project_dir(config_basename =  PROJDIR):
@@ -170,15 +171,15 @@ class Website(object):
         self.build_dir.ensure(dir=1)
         site = self.get_site_design()
         
-        for content_name, content_dir in self.get_content(site):
+        for content_name, content_dir in self.get_content_dir(site):
             logger.info('Build content: {}: {}'.format(content_name, content_dir))
             if content_name == HOME:
-                self.build_page('/', content_dir)
+                self.build_home_page('/', content_dir)
             else:
-                for url, source in self.get_source(content_dir):
+                for url, source in self.get_source_dir(content_dir):
                     self.build_page(url, source)
 
-    def get_content(self, site):
+    def get_content_dir(self, site):
         for name in site[CONTENT]:
             if name in [HOME, PAGES, POSTS]:
                 dirname = site[CONTENT][name]
@@ -189,25 +190,48 @@ class Website(object):
                 assert 0, \
                     'Content not recognized: {}'.format(name)
 
-    def get_source(self, content_dir):
+    def get_source_dir(self, content_dir):
         for source in content_dir.visit():
             if source.check(dir=1):
                 rel_source = source.relto(content_dir)
                 url = os.path.join('/', rel_source)
                 yield url, source  
 
+    def build_home_page(self, url, source_dir):
+        try:
+            self.build_page(url, source_dir)
+        except SourceDirNotFoundError as e:
+            logger.warning(e.message)
+        self.build_dir.ensure(url, 'index.html')
+
     def build_page(self, url, source_dir):
         logger.info("Build page: {}".format(url))
+        if not source_dir.check(dir=1):
+            raise SourceDirNotFoundError, \
+                'Source dir not found: {}'.format(source_dir)
         target_dir = self.build_dir.join(url)
-        target_dir.ensure(dir=1)
+        source = self.get_page_source(source_dir)
+        self.build_page_file(source, target_dir)
+        self.build_page_assets(source_dir, target_dir)
+
+    def get_page_source(self, source_dir):
+        #TODO: Can also check for index.php file here too
         source_file = source_dir.join('index.html')
         if source_file.check():
-            source_file.copy(target_dir)
+            return source_file
+        # No source file detected, so use a template
+
+    def build_page_file(self, source, target_dir):
+        if isinstance(source, py.path.local):
+            #target_dir.ensure(dir=1)
+            source.copy(target_dir)
         else:
-            logger.warning("No source file found: {}".format(source_file))
+            logger.warning("No source file found: {}".format(source))
             #TODO: Use a template to generate the file
             target_dir.join('index.html').ensure()
-        if source_dir.check(dir=1):
-            for asset in source_dir.visit(fil='*.css'):
-                logger.info('Get asset /{} from {}'.format(target_dir.relto(self.build_dir).join(asset.basename), asset))
-                asset.copy(target_dir)
+
+    def build_page_assets(self, source_dir, target_dir):
+        for asset in source_dir.visit(fil='*.css'):
+            logger.info('Get asset /{} from {}'.format(target_dir.relto(self.build_dir).join(asset.basename), asset))
+            asset.copy(target_dir)
+
