@@ -184,7 +184,7 @@ class Website(object):
                 dirname = site[CONTENT][name]
                 if dirname is None:
                     dirname = os.path.join(CONTENT, name)
-                yield name, py.path.local(dirname)
+                yield name, self.site_dir.join(dirname)
             else:
                 assert 0, \
                     'Content not recognized: {}'.format(name)
