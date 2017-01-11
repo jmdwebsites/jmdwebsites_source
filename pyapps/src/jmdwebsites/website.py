@@ -7,6 +7,13 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+BUILD = 'build'
+CONTENT = 'content'
+CONFIG_FILE = 'site.yaml'
+PROJDIR = '.jmdwebsite'
+PAGES = 'pages'
+POSTS = 'posts'
+HOME = 'home'
 
 # Exceptions
 #
@@ -24,7 +31,7 @@ class PathAlreadyExists(WebsiteError): pass
 class WebsiteProjectAlreadyExists(WebsiteError): pass
 
 
-def get_project_dir(config_basename = '.jmdwebsite'):
+def get_project_dir(config_basename =  PROJDIR):
     # Check for project file in this dir and ancestor dirs
     for dirpath in py.path.local().parts(reverse=True):
         for path in dirpath.listdir():
@@ -35,7 +42,7 @@ def get_project_dir(config_basename = '.jmdwebsite'):
  
 def protected_remove(path, valid_basenames=None):
     if valid_basenames  is None:
-        valid_basenames = ['build']
+        valid_basenames = [BUILD]
     logger.info('Remove {}'.format(path))
     for disallowed in [os.getcwd(), __file__]:
         if path in py.path.local(disallowed).parts():
@@ -86,7 +93,7 @@ def new_website(site_dirname = ''):
     if site_dir.check():
         raise PathAlreadyExists, \
             'Already exists: {}'.format(site_dir)
-    site_dir.ensure('.jmdwebsite')
+    site_dir.ensure( PROJDIR)
     logger.error('TODO:')
     #for url in urls(yaml.load(brochure)):
     #    logger.info(url)
@@ -95,13 +102,13 @@ def init_website():
     """Initialize website."""
     site_dir = py.path.local()
     logger.info('Init website {}'.format(site_dir.strpath))
-    project_dir = py.path.local('.jmdwebsite')
+    project_dir = py.path.local( PROJDIR)
     if project_dir.check():
         raise WebsiteProjectAlreadyExists, \
             'Website project already exists: {}'.format(project_dir)
     logger.info('Create proj dir {}'.format(project_dir.strpath))
     project_dir.ensure(dir=1)
-    site_dir.ensure('site.yaml')
+    site_dir.ensure(CONFIG_FILE)
 
 
 class Website(object):
@@ -113,10 +120,10 @@ class Website(object):
         else:
             self.site_dir = py.path.local(site_dir)
         if build_dir is None:
-            self.build_dir = self.site_dir.join('build')
+            self.build_dir = self.site_dir.join(BUILD)
         else:
             self.build_dir = py.path.local(build_dir)
-        self.content_dir = self.site_dir.join('content')
+        #self.content_dir = self.site_dir.join(CONTENT)
         logger.info('Website root: {}'.format(self.site_dir))
 
     def clean(self):
@@ -135,20 +142,23 @@ class Website(object):
 
     def get_site_design(self):
         #TODO: If a site.yaml exisits in .jmdwebsites, use it otherwise use the default base theme
-        config_file = self.site_dir.join('site.yaml')
+        config_file = self.site_dir.join(CONFIG_FILE)
         if config_file.check():
             logger.info('Site config file: {}'.format(config_file))
-            with self.site_dir.join('site.yaml').open() as f:
+            with self.site_dir.join(CONFIG_FILE).open() as f:
                 config = yaml.load(f)
         else:
             if 0:
                 #TODO: Change this to theme.yaml and use as a default theme
                 theme_dir = py.path.local(__file__).dirpath('themes','base')
-                with theme_dir.join('site.yaml').open() as f:
+                with theme_dir.join(CONFIG_FILE).open() as f:
                     config = yaml.load(f)
-            config = { 'content': {'home': None, 'pages': None}}
+            config = { CONTENT: {HOME: None, PAGES: None}}
         logger.info('Site config: {}'.format(config))
         return config
+
+    def build_teplates(self):
+        """Build templates."""
 
     def build(self):
         """Build the website."""
@@ -162,19 +172,18 @@ class Website(object):
         
         for content_name, content_path in self.get_content(site):
             logger.info('Build content: {}: {}'.format(content_name, content_path))
-            if content_name == 'home':
+            if content_name == HOME:
                 self.build_page(content_path, '/')
             else:
                 for source, url in self.get_source(content_path):
                     self.build_page(source, url)
 
     def get_content(self, site):
-        content = 'content' 
-        for name in site[content]:
-            if name in ['home', 'pages', 'posts']:
-                dirname = site[content][name]
+        for name in site[CONTENT]:
+            if name in [HOME, PAGES, POSTS]:
+                dirname = site[CONTENT][name]
                 if dirname is None:
-                    dirname = os.path.join(content, name)
+                    dirname = os.path.join(CONTENT, name)
                 yield name, py.path.local(dirname)
             else:
                 assert 0, \
