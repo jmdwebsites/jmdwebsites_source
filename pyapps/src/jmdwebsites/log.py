@@ -136,5 +136,3 @@ def config_logging(level=None, info=False, debug=False, verbose=0, logfile=None,
     logging.config.dictConfig(_config)
     logging.raiseExceptions = 0
     logging.disable(logging.NOTSET)
-    
-

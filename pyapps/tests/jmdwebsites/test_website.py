@@ -50,7 +50,7 @@ def test_new_website(tmpcwd, loginfo):
     assert site_dir.check(), \
         'No new site has been created: {}'.format(site_dir)
     #assert site_dir.join('index').check()
-        
+
 
 @pytest.mark.parametrize("config, expected", [
     (
@@ -100,7 +100,7 @@ class TestWebsite:
         datapath('simple_home_page_and_stylesheet'),
         datapath('brochure')
     ])
-    def test_build(self, site_dir, logdebug, website):
+    def test_build(self, site_dir, logopt, website):
         expected_dir = site_dir.join('expected')
         website.build()
         assert website.build_dir.check(), \

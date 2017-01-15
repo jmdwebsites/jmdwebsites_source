@@ -1,22 +1,35 @@
+from __future__ import print_function
+import copy
 import logging
-import py
-import six
 import os
+from pprint import pformat
+
+import py
+import ruamel.yaml as ryaml
+import six
 import yaml
 
+#import partials
 
 logger = logging.getLogger(__name__)
 
 BUILD = 'build'
 CONTENT = 'content'
 CONFIG_FILE = 'site.yaml'
+TEMPLATE_FILE = 'templates.yaml'
 PROJDIR = '.jmdwebsite'
+HOME = 'home'
 PAGES = 'pages'
 POSTS = 'posts'
-HOME = 'home'
+STARTSTR     =   '*** START ***'
+ENDSTR       =   '**** END ****'
+STARTSTR_N   =   '*** START ***\n'
+ENDSTR_N     =   '**** END ****\n'
+N_STARTSTR   = '\n*** START ***'
+N_ENDSTR     = '\n**** END ****'
+N_STARTSTR_N = '\n*** START ***\n'
+N_ENDSTR_N   = '\n**** END ****\n'
 
-# Exceptions
-#
 class FatalError(Exception): pass
 class NonFatalError(Exception): pass
 class WebsiteError(Exception): pass
@@ -30,6 +43,11 @@ class PathNotFoundError(ProtectedRemoveError): pass
 class PathAlreadyExists(WebsiteError): pass
 class WebsiteProjectAlreadyExists(WebsiteError): pass
 class SourceDirNotFoundError(WebsiteError): pass
+class TemplateFoundError(WebsiteError): pass
+
+
+def yamldump(data):
+    return ryaml.dump(data, Dumper=ryaml.RoundTripDumper)
 
 
 def get_project_dir(config_basename =  PROJDIR):
@@ -40,6 +58,7 @@ def get_project_dir(config_basename =  PROJDIR):
                 return path.dirpath()
     raise ProjectNotFoundError, \
         'Not a website project (or any of the parent directories): {} not found'.format(config_basename)
+
  
 def protected_remove(path, valid_basenames=None):
     if valid_basenames  is None:
@@ -59,6 +78,7 @@ def protected_remove(path, valid_basenames=None):
         raise PathNotFoundError, 'protected_remove: Path not found: {}'.format(path)
     path.remove()
 
+
 class ExtMatcher:
     def __init__(self, extensions=None):
         if extensions is None:
@@ -70,6 +90,7 @@ class ExtMatcher:
     def __call__(self, path):
         return path.ext in self.extensions
 
+
 def dict_walker(parent, parent_path=''):
     if isinstance(parent, dict):
         for child_name, child in parent.items():
@@ -78,14 +99,6 @@ def dict_walker(parent, parent_path=''):
             for path, value in dict_walker(child, parent_path = child_path):
                 yield path, value
 
-brochure = '''
-/:
-  blog/:
-    first-post/:
-  contact:
-  about:
-    tmp.html:
-'''
 
 def new_website(site_dirname = ''):
     """New website."""
@@ -96,8 +109,7 @@ def new_website(site_dirname = ''):
             'Already exists: {}'.format(site_dir)
     site_dir.ensure( PROJDIR)
     logger.error('TODO:')
-    #for url in urls(yaml.load(brochure)):
-    #    logger.info(url)
+
 
 def init_website():
     """Initialize website."""
@@ -113,7 +125,6 @@ def init_website():
 
 
 class Website(object):
-    
     def __init__(self, site_dir=None, build_dir=None):
         logger.debug('Instantiate: {}({})'.format(self.__class__.__name__, repr(build_dir)))
         if site_dir is None:
@@ -142,7 +153,7 @@ class Website(object):
         protected_remove(self.build_dir)
 
     def get_site_design(self):
-        #TODO: If a site.yaml exisits in .jmdwebsites, use it otherwise use the default base theme
+        #TODO: If a CONFIG_FILE exists, use it. Otherwise, use a default version in the theme dir
         config_file = self.site_dir.join(CONFIG_FILE)
         if config_file.check():
             logger.info('Site config file: {}'.format(config_file))
@@ -220,10 +231,74 @@ class Website(object):
         if source_file.check():
             return source_file
         # No source file detected, so use a template
+        template_source = self.get_template_source('about')
+        #template_source = self.get_template_source('empty')  
+        template = self.get_page_template(template_source)
+
+    def get_page_template(self, template_source):
+        parts = list(self.partial_getter(template_source, 'doc'))
+        logger.debug('get_page_template(): parts:' + N_STARTSTR_N + pformat(parts) + N_ENDSTR)
+        template = '\n'.join(parts)
+        logger.debug('get_page_template(): template: represented by' + N_STARTSTR_N + repr(template) + N_ENDSTR)
+        logger.debug('get_page_template(): template:' + N_STARTSTR_N + template + N_ENDSTR)
+        return template
+
+    def partial_getter(self, source_template, name):
+        layouts = source_template['layouts']
+        logger.debug('partial_getter(): ' + name)
+        if name not in layouts or not layouts[name]:
+            return
+        for child_name in layouts[name]:
+            logger.debug('partial_getter():     ' + child_name)
+            if child_name in layouts and layouts[child_name]:
+                text = '\n'.join(list(self.partial_getter(source_template, child_name)))
+                child = '\n{}\n'.format(text)
+            else:
+                child = '!!'
+            if 'partials' in source_template and child_name in source_template['partials']:
+                partial = source_template['partials'][child_name].format(child)
+            else:
+                partial = '<${1}>{0}</${1}>'.format(child, child_name)
+            yield partial
+                
+    def get_template_source(self, page_name):
+        with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
+            templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
+        
+        page_template = self.get_sub_template(templates['pages'], page_name)
+        logger.debug('get_template_source(): page_template: raw:' + N_STARTSTR_N + yamldump(page_template) + ENDSTR)
+        for name in page_template:
+            page_template[name] = self.get_sub_template(templates[name], page_template[name])
+        logger.debug('get_template_source(): page_template: processed:' + N_STARTSTR_N + yamldump(page_template) + ENDSTR)
+        return page_template
+
+    def get_sub_template(self, templates, name):
+        ancestors = [ancestor for ancestor_name, ancestor in self.inheritor(templates, name) if ancestor]
+        logger.debug('get_sub_template: ancestors:' + N_STARTSTR_N + repr(ancestors) + N_ENDSTR)
+        if not ancestors:
+            return {}
+        template = copy.deepcopy(ancestors[-1])
+        for ancestor in reversed(ancestors):
+            for block_name, block in ancestor.items():
+                template[block_name] = block
+        del template['inherit']
+        return template
+
+    def inheritor(self, templates, template_name):
+        logger.debug('inheritor(): template_name:' + template_name)
+        if template_name not in templates:
+            raise TemplateFoundError, '{}: Template not found'.format(template_name)
+        template = templates[template_name]
+        yield template_name, template
+        while (template and ('inherit' in template) and template['inherit']):
+            inherited_name = template['inherit']
+            if inherited_name not in templates:
+                raise TemplateFoundError, '{}: Inherited template not found: {}'.format(template_name, inherited_name)
+            template = templates[inherited_name]
+            yield inherited_name, template
 
     def build_page_file(self, source, target_dir):
         if isinstance(source, py.path.local):
-            #target_dir.ensure(dir=1)
             source.copy(target_dir)
         else:
             logger.warning("No source file found: {}".format(source))
@@ -234,4 +309,3 @@ class Website(object):
         for asset in source_dir.visit(fil='*.css'):
             logger.info('Get asset /{} from {}'.format(target_dir.relto(self.build_dir).join(asset.basename), asset))
             asset.copy(target_dir)
-
