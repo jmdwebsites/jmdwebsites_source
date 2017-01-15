@@ -43,7 +43,7 @@ class PathNotFoundError(ProtectedRemoveError): pass
 class PathAlreadyExists(WebsiteError): pass
 class WebsiteProjectAlreadyExists(WebsiteError): pass
 class SourceDirNotFoundError(WebsiteError): pass
-class TemplateFoundError(WebsiteError): pass
+class TemplateNotFoundError(WebsiteError): pass
 
 
 def dir_getter(root_path):
@@ -224,19 +224,28 @@ class Website(object):
             raise SourceDirNotFoundError, \
                 'Source dir not found: {}'.format(source_dir)
         target_dir = self.build_dir.join(url)
-        source = self.get_page_source(source_dir)
-        self.build_page_file(source, target_dir)
+        self.build_page_file(source_dir, target_dir)
         self.build_page_assets(source_dir, target_dir)
 
-    def get_page_source(self, source_dir):
+    def build_page_file(self, source_dir, target_dir):
         #TODO: Can also check for index.php file here too
         source_file = source_dir.join('index.html')
         if source_file.check():
-            return source_file
+            source_file.copy(target_dir)
+            return
+        logger.debug("No source file found: {}".format(source_file))
         # No source file detected, so use a template
-        template_source = self.get_template_source('about')
-        #template_source = self.get_template_source('empty')  
+
+        template_name = source_dir.basename
+        try:
+            template_source = self.get_template_source(template_name)
+        except TemplateNotFoundError:
+            template_source = self.get_template_source('empty')
+
         template = self.get_page_template(template_source)
+
+        target_dir.ensure(dir=1)
+        target_dir.join('index.html').write(template)
 
     def get_page_template(self, template_source):
         parts = list(self.partial_getter(template_source, 'doc'))
@@ -290,23 +299,15 @@ class Website(object):
     def inheritor(self, templates, template_name):
         logger.debug('inheritor(): template_name:' + template_name)
         if template_name not in templates:
-            raise TemplateFoundError, '{}: Template not found'.format(template_name)
+            raise TemplateNotFoundError, '{}: Template not found'.format(template_name)
         template = templates[template_name]
         yield template_name, template
         while (template and ('inherit' in template) and template['inherit']):
             inherited_name = template['inherit']
             if inherited_name not in templates:
-                raise TemplateFoundError, '{}: Inherited template not found: {}'.format(template_name, inherited_name)
+                raise TemplateNotFoundError, '{}: Inherited template not found: {}'.format(template_name, inherited_name)
             template = templates[inherited_name]
             yield inherited_name, template
-
-    def build_page_file(self, source, target_dir):
-        if isinstance(source, py.path.local):
-            source.copy(target_dir)
-        else:
-            logger.warning("No source file found: {}".format(source))
-            #TODO: Use a template to generate the file
-            target_dir.join('index.html').ensure()
 
     def build_page_assets(self, source_dir, target_dir):
         for asset in source_dir.visit(fil='*.css'):
