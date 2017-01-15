@@ -1,4 +1,5 @@
 from __future__ import print_function
+#from collections import OrderedDict
 import copy
 import logging
 import os
@@ -6,6 +7,7 @@ from pprint import pformat
 
 import py
 import ruamel.yaml as ryaml
+from ruamel.yaml.compat import ordereddict
 import six
 import yaml
 
@@ -44,6 +46,7 @@ class PathAlreadyExists(WebsiteError): pass
 class WebsiteProjectAlreadyExists(WebsiteError): pass
 class SourceDirNotFoundError(WebsiteError): pass
 class TemplateNotFoundError(WebsiteError): pass
+class PartialNotFoundError(WebsiteError): pass
 
 
 def dir_getter(root_path):
@@ -247,6 +250,43 @@ class Website(object):
         target_dir.ensure(dir=1)
         target_dir.join('index.html').write(template)
 
+    def get_template_source(self, page_name):
+        with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
+            templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
+        
+        page_template = self.get_sub_template(templates['pages'], page_name)
+        logger.debug('get_template_source(): page_template: raw:' + N_STARTSTR_N + yamldump(page_template) + ENDSTR)
+        for name in page_template:
+            page_template[name] = self.get_sub_template(templates[name], page_template[name])
+        logger.debug(repr(page_template))
+        logger.debug('get_template_source(): page_template: processed:' + N_STARTSTR_N + yamldump(page_template) + ENDSTR)
+        return page_template
+
+    def get_sub_template(self, templates, name):
+        ancestors = [ancestor for ancestor_name, ancestor in self.inheritor(templates, name) if ancestor]
+        logger.debug('get_sub_template: ancestors:' + N_STARTSTR_N + repr(ancestors) + N_ENDSTR)
+        if not ancestors:
+            return ordereddict()
+        template = copy.deepcopy(ancestors[-1])
+        for ancestor in reversed(ancestors):
+            for block_name, block in ancestor.items():
+                template[block_name] = block
+        del template['inherit']
+        return template
+
+    def inheritor(self, templates, template_name):
+        if template_name not in templates:
+            raise TemplateNotFoundError, '{}: Template not found'.format(template_name)
+        template = templates[template_name]
+        logger.debug('inheritor(): {}: {}'.format(template_name, template))
+        yield template_name, template
+        while (template and ('inherit' in template) and template['inherit']):
+            inherited_name = template['inherit']
+            if inherited_name not in templates:
+                raise TemplateNotFoundError, '{}: Inherited template not found: {}'.format(template_name, inherited_name)
+            template = templates[inherited_name]
+            yield inherited_name, template
+
     def get_page_template(self, template_source):
         parts = list(self.partial_getter(template_source, 'doc'))
         logger.debug('get_page_template(): parts:' + N_STARTSTR_N + pformat(parts) + N_ENDSTR)
@@ -258,7 +298,10 @@ class Website(object):
     def partial_getter(self, source_template, name):
         layouts = source_template['layouts']
         logger.debug('partial_getter(): ' + name)
-        if name not in layouts or not layouts[name]:
+        if name not in layouts:
+            raise PartialNotFoundError, \
+                'Partial not found: {}'.format(name)
+        if not layouts[name]:
             return
         for child_name in layouts[name]:
             logger.debug('partial_getter():     ' + child_name)
@@ -273,42 +316,7 @@ class Website(object):
                 partial = '<${1}>{0}</${1}>'.format(child, child_name)
             yield partial
                 
-    def get_template_source(self, page_name):
-        with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
-            templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
-        
-        page_template = self.get_sub_template(templates['pages'], page_name)
-        logger.debug('get_template_source(): page_template: raw:' + N_STARTSTR_N + yamldump(page_template) + ENDSTR)
-        for name in page_template:
-            page_template[name] = self.get_sub_template(templates[name], page_template[name])
-        logger.debug('get_template_source(): page_template: processed:' + N_STARTSTR_N + yamldump(page_template) + ENDSTR)
-        return page_template
-
-    def get_sub_template(self, templates, name):
-        ancestors = [ancestor for ancestor_name, ancestor in self.inheritor(templates, name) if ancestor]
-        logger.debug('get_sub_template: ancestors:' + N_STARTSTR_N + repr(ancestors) + N_ENDSTR)
-        if not ancestors:
-            return {}
-        template = copy.deepcopy(ancestors[-1])
-        for ancestor in reversed(ancestors):
-            for block_name, block in ancestor.items():
-                template[block_name] = block
-        del template['inherit']
-        return template
-
-    def inheritor(self, templates, template_name):
-        logger.debug('inheritor(): template_name:' + template_name)
-        if template_name not in templates:
-            raise TemplateNotFoundError, '{}: Template not found'.format(template_name)
-        template = templates[template_name]
-        yield template_name, template
-        while (template and ('inherit' in template) and template['inherit']):
-            inherited_name = template['inherit']
-            if inherited_name not in templates:
-                raise TemplateNotFoundError, '{}: Inherited template not found: {}'.format(template_name, inherited_name)
-            template = templates[inherited_name]
-            yield inherited_name, template
-
+                
     def build_page_assets(self, source_dir, target_dir):
         for asset in source_dir.visit(fil='*.css'):
             logger.info('Get asset /{} from {}'.format(target_dir.relto(self.build_dir).join(asset.basename), asset))

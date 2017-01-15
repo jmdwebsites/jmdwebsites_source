@@ -12,6 +12,7 @@ pages:
         layouts: about
 layouts:
     empty:
+        doc:
     default:
         inherit:
         doc:
