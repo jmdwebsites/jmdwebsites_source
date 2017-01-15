@@ -46,6 +46,16 @@ class SourceDirNotFoundError(WebsiteError): pass
 class TemplateFoundError(WebsiteError): pass
 
 
+def dir_getter(root_path):
+    return (path for path in root_path.visit() if path.check(dir=1))
+
+
+def url_and_dir_getter(root):
+    for dir in dir_getter(root):
+        url = os.path.join('/', dir.relto(root))
+        yield url, dir  
+
+
 def yamldump(data):
     return ryaml.dump(data, Dumper=ryaml.RoundTripDumper)
 
@@ -182,15 +192,15 @@ class Website(object):
         self.build_dir.ensure(dir=1)
         site = self.get_site_design()
         
-        for content_name, content_dir in self.get_content_dir(site):
+        for content_name, content_dir in self.content_dir_getter(site):
             logger.info('Build content: {}: {}'.format(content_name, content_dir))
             if content_name == HOME:
                 self.build_home_page('/', content_dir)
             else:
-                for url, source in self.get_source_dir(content_dir):
-                    self.build_page(url, source)
+                for url, source_dir in url_and_dir_getter(content_dir):
+                    self.build_page(url, source_dir)
 
-    def get_content_dir(self, site):
+    def content_dir_getter(self, site):
         for name in site[CONTENT]:
             if name in [HOME, PAGES, POSTS]:
                 dirname = site[CONTENT][name]
@@ -200,13 +210,6 @@ class Website(object):
             else:
                 assert 0, \
                     'Content not recognized: {}'.format(name)
-
-    def get_source_dir(self, content_dir):
-        for source in content_dir.visit():
-            if source.check(dir=1):
-                rel_source = source.relto(content_dir)
-                url = os.path.join('/', rel_source)
-                yield url, source  
 
     def build_home_page(self, url, source_dir):
         try:
