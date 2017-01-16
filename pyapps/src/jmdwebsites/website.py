@@ -67,17 +67,16 @@ def get_project_dir(config_basename =  PROJDIR):
  
 def protected_remove(path, valid_basenames=None):
     if valid_basenames is None:
-        valid_basenames = [BUILD]
-    logger.info('Remove {}'.format(path))
+        valid_basenames = set([BUILD])
     for disallowed in [os.getcwd(), __file__]:
         if path in py.path.local(disallowed).parts():
             raise PathNotAllowedError(
-                'remove: {}: Path not allowed, protecting: {}'.format(
+                'Remove: {}: Path not allowed, protecting: {}'.format(
                     path, 
                     disallowed))
     if valid_basenames and path.basename not in valid_basenames:
         raise BasenameNotAllowedError(
-            'remove: {}: Basename not allowed: {}: Must be one of: {}'.format(
+            'Remove: {}: Basename not allowed: {}: Must be one of: {}'.format(
                 path, 
                 path.basename, 
                 valid_basenames))
@@ -88,7 +87,8 @@ def protected_remove(path, valid_basenames=None):
     
     if not path.check():
         raise PathNotFoundError(
-            'protected_remove: Path not found: {}'.format(path))
+            'Remove: Path not found: {}'.format(path))
+    logger.info('Remove {}'.format(path))
     path.remove()
 
 
