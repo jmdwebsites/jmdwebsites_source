@@ -43,13 +43,12 @@ layouts:
 partials:
     html5:
         doctype: "<!DOCTYPE html>"
-        #html: <html lang={{ page['lang'] }}>\n</html>
-        html: "<html lang='en'>{0}</html>"
-        head: "<head>{0}</head>"
+        html: "<html lang='{lang}'>{block}</html>"
+        head: "<head>{block}</head>"
         charset: "<meta charset={{ vars['charset'] }}/>"
-        body: "<body>{0}</body>"
+        body: "<body>{block}</body>"
         header: "<header></header>"
-        main: "<main>{0}</main>"
+        main: "<main>{block}</main>"
         footer: "<footer></footer>"
         article: "<article></article>"
         cards: "<div class='cards'></div>"

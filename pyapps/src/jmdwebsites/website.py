@@ -320,11 +320,13 @@ class Website(object):
                 child = '\n{}\n'.format(child)
             logger.debug('partial_getter(): /' + child_name)
             try:
-                partial = source_template['partials'][child_name].format(child)
+                partial = source_template['partials'][child_name]
             except KeyError:
                 raise PartialNotFoundError(
                     'Partial not found: {}'.format(child_name))
-            yield partial
+            yield partial.format(
+                block=child, 
+                **source_template['vars'])
                 
     def build_page_assets(self, source_dir, target_dir):
         for asset in source_dir.visit(fil='*.css'):
