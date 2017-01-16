@@ -288,34 +288,27 @@ class Website(object):
             yield inherited_name, template
 
     def get_page_template(self, template_source):
-        parts = list(self.partial_getter(template_source, 'doc'))
-        logger.debug('get_page_template(): parts:' + N_STARTSTR_N + pformat(parts) + N_ENDSTR)
-        template = '\n'.join(parts)
-        logger.debug('get_page_template(): template: represented by' + N_STARTSTR_N + repr(template) + N_ENDSTR)
+        template = '\n'.join(self.partial_getter(template_source, 'doc'))
+        #logger.debug('get_page_template(): template: represented by' + N_STARTSTR_N + repr(template) + N_ENDSTR)
         logger.debug('get_page_template(): template:' + N_STARTSTR_N + template + N_ENDSTR)
         return template
 
     def partial_getter(self, source_template, name):
         layouts = source_template['layouts']
         logger.debug('partial_getter(): ' + name)
-        if name not in layouts:
-            raise PartialNotFoundError, \
-                'Partial not found: {}'.format(name)
-        if not layouts[name]:
+        if name not in layouts or not layouts[name]:
             return
         for child_name in layouts[name]:
-            logger.debug('partial_getter():     ' + child_name)
-            if child_name in layouts and layouts[child_name]:
-                text = '\n'.join(list(self.partial_getter(source_template, child_name)))
-                child = '\n{}\n'.format(text)
-            else:
-                child = '!!'
-            if 'partials' in source_template and child_name in source_template['partials']:
+            child = '\n'.join(self.partial_getter(source_template, child_name))
+            if child:
+                child = '\n{}\n'.format(child)
+            logger.debug('partial_getter(): /' + child_name)
+            try:
                 partial = source_template['partials'][child_name].format(child)
-            else:
-                partial = '<${1}>{0}</${1}>'.format(child, child_name)
+            except KeyError:
+                raise PartialNotFoundError, \
+                    'Partial not found: {}'.format(child_name)
             yield partial
-                
                 
     def build_page_assets(self, source_dir, target_dir):
         for asset in source_dir.visit(fil='*.css'):
