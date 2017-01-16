@@ -1,5 +1,4 @@
 from __future__ import print_function
-#from collections import OrderedDict
 import copy
 import logging
 import os
@@ -10,8 +9,6 @@ import ruamel.yaml as ryaml
 from ruamel.yaml.compat import ordereddict
 import six
 import yaml
-
-#import partials
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +22,6 @@ PAGES = 'pages'
 POSTS = 'posts'
 STARTSTR     =   '*** START ***'
 ENDSTR       =   '**** END ****'
-STARTSTR_N   =   '*** START ***\n'
-ENDSTR_N     =   '**** END ****\n'
-N_STARTSTR   = '\n*** START ***'
-N_ENDSTR     = '\n**** END ****'
-N_STARTSTR_N = '\n*** START ***\n'
-N_ENDSTR_N   = '\n**** END ****\n'
 
 class FatalError(Exception): pass
 class NonFatalError(Exception): pass
@@ -255,9 +246,7 @@ class Website(object):
             return
         logger.debug("No source file found: {}".format(source_file))
         # No source file detected, so use a template
-
         template = self.get_page_template(source_dir)
-
         target_dir.ensure(dir=1)
         target_dir.join('index.html').write(template)
 
@@ -268,8 +257,8 @@ class Website(object):
             template_source = self.get_template_source('empty')
 
         template = '\n'.join(self.partial_getter(template_source, 'doc'))
-        logger.debug('get_page_template(): template:{}{}{}'.format(
-            N_STARTSTR_N, template, N_ENDSTR))
+        logger.debug('get_page_template(): template:\n{}\n{}\n{}'.format(
+            STARTSTR, template, ENDSTR))
         return template
 
     def get_template_source(self, page_name):
@@ -279,20 +268,20 @@ class Website(object):
         page_template = self.get_sub_template_source(
             templates['pages'], 
             page_name)
-        logger.debug('get_template_source(): raw:{}{}{}'.format(
-            N_STARTSTR_N, yamldump(page_template), ENDSTR))
+        logger.debug('get_template_source(): raw:\n{}\n{}{}'.format(
+            STARTSTR, yamldump(page_template), ENDSTR))
         for name in page_template:
             page_template[name] = self.get_sub_template_source(
                 templates[name], 
                 page_template[name])
-        logger.debug('get_template_source(): processed:{}{}{}'.format(
-            N_STARTSTR_N, yamldump(page_template), ENDSTR))
+        logger.debug('get_template_source(): processed:\n{}\n{}{}'.format(
+            STARTSTR, yamldump(page_template), ENDSTR))
         return page_template
 
     def get_sub_template_source(self, templates, name):
         ancestors = [anc for anc_name, anc in self.inheritor(templates, name) if anc]
-        logger.debug('get_sub_template_source: ancestors:{}{}{}'.format(
-            N_STARTSTR_N, repr(ancestors), N_ENDSTR))
+        logger.debug('get_sub_template_source: ancestors:\n{}\n{}\n{}'.format(
+            STARTSTR, repr(ancestors), ENDSTR))
         if not ancestors:
             return ordereddict()
         template = copy.deepcopy(ancestors[-1])
