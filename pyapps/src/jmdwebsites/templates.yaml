@@ -44,22 +44,26 @@ layouts:
             cards:
             article:
 partials:
-    html5:
-        doctype: '<!DOCTYPE html>'
+    default:
+        doctype: '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">'
         html: '<html lang="{lang}">{block}</html>'
         head: '<head>{block}</head>'
         charset: '<meta charset="{charset}"/>'
         body: '<body>{block}</body>'
+        header: '<div class="header"></div>'
+        main: '<div class="main">{block}</div>'
+        footer: '<div class="footer"></div>'
+        article: '<div class="article"></div>'
+        cards: '<div class="cards"></div>'
+    html4:
+        inherit: default
+    html5:
+        inherit: default
+        doctype: '<!DOCTYPE html>'
         header: '<header></header>'
         main: '<main>{block}</main>'
         footer: '<footer></footer>'
         article: '<article></article>'
-        cards: '<div class="cards"></div>'
-    default:
-        inherit: html5
-    html4:
-        inherit: html5
-        doctype: '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">'
 vars:
     default:
         lang: 'en'
