@@ -70,7 +70,8 @@ def logdebug():
 def logopt(request):
     print('Setup logopt')
     jmddbg = request.config.getoption("--jmddbg")
-    jmdwebsites.log.config_logging(debug = jmddbg, verbose = 1)
+    jmdinfo = request.config.getoption("--jmdinfo")
+    jmdwebsites.log.config_logging(debug = jmddbg, info = jmdinfo, verbose = 1)
     yield
     print('\nTear down logdebug')
     jmdwebsites.log.reset_logging()
