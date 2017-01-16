@@ -19,6 +19,7 @@ def test_protected_remove(tmpdir):
         # Check we're in a jmdwebsite project tree
         with pytest.raises(jmdwebsites.website.ProjectNotFoundError) as e:
             jmdwebsites.website.protected_remove(build_dir)
+        assert str(e.value) == 'Remove: Not a website project (or any parent directories): .jmdwebsite not found'
         site_dir.ensure('.jmdwebsite', dir=1)
         # Check we cant remove the path if we're in a subdir of that directory
         with build_dir.as_cwd():

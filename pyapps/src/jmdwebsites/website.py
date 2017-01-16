@@ -80,11 +80,12 @@ def protected_remove(path, valid_basenames=None):
                 path, 
                 path.basename, 
                 valid_basenames))
-    
-    #Check that file/dir is a child of a dir containing a .jmdwebsites file, 
-    # thus indicating it is part of a website project.
-    get_project_dir()
-    
+    try:
+        #Check that file/dir is a child of a dir containing a .jmdwebsites file, 
+        # thus indicating it is part of a website project.
+        get_project_dir()
+    except ProjectNotFoundError as e:
+        raise ProjectNotFoundError('Remove: {}'.format(e))
     if not path.check():
         raise PathNotFoundError(
             'Remove: Path not found: {}'.format(path))
