@@ -70,17 +70,20 @@ def get_project_dir(config_basename =  PROJDIR):
             if path.basename == config_basename:
                 return path.dirpath()
     raise ProjectNotFoundError(
-        'Not a website project (nor any parent directories): {} not found'.format(config_basename))
+        'Not a website project (or any parent directories): {} not found'.format(
+            config_basename))
 
  
 def protected_remove(path, valid_basenames=None):
-    if valid_basenames  is None:
+    if valid_basenames is None:
         valid_basenames = [BUILD]
     logger.info('Remove {}'.format(path))
     for disallowed in [os.getcwd(), __file__]:
         if path in py.path.local(disallowed).parts():
             raise PathNotAllowedError(
-                'remove: {}: Path not allowed, protecting: {}'.format(path, disallowed))
+                'remove: {}: Path not allowed, protecting: {}'.format(
+                    path, 
+                    disallowed))
     if valid_basenames and path.basename not in valid_basenames:
         raise BasenameNotAllowedError(
             'remove: {}: Basename not allowed: {}: Must be one of: {}'.format(
@@ -145,7 +148,9 @@ def init_website():
 
 class Website(object):
     def __init__(self, site_dir=None, build_dir=None):
-        logger.debug('Instantiate: {}({})'.format(self.__class__.__name__, repr(build_dir)))
+        logger.debug('Instantiate: {}({})'.format(
+            self.__class__.__name__, 
+            repr(build_dir)))
         if site_dir is None:
             self.site_dir = get_project_dir()
         else:
@@ -173,7 +178,8 @@ class Website(object):
         protected_remove(self.build_dir)
 
     def get_site_design(self):
-        #TODO: If a CONFIG_FILE exists, use it. Otherwise, use a default version in the theme dir
+        #TODO: If a CONFIG_FILE exists, use it. 
+        #      Otherwise, use a default version in the theme dir
         config_file = self.site_dir.join(CONFIG_FILE)
         if config_file.check():
             logger.info('Site config file: {}'.format(config_file))
@@ -195,15 +201,19 @@ class Website(object):
     def build(self):
         """Build the website."""
         #TODO: Write code to update files only if they have changed.
-        #      But until then, clobber the build first, and then build everything from new.
+        #      But until then, clobber the build first, 
+        #      and then build everything from new.
         if self.build_dir.check():
             protected_remove(self.build_dir)
-        assert self.build_dir.check() == False, 'Build directory already exists.'.format(self.build_dir)
+        assert self.build_dir.check() == False, \
+            'Build directory already exists.'.format(self.build_dir)
         self.build_dir.ensure(dir=1)
         site = self.get_site_design()
         
         for content_name, content_dir in self.content_dir_getter(site):
-            logger.info('Build content: {}: {}'.format(content_name, content_dir))
+            logger.info('Build content: {}: {}'.format(
+                content_name, 
+                content_dir))
             if content_name == HOME:
                 self.build_home_page('/', content_dir)
             else:
@@ -258,25 +268,31 @@ class Website(object):
             template_source = self.get_template_source('empty')
 
         template = '\n'.join(self.partial_getter(template_source, 'doc'))
-        #logger.debug('get_page_template(): template: represented by' + N_STARTSTR_N + repr(template) + N_ENDSTR)
-        logger.debug('get_page_template(): template:' + N_STARTSTR_N + template + N_ENDSTR)
+        logger.debug('get_page_template(): template:{}{}{}'.format(
+            N_STARTSTR_N, template, N_ENDSTR))
         return template
 
     def get_template_source(self, page_name):
         with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
             templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
         
-        page_template = self.get_sub_template_source(templates['pages'], page_name)
-        logger.debug('get_template_source(): page_template: raw:' + N_STARTSTR_N + yamldump(page_template) + ENDSTR)
+        page_template = self.get_sub_template_source(
+            templates['pages'], 
+            page_name)
+        logger.debug('get_template_source(): raw:{}{}{}'.format(
+            N_STARTSTR_N, yamldump(page_template), ENDSTR))
         for name in page_template:
-            page_template[name] = self.get_sub_template_source(templates[name], page_template[name])
-        logger.debug(repr(page_template))
-        logger.debug('get_template_source(): page_template: processed:' + N_STARTSTR_N + yamldump(page_template) + ENDSTR)
+            page_template[name] = self.get_sub_template_source(
+                templates[name], 
+                page_template[name])
+        logger.debug('get_template_source(): processed:{}{}{}'.format(
+            N_STARTSTR_N, yamldump(page_template), ENDSTR))
         return page_template
 
     def get_sub_template_source(self, templates, name):
-        ancestors = [ancestor for ancestor_name, ancestor in self.inheritor(templates, name) if ancestor]
-        logger.debug('get_sub_template_source: ancestors:' + N_STARTSTR_N + repr(ancestors) + N_ENDSTR)
+        ancestors = [anc for anc_name, anc in self.inheritor(templates, name) if anc]
+        logger.debug('get_sub_template_source: ancestors:{}{}{}'.format(
+            N_STARTSTR_N, repr(ancestors), N_ENDSTR))
         if not ancestors:
             return ordereddict()
         template = copy.deepcopy(ancestors[-1])
@@ -297,7 +313,9 @@ class Website(object):
             inherited_name = template['inherit']
             if inherited_name not in templates:
                 raise TemplateNotFoundError(
-                    '{}: Inherited template not found: {}'.format(template_name, inherited_name))
+                    '{}: Inherited template not found: {}'.format(
+                        template_name, 
+                        inherited_name))
             template = templates[inherited_name]
             yield inherited_name, template
 
@@ -320,5 +338,7 @@ class Website(object):
                 
     def build_page_assets(self, source_dir, target_dir):
         for asset in source_dir.visit(fil='*.css'):
-            logger.info('Get asset /{} from {}'.format(target_dir.relto(self.build_dir).join(asset.basename), asset))
+            logger.info('Get asset /{} from {}'.format(
+                target_dir.relto(self.build_dir).join(asset.basename), 
+                asset))
             asset.copy(target_dir)
