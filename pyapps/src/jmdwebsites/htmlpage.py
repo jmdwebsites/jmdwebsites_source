@@ -19,7 +19,8 @@ class HtmlPage(object):
         '''
         doctype = self.soup.contents[0]
         if len([t for t in self.soup.contents if isinstance(t, bs.Doctype)]) > 1: 
-            raise DoctypeError('More than one doctype')
+            raise DoctypeError(
+                'More than one doctype')
         if isinstance(doctype, bs.Doctype):
             return doctype
         # By default, return None to indicate no doctype found
@@ -31,7 +32,8 @@ class HtmlPage(object):
         '''
         first_tag = self.soup.html.head.find(True)
         if not ((first_tag.name == 'meta') and first_tag.has_attr('charset')):
-            raise CharsetError("First tag in <head>: {}: charset not defined".format(first_tag.name))
+            raise CharsetError(
+                "First tag in <head>: {}: charset not defined".format(first_tag.name))
         return first_tag['charset']
 
     def check_page(self):

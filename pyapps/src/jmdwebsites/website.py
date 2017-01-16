@@ -69,8 +69,8 @@ def get_project_dir(config_basename =  PROJDIR):
         for path in dirpath.listdir():
             if path.basename == config_basename:
                 return path.dirpath()
-    raise ProjectNotFoundError, \
-        'Not a website project (or any of the parent directories): {} not found'.format(config_basename)
+    raise ProjectNotFoundError(
+        'Not a website project (nor any parent directories): {} not found'.format(config_basename))
 
  
 def protected_remove(path, valid_basenames=None):
@@ -79,16 +79,22 @@ def protected_remove(path, valid_basenames=None):
     logger.info('Remove {}'.format(path))
     for disallowed in [os.getcwd(), __file__]:
         if path in py.path.local(disallowed).parts():
-            raise PathNotAllowedError, 'remove: {}: Path not allowed, protecting: {}'.format(path, disallowed)
+            raise PathNotAllowedError(
+                'remove: {}: Path not allowed, protecting: {}'.format(path, disallowed))
     if valid_basenames and path.basename not in valid_basenames:
-        raise BasenameNotAllowedError, 'remove: {}: Basename not allowed: {}: Must be one of: {}'.format(path, path.basename, valid_basenames)
+        raise BasenameNotAllowedError(
+            'remove: {}: Basename not allowed: {}: Must be one of: {}'.format(
+                path, 
+                path.basename, 
+                valid_basenames))
     
     #Check that file/dir is a child of a dir containing a .jmdwebsites file, 
     # thus indicating it is part of a website project.
     get_project_dir()
     
     if not path.check():
-        raise PathNotFoundError, 'protected_remove: Path not found: {}'.format(path)
+        raise PathNotFoundError(
+            'protected_remove: Path not found: {}'.format(path))
     path.remove()
 
 
@@ -118,8 +124,8 @@ def new_website(site_dirname = ''):
     site_dir = py.path.local(site_dirname)
     logger.info('Create new website {}'.format(site_dir.strpath))
     if site_dir.check():
-        raise PathAlreadyExists, \
-            'Already exists: {}'.format(site_dir)
+        raise PathAlreadyExists(
+            'Already exists: {}'.format(site_dir))
     site_dir.ensure( PROJDIR)
     logger.error('TODO:')
 
@@ -130,8 +136,8 @@ def init_website():
     logger.info('Init website {}'.format(site_dir.strpath))
     project_dir = py.path.local( PROJDIR)
     if project_dir.check():
-        raise WebsiteProjectAlreadyExists, \
-            'Website project already exists: {}'.format(project_dir)
+        raise WebsiteProjectAlreadyExists(
+            'Website project already exists: {}'.format(project_dir))
     logger.info('Create proj dir {}'.format(project_dir.strpath))
     project_dir.ensure(dir=1)
     site_dir.ensure(CONFIG_FILE)
@@ -154,7 +160,8 @@ class Website(object):
     def clean(self):
         """Clean up the build."""
         logger.info(self.clean.__doc__)
-        raise WebsiteError, 'TODO: Write code clean the website build'
+        raise WebsiteError(
+            'TODO: Write code clean the website build')
 
     def clobber(self):
         """Clobber the build removing everything."""
@@ -224,8 +231,8 @@ class Website(object):
     def build_page(self, url, source_dir):
         logger.info("Build page: {}".format(url))
         if not source_dir.check(dir=1):
-            raise SourceDirNotFoundError, \
-                'Source dir not found: {}'.format(source_dir)
+            raise SourceDirNotFoundError(
+                'Source dir not found: {}'.format(source_dir))
         target_dir = self.build_dir.join(url)
         self.build_page_file(source_dir, target_dir)
         self.build_page_assets(source_dir, target_dir)
@@ -281,14 +288,16 @@ class Website(object):
 
     def inheritor(self, templates, template_name):
         if template_name not in templates:
-            raise TemplateNotFoundError, '{}: Template not found'.format(template_name)
+            raise TemplateNotFoundError(
+                '{}: Template not found'.format(template_name))
         template = templates[template_name]
         logger.debug('inheritor(): {}: {}'.format(template_name, template))
         yield template_name, template
         while (template and ('inherit' in template) and template['inherit']):
             inherited_name = template['inherit']
             if inherited_name not in templates:
-                raise TemplateNotFoundError, '{}: Inherited template not found: {}'.format(template_name, inherited_name)
+                raise TemplateNotFoundError(
+                    '{}: Inherited template not found: {}'.format(template_name, inherited_name))
             template = templates[inherited_name]
             yield inherited_name, template
 
@@ -305,8 +314,8 @@ class Website(object):
             try:
                 partial = source_template['partials'][child_name].format(child)
             except KeyError:
-                raise PartialNotFoundError, \
-                    'Partial not found: {}'.format(child_name)
+                raise PartialNotFoundError(
+                    'Partial not found: {}'.format(child_name))
             yield partial
                 
     def build_page_assets(self, source_dir, target_dir):
