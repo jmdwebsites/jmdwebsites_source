@@ -5,10 +5,13 @@ pages:
         layouts: default
         partials: default
         vars: default
+    basepage:
+        inherit: default
+        partials: html5
     page:
-        inherit: default
+        inherit: basepage
     about:
-        inherit: default
+        inherit: page
         layouts: about
 layouts:
     empty:
