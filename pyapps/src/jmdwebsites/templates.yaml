@@ -45,7 +45,7 @@ partials:
         doctype: "<!DOCTYPE html>"
         html: "<html lang='{lang}'>{block}</html>"
         head: "<head>{block}</head>"
-        charset: "<meta charset={{ vars['charset'] }}/>"
+        charset: "<meta charset='{charset}'/>"
         body: "<body>{block}</body>"
         header: "<header></header>"
         main: "<main>{block}</main>"
@@ -60,3 +60,4 @@ partials:
 vars:
     default:
         lang: 'en'
+        charset: 'utf-8'
