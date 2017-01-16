@@ -239,32 +239,37 @@ class Website(object):
         logger.debug("No source file found: {}".format(source_file))
         # No source file detected, so use a template
 
-        template_name = source_dir.basename
-        try:
-            template_source = self.get_template_source(template_name)
-        except TemplateNotFoundError:
-            template_source = self.get_template_source('empty')
-
-        template = self.get_page_template(template_source)
+        template = self.get_page_template(source_dir)
 
         target_dir.ensure(dir=1)
         target_dir.join('index.html').write(template)
+
+    def get_page_template(self, source_dir):
+        try:
+            template_source = self.get_template_source(source_dir.basename)
+        except TemplateNotFoundError:
+            template_source = self.get_template_source('empty')
+
+        template = '\n'.join(self.partial_getter(template_source, 'doc'))
+        #logger.debug('get_page_template(): template: represented by' + N_STARTSTR_N + repr(template) + N_ENDSTR)
+        logger.debug('get_page_template(): template:' + N_STARTSTR_N + template + N_ENDSTR)
+        return template
 
     def get_template_source(self, page_name):
         with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
             templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
         
-        page_template = self.get_sub_template(templates['pages'], page_name)
+        page_template = self.get_sub_template_source(templates['pages'], page_name)
         logger.debug('get_template_source(): page_template: raw:' + N_STARTSTR_N + yamldump(page_template) + ENDSTR)
         for name in page_template:
-            page_template[name] = self.get_sub_template(templates[name], page_template[name])
+            page_template[name] = self.get_sub_template_source(templates[name], page_template[name])
         logger.debug(repr(page_template))
         logger.debug('get_template_source(): page_template: processed:' + N_STARTSTR_N + yamldump(page_template) + ENDSTR)
         return page_template
 
-    def get_sub_template(self, templates, name):
+    def get_sub_template_source(self, templates, name):
         ancestors = [ancestor for ancestor_name, ancestor in self.inheritor(templates, name) if ancestor]
-        logger.debug('get_sub_template: ancestors:' + N_STARTSTR_N + repr(ancestors) + N_ENDSTR)
+        logger.debug('get_sub_template_source: ancestors:' + N_STARTSTR_N + repr(ancestors) + N_ENDSTR)
         if not ancestors:
             return ordereddict()
         template = copy.deepcopy(ancestors[-1])
@@ -286,12 +291,6 @@ class Website(object):
                 raise TemplateNotFoundError, '{}: Inherited template not found: {}'.format(template_name, inherited_name)
             template = templates[inherited_name]
             yield inherited_name, template
-
-    def get_page_template(self, template_source):
-        template = '\n'.join(self.partial_getter(template_source, 'doc'))
-        #logger.debug('get_page_template(): template: represented by' + N_STARTSTR_N + repr(template) + N_ENDSTR)
-        logger.debug('get_page_template(): template:' + N_STARTSTR_N + template + N_ENDSTR)
-        return template
 
     def partial_getter(self, source_template, name):
         layouts = source_template['layouts']
