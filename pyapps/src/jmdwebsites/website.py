@@ -10,6 +10,8 @@ from ruamel.yaml.compat import ordereddict
 import six
 import yaml
 
+from jmdwebsites.log import STARTSTR, ENDSTR
+
 logger = logging.getLogger(__name__)
 
 BUILD = 'build'
@@ -20,8 +22,6 @@ PROJDIR = '.jmdwebsite'
 HOME = 'home'
 PAGES = 'pages'
 POSTS = 'posts'
-STARTSTR     =   '*** START ***'
-ENDSTR       =   '**** END ****'
 
 class FatalError(Exception): pass
 class NonFatalError(Exception): pass
@@ -152,7 +152,8 @@ class Website(object):
         else:
             self.build_dir = py.path.local(build_dir)
         #self.content_dir = self.site_dir.join(CONTENT)
-        logger.info('Website root: {}'.format(self.site_dir))
+        logger.info('site dir name: {}'.format(self.site_dir))
+        logger.info('build dir name: {}'.format(self.build_dir))
 
     def clean(self):
         """Clean up the build."""
@@ -214,7 +215,7 @@ class Website(object):
 
     def content_dir_getter(self, site):
         for name in site[CONTENT]:
-            if name in [HOME, PAGES, POSTS]:
+            if name in set([HOME, PAGES, POSTS]):
                 dirname = site[CONTENT][name]
                 if dirname is None:
                     dirname = os.path.join(CONTENT, name)
@@ -245,7 +246,8 @@ class Website(object):
         if source_file.check():
             source_file.copy(target_dir)
             return
-        logger.debug("No source file found: {}".format(source_file))
+        #logger.debug("No source file found: {}".format(source_file))
+        logger.warning("No source file found: {}".format(source_file))
         # No source file detected, so use a template
         template = self.get_page_template(source_dir)
         target_dir.ensure(dir=1)
@@ -255,7 +257,7 @@ class Website(object):
         try:
             template_source = self.get_template_source(source_dir.basename)
         except TemplateNotFoundError:
-            template_source = self.get_template_source('empty')
+            template_source = self.get_template_source('page')
 
         template = '\n'.join(self.partial_getter(template_source, 'doc'))
         logger.debug('get_page_template(): template:\n{}\n{}\n{}'.format(

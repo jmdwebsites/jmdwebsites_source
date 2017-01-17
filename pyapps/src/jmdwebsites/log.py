@@ -1,6 +1,10 @@
 import logging.config
 import os
+
 import click
+
+STARTSTR = '--- START ---'
+ENDSTR   = '---- END ----'
 
 
 def remove(filename):

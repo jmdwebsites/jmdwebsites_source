@@ -78,6 +78,7 @@ def logopt(request):
 
 @pytest.fixture()
 def website(tmpdir, request):
+    print('fixture: website: tmpdir: {}'.format(tmpdir))
     site_dir = request.getfuncargvalue('site_dir')
     with site_dir.as_cwd():
         print('cwd: {}'.format(os.getcwd()))
