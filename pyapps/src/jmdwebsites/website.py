@@ -185,8 +185,10 @@ def build_html_file(url, source_dir, build_dir):
     logger.warning("No source file found: {}".format(source_file))
     # No source file detected, so use a template
     template = get_page_template(source_dir)
+    html_template = get_html_template(template)
+    html = render(html_template)
     target_dir.ensure(dir=1)
-    target_dir.join('index.html').write(template)
+    target_dir.join('index.html').write(html)
 
 
 def build_page_assets(url, source_dir, build_dir):
@@ -207,19 +209,27 @@ def get_page_template(source_dir):
     else:
         tplname = 'page'
 
-    raw_page_dict = inherit(tplname, 'pages', templates)
+    raw_page_tpl = inherit(tplname, 'pages', templates)
     logger.debug('get_page_template(): raw:\n{}\n{}{}'.format(
-        STARTSTR, yamldump(raw_page_dict), ENDSTR))
+        STARTSTR, yamldump(raw_page_tpl), ENDSTR))
     
-    page_dict = {tpltype: inherit(tplname, tpltype, templates) 
-        for tpltype, tplname in raw_page_dict.items()} 
+    page_tpl = {tpltype: inherit(tplname, tpltype, templates) 
+        for tpltype, tplname in raw_page_tpl.items()} 
     logger.debug('get_page_template(): processed:\n{}\n{}{}'.format(
-        STARTSTR, yamldump(page_dict), ENDSTR))
+        STARTSTR, yamldump(page_tpl), ENDSTR))
 
-    page_template = '\n'.join(partial_getter(page_dict, 'doc'))
-    logger.debug('get_page_template(): template:\n{}\n{}\n{}'.format(
-        STARTSTR, page_template, ENDSTR))
-    return page_template
+    return page_tpl
+
+
+def render(html_template):
+    return html_template
+
+
+def get_html_template(template):
+    html_template = '\n'.join(partial_getter(template, 'doc'))
+    logger.debug('get_html_template():\n{}\n{}\n{}'.format(
+        STARTSTR, html_template, ENDSTR))
+    return html_template
 
 
 def partial_getter(source_template, name):
