@@ -13,6 +13,9 @@ pages:
     about:
         inherit: page
         layouts: about
+    products:
+        inherit: page
+        layouts: products
 layouts:
     empty:
         doc:
@@ -38,6 +41,14 @@ layouts:
         main:
             headlines:
             article:
+    products:
+        inherit: page
+        head:
+            title:
+            author:
+            robots:
+            stylesheet:
+            html5shiv:
     about:
         inherit: page
         main:
@@ -49,17 +60,26 @@ partials:
         html: '<html lang="{lang}">{block}</html>'
         head: '<head>{block}</head>'
         charset: '<meta charset="{charset}"/>'
+        title: <title>{{{{title}}}}</title>
+        author: '<meta content="{author}" name="author"/>'
+        robots: '<meta content="{robots}" name="robots"/>'
+        stylesheet: '<link href="{stylesheet}" rel="stylesheet"/>'
+        html5shiv:
         body: '<body>{block}</body>'
         header: '<div class="header"></div>'
         main: '<div class="main">{block}</div>'
         footer: '<div class="footer"></div>'
+        headlines: '<div class="headlines"></div>'
         article: '<div class="article"></div>'
         cards: '<div class="cards"></div>'
     html4:
         inherit: default
-    html5:
+    html5tagless:
         inherit: default
         doctype: '<!DOCTYPE html>'
+        html5shiv: '<!--[if ls IE 9] <script src="{html5shiv}"></script><![endif]-->'
+    html5:
+        inherit: html5tagless
         header: '<header></header>'
         main: '<main>{block}</main>'
         footer: '<footer></footer>'
@@ -68,3 +88,7 @@ vars:
     default:
         lang: 'en'
         charset: 'utf-8'
+        author: 'jmdwebsites'
+        robots: 'noindex'
+        stylesheet: '/page.css'
+        html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'

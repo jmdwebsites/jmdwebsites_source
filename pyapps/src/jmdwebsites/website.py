@@ -162,7 +162,7 @@ def build_home_page(url, source_dir, build_dir):
     try:
         build_page(url, source_dir, build_dir)
     except SourceDirNotFoundError as e:
-        logger.warning(e.message)
+        logger.error(e)
     build_dir.ensure(url, 'index.html')
 
 
@@ -245,9 +245,14 @@ def partial_getter(source_template, name):
         logger.debug('partial_getter(): /' + child_name)
         try:
             partial = source_template['partials'][child_name]
+            # Skip partials that have no value assigned to them
+            if not partial: 
+                continue
         except KeyError:
+            #partial = '<${1}>{0}</${1}>'.format(child, child_name)
             raise PartialNotFoundError(
                 'Partial not found: {}'.format(child_name))
+
         yield partial.format(
             block=child, 
             **source_template['vars'])
