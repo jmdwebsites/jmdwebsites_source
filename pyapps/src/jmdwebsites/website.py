@@ -114,6 +114,25 @@ def dict_walker(parent, parent_path=''):
                 yield path, value
 
 
+def get_site_design(site_dir):
+    #TODO: If a CONFIG_FILE exists, use it. 
+    #      Otherwise, use a default version in the theme dir
+    config_file = site_dir.join(CONFIG_FILE)
+    if config_file.check():
+        logger.info('Site config file: {}'.format(config_file))
+        with site_dir.join(CONFIG_FILE).open() as f:
+            config = yaml.load(f)
+    else:
+        if 0:
+            #TODO: Change this to theme.yaml and use as a default theme
+            theme_dir = py.path.local(__file__).dirpath('themes','base')
+            with theme_dir.join(CONFIG_FILE).open() as f:
+                config = yaml.load(f)
+        config = { CONTENT: {HOME: None, PAGES: None}}
+    logger.info('Site config: {}'.format(config))
+    return config
+
+
 def new_website(site_dirname = ''):
     """New website."""
     site_dir = py.path.local(site_dirname)
@@ -136,6 +155,122 @@ def init_website():
     logger.info('Create proj dir {}'.format(project_dir.strpath))
     project_dir.ensure(dir=1)
     site_dir.ensure(CONFIG_FILE)
+
+
+def build_home_page(url, source_dir, build_dir):
+    try:
+        build_page(url, source_dir, build_dir)
+    except SourceDirNotFoundError as e:
+        logger.warning(e.message)
+    build_dir.ensure(url, 'index.html')
+
+
+def build_page(url, source_dir, build_dir):
+    logger.info("Build page: {}".format(url))
+    if not source_dir.check(dir=1):
+        raise SourceDirNotFoundError(
+            'Source dir not found: {}'.format(source_dir))
+    build_html_file(url, source_dir, build_dir)
+    build_page_assets(url, source_dir, build_dir)
+
+
+def build_html_file(url, source_dir, build_dir):
+    target_dir = build_dir.join(url)
+    #TODO: Can also check for index.php file here too
+    source_file = source_dir.join('index.html')
+    if source_file.check():
+        source_file.copy(target_dir)
+        return
+    #logger.debug("No source file found: {}".format(source_file))
+    logger.warning("No source file found: {}".format(source_file))
+    # No source file detected, so use a template
+    template = get_page_template(source_dir)
+    target_dir.ensure(dir=1)
+    target_dir.join('index.html').write(template)
+
+
+def build_page_assets(url, source_dir, build_dir):
+    target_dir = build_dir.join(url)
+    for asset in source_dir.visit(fil='*.css'):
+        logger.info('Get asset /{} from {}'.format(
+            target_dir.relto(build_dir).join(asset.basename), 
+            asset))
+        asset.copy(target_dir)
+
+
+def get_page_template(source_dir):
+    with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
+        templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
+
+    if source_dir.basename in templates['pages']:
+        tplname = source_dir.basename
+    else:
+        tplname = 'page'
+
+    raw_page_dict = inherit(tplname, 'pages', templates)
+    logger.debug('get_page_template(): raw:\n{}\n{}{}'.format(
+        STARTSTR, yamldump(raw_page_dict), ENDSTR))
+    
+    page_dict = {tpltype: inherit(tplname, tpltype, templates) 
+        for tpltype, tplname in raw_page_dict.items()} 
+    logger.debug('get_page_template(): processed:\n{}\n{}{}'.format(
+        STARTSTR, yamldump(page_dict), ENDSTR))
+
+    page_template = '\n'.join(partial_getter(page_dict, 'doc'))
+    logger.debug('get_page_template(): template:\n{}\n{}\n{}'.format(
+        STARTSTR, page_template, ENDSTR))
+    return page_template
+
+
+def partial_getter(source_template, name):
+    layouts = source_template['layouts']
+    logger.debug('partial_getter(): ' + name)
+    if name not in layouts or not layouts[name]:
+        return
+    for child_name in layouts[name]:
+        child = '\n'.join(partial_getter(source_template, child_name))
+        if child:
+            child = '\n{}\n'.format(child)
+        logger.debug('partial_getter(): /' + child_name)
+        try:
+            partial = source_template['partials'][child_name]
+        except KeyError:
+            raise PartialNotFoundError(
+                'Partial not found: {}'.format(child_name))
+        yield partial.format(
+            block=child, 
+            **source_template['vars'])
+
+
+def inherit(tplname, tpltype, templates):
+    tpl = templates[tpltype][tplname]
+    templates = templates[tpltype]
+    ancestors = [tpl] + [anc for anc in inheritor(tpl, templates) if anc]
+    logger.debug('inherit(): ancestors:\n{}\n{}\n{}'.format(
+        #STARTSTR, repr(ancestors), ENDSTR))
+        STARTSTR, yamldump(ancestors), ENDSTR))
+    if not ancestors:
+        return ordereddict()
+    template = copy.deepcopy(ancestors[-1])
+    for ancestor in reversed(ancestors):
+        for key, value in ancestor.items():
+            template[key] = value
+    del template['inherit']
+    return template
+
+
+def inheritor(template, root):
+    logger.debug('inheritor(): {}'.format(template))
+    while (template):
+        try:
+            inherited = template['inherit']
+        except KeyError:
+            break
+        try:
+            template = root[inherited]
+        except KeyError:
+            break
+        yield template
 
 
 class Website(object):
@@ -170,24 +305,6 @@ class Website(object):
         #    print('clobber: No such build dir: {}'.format(self.build_dir))
         protected_remove(self.build_dir)
 
-    def get_site_design(self):
-        #TODO: If a CONFIG_FILE exists, use it. 
-        #      Otherwise, use a default version in the theme dir
-        config_file = self.site_dir.join(CONFIG_FILE)
-        if config_file.check():
-            logger.info('Site config file: {}'.format(config_file))
-            with self.site_dir.join(CONFIG_FILE).open() as f:
-                config = yaml.load(f)
-        else:
-            if 0:
-                #TODO: Change this to theme.yaml and use as a default theme
-                theme_dir = py.path.local(__file__).dirpath('themes','base')
-                with theme_dir.join(CONFIG_FILE).open() as f:
-                    config = yaml.load(f)
-            config = { CONTENT: {HOME: None, PAGES: None}}
-        logger.info('Site config: {}'.format(config))
-        return config
-
     def build_templates(self):
         """Build templates."""
 
@@ -201,17 +318,17 @@ class Website(object):
         assert self.build_dir.check() == False, \
             'Build directory already exists.'.format(self.build_dir)
         self.build_dir.ensure(dir=1)
-        site = self.get_site_design()
+        site = get_site_design(self.site_dir)
         
         for content_name, content_dir in self.content_dir_getter(site):
             logger.info('Build content: {}: {}'.format(
                 content_name, 
                 content_dir))
             if content_name == HOME:
-                self.build_home_page('/', content_dir)
+                build_home_page('/', content_dir, self.build_dir)
             else:
                 for url, source_dir in url_and_dir_getter(content_dir):
-                    self.build_page(url, source_dir)
+                    build_page(url, source_dir, self.build_dir)
 
     def content_dir_getter(self, site):
         for name in site[CONTENT]:
@@ -223,110 +340,3 @@ class Website(object):
             else:
                 assert 0, \
                     'Content not recognized: {}'.format(name)
-
-    def build_home_page(self, url, source_dir):
-        try:
-            self.build_page(url, source_dir)
-        except SourceDirNotFoundError as e:
-            logger.warning(e.message)
-        self.build_dir.ensure(url, 'index.html')
-
-    def build_page(self, url, source_dir):
-        logger.info("Build page: {}".format(url))
-        if not source_dir.check(dir=1):
-            raise SourceDirNotFoundError(
-                'Source dir not found: {}'.format(source_dir))
-        target_dir = self.build_dir.join(url)
-        self.build_page_file(source_dir, target_dir)
-        self.build_page_assets(source_dir, target_dir)
-
-    def build_page_file(self, source_dir, target_dir):
-        #TODO: Can also check for index.php file here too
-        source_file = source_dir.join('index.html')
-        if source_file.check():
-            source_file.copy(target_dir)
-            return
-        #logger.debug("No source file found: {}".format(source_file))
-        logger.warning("No source file found: {}".format(source_file))
-        # No source file detected, so use a template
-        template = self.get_page_template(source_dir)
-        target_dir.ensure(dir=1)
-        target_dir.join('index.html').write(template)
-
-    def get_page_template(self, source_dir):
-        with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
-            templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
-
-        if source_dir.basename in templates['pages']:
-            tplname = source_dir.basename
-        else:
-            tplname = 'page'
-
-        raw_page_dict = self.inherit(tplname, 'pages', templates)
-        logger.debug('get_page_template(): raw:\n{}\n{}{}'.format(
-            STARTSTR, yamldump(raw_page_dict), ENDSTR))
-        
-        page_dict = {tpltype: self.inherit(tplname, tpltype, templates) 
-            for tpltype, tplname in raw_page_dict.items()} 
-        logger.debug('get_page_template(): processed:\n{}\n{}{}'.format(
-            STARTSTR, yamldump(page_dict), ENDSTR))
-
-        page_template = '\n'.join(self.partial_getter(page_dict, 'doc'))
-        logger.debug('get_page_template(): template:\n{}\n{}\n{}'.format(
-            STARTSTR, page_template, ENDSTR))
-        return page_template
-
-    def inherit(self, tplname, tpltype, templates):
-        tpl = templates[tpltype][tplname]
-        templates = templates[tpltype]
-        ancestors = [tpl] + [anc for anc in self.inheritor(tpl, templates) if anc]
-        logger.debug('inherit(): ancestors:\n{}\n{}\n{}'.format(
-            #STARTSTR, repr(ancestors), ENDSTR))
-            STARTSTR, yamldump(ancestors), ENDSTR))
-        if not ancestors:
-            return ordereddict()
-        template = copy.deepcopy(ancestors[-1])
-        for ancestor in reversed(ancestors):
-            for key, value in ancestor.items():
-                template[key] = value
-        del template['inherit']
-        return template
-
-    def inheritor(self, template, root):
-        logger.debug('inheritor(): {}'.format(template))
-        while (template):
-            try:
-                inherited = template['inherit']
-            except KeyError:
-                break
-            try:
-                template = root[inherited]
-            except KeyError:
-                break
-            yield template
-
-    def partial_getter(self, source_template, name):
-        layouts = source_template['layouts']
-        logger.debug('partial_getter(): ' + name)
-        if name not in layouts or not layouts[name]:
-            return
-        for child_name in layouts[name]:
-            child = '\n'.join(self.partial_getter(source_template, child_name))
-            if child:
-                child = '\n{}\n'.format(child)
-            logger.debug('partial_getter(): /' + child_name)
-            try:
-                partial = source_template['partials'][child_name]
-            except KeyError:
-                raise PartialNotFoundError(
-                    'Partial not found: {}'.format(child_name))
-            yield partial.format(
-                block=child, 
-                **source_template['vars'])
-
-    def build_page_assets(self, source_dir, target_dir):
-        for asset in source_dir.visit(fil='*.css'):
-            logger.info('Get asset /{} from {}'.format(
-                target_dir.relto(self.build_dir).join(asset.basename), 
-                asset))
-            asset.copy(target_dir)
