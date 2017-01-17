@@ -254,62 +254,56 @@ class Website(object):
         target_dir.join('index.html').write(template)
 
     def get_page_template(self, source_dir):
-        try:
-            template_source = self.get_template_source(source_dir.basename)
-        except TemplateNotFoundError:
-            template_source = self.get_template_source('page')
-
-        template = '\n'.join(self.partial_getter(template_source, 'doc'))
-        logger.debug('get_page_template(): template:\n{}\n{}\n{}'.format(
-            STARTSTR, template, ENDSTR))
-        return template
-
-    def get_template_source(self, page_name):
         with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
             templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
+
+        if source_dir.basename in templates['pages']:
+            tplname = source_dir.basename
+        else:
+            tplname = 'page'
+
+        raw_page_dict = self.inherit(tplname, 'pages', templates)
+        logger.debug('get_page_template(): raw:\n{}\n{}{}'.format(
+            STARTSTR, yamldump(raw_page_dict), ENDSTR))
         
-        page_template = self.get_sub_template_source(
-            templates['pages'], 
-            page_name)
-        logger.debug('get_template_source(): raw:\n{}\n{}{}'.format(
-            STARTSTR, yamldump(page_template), ENDSTR))
-        for name in page_template:
-            page_template[name] = self.get_sub_template_source(
-                templates[name], 
-                page_template[name])
-        logger.debug('get_template_source(): processed:\n{}\n{}{}'.format(
-            STARTSTR, yamldump(page_template), ENDSTR))
+        page_dict = {tpltype: self.inherit(tplname, tpltype, templates) 
+            for tpltype, tplname in raw_page_dict.items()} 
+        logger.debug('get_page_template(): processed:\n{}\n{}{}'.format(
+            STARTSTR, yamldump(page_dict), ENDSTR))
+
+        page_template = '\n'.join(self.partial_getter(page_dict, 'doc'))
+        logger.debug('get_page_template(): template:\n{}\n{}\n{}'.format(
+            STARTSTR, page_template, ENDSTR))
         return page_template
 
-    def get_sub_template_source(self, templates, name):
-        ancestors = [anc for anc_name, anc in self.inheritor(templates, name) if anc]
-        logger.debug('get_sub_template_source: ancestors:\n{}\n{}\n{}'.format(
-            STARTSTR, repr(ancestors), ENDSTR))
+    def inherit(self, tplname, tpltype, templates):
+        tpl = templates[tpltype][tplname]
+        templates = templates[tpltype]
+        ancestors = [tpl] + [anc for anc in self.inheritor(tpl, templates) if anc]
+        logger.debug('inherit(): ancestors:\n{}\n{}\n{}'.format(
+            #STARTSTR, repr(ancestors), ENDSTR))
+            STARTSTR, yamldump(ancestors), ENDSTR))
         if not ancestors:
             return ordereddict()
         template = copy.deepcopy(ancestors[-1])
         for ancestor in reversed(ancestors):
-            for block_name, block in ancestor.items():
-                template[block_name] = block
+            for key, value in ancestor.items():
+                template[key] = value
         del template['inherit']
         return template
 
-    def inheritor(self, templates, template_name):
-        if template_name not in templates:
-            raise TemplateNotFoundError(
-                '{}: Template not found'.format(template_name))
-        template = templates[template_name]
-        logger.debug('inheritor(): {}: {}'.format(template_name, template))
-        yield template_name, template
-        while (template and ('inherit' in template) and template['inherit']):
-            inherited_name = template['inherit']
-            if inherited_name not in templates:
-                raise TemplateNotFoundError(
-                    '{}: Inherited template not found: {}'.format(
-                        template_name, 
-                        inherited_name))
-            template = templates[inherited_name]
-            yield inherited_name, template
+    def inheritor(self, template, root):
+        logger.debug('inheritor(): {}'.format(template))
+        while (template):
+            try:
+                inherited = template['inherit']
+            except KeyError:
+                break
+            try:
+                template = root[inherited]
+            except KeyError:
+                break
+            yield template
 
     def partial_getter(self, source_template, name):
         layouts = source_template['layouts']
@@ -329,7 +323,7 @@ class Website(object):
             yield partial.format(
                 block=child, 
                 **source_template['vars'])
-                
+
     def build_page_assets(self, source_dir, target_dir):
         for asset in source_dir.visit(fil='*.css'):
             logger.info('Get asset /{} from {}'.format(
