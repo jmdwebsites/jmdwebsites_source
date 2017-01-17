@@ -11,6 +11,7 @@ import six
 import yaml
 
 from jmdwebsites.log import STARTSTR, ENDSTR
+from jmdwebsites.html import prettify
 
 logger = logging.getLogger(__name__)
 
@@ -222,7 +223,7 @@ def get_page_template(source_dir):
 
 
 def render(html_template):
-    return html_template
+    return prettify(html_template)
 
 
 def get_html_template(template):
@@ -257,7 +258,6 @@ def inherit(tplname, tpltype, templates):
     templates = templates[tpltype]
     ancestors = [tpl] + [anc for anc in inheritor(tpl, templates) if anc]
     logger.debug('inherit(): ancestors:\n{}\n{}\n{}'.format(
-        #STARTSTR, repr(ancestors), ENDSTR))
         STARTSTR, yamldump(ancestors), ENDSTR))
     if not ancestors:
         return ordereddict()
