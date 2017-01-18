@@ -83,7 +83,7 @@ partials:
         header: '<header></header>'
         main: '<main>{block}</main>'
         footer: '<footer></footer>'
-        article: '<article>{{{{content.article}}}}</article>'
+        article: '<article>{{{{article}}}}</article>'
 vars:
     default:
         lang: 'en'

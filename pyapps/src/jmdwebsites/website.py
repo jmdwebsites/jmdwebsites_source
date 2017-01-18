@@ -231,18 +231,18 @@ def get_page_template(source_dir):
 
 def render(html_template, html_content):
     jtemplate = jinja2.Template(html_template)
-    html = jtemplate.render(content=html_content)
+    html = jtemplate.render(**html_content)
     return prettify(html)
 
 
 def get_html_template(template):
-    html_template = '\n'.join(partial_getter(template, 'doc'))
+    html_template = '\n'.join(partial_getter(template))
     logger.debug('get_html_template():\n{}\n{}\n{}'.format(
         STARTSTR, html_template, ENDSTR))
     return html_template
 
 
-def partial_getter(source_template, name):
+def partial_getter(source_template, name='doc'):
     layouts = source_template['layouts']
     logger.debug('partial_getter(): ' + name)
     if name not in layouts or not layouts[name]:
