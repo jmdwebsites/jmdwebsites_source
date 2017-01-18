@@ -2,9 +2,23 @@ import logging.config
 import os
 
 import click
+import ruamel.yaml as ryaml
 
-STARTSTR = '--- START ---'
-ENDSTR   = '---- END ----'
+STARTSTR = '---- START ----'
+ENDSTR   = '---- END ------'
+
+
+def dbgdump(data, wrap='\n{}\n{}\n{}'):
+    return wrap.format(STARTSTR, data, ENDSTR)
+
+
+def yamldump(data, wrap='\n{}\n{}{}'):
+    if wrap:
+        text = ryaml.dump(data, Dumper=ryaml.RoundTripDumper)
+        text = wrap.format(STARTSTR, text, ENDSTR)
+        return text
+    else:
+        return ryaml.dump(data, Dumper=ryaml.RoundTripDumper)
 
 
 def remove(filename):

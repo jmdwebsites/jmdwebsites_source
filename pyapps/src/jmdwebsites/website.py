@@ -8,10 +8,11 @@ import jinja2
 import py
 import ruamel.yaml as ryaml
 from ruamel.yaml.compat import ordereddict
+from ruamel.yaml.comments import CommentedMap
 import six
 import yaml
 
-from jmdwebsites.log import STARTSTR, ENDSTR
+from jmdwebsites.log import dbgdump, yamldump
 from jmdwebsites.html import prettify
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,8 @@ class WebsiteProjectAlreadyExists(WebsiteError): pass
 class SourceDirNotFoundError(WebsiteError): pass
 class TemplateNotFoundError(WebsiteError): pass
 class PartialNotFoundError(WebsiteError): pass
+class MissingContentError(WebsiteError): pass
+class MissingContentTemplateError(WebsiteError): pass
 
 
 def dir_getter(root_path):
@@ -50,10 +53,6 @@ def url_and_dir_getter(root):
     for dir in dir_getter(root):
         url = os.path.join('/', dir.relto(root))
         yield url, dir  
-
-
-def yamldump(data):
-    return ryaml.dump(data, Dumper=ryaml.RoundTripDumper)
 
 
 def get_project_dir(config_basename =  PROJDIR):
@@ -168,6 +167,7 @@ def build_home_page(url, source_dir, build_dir):
 
 
 def build_page(url, source_dir, build_dir):
+    logger.debug('%%%%%%%%%%%%%%%%%%%%% {} %%%%%%%%%%%%%%%%%%%%%'.format(url))
     logger.info("Build page: {}".format(url))
     if not source_dir.check(dir=1):
         raise SourceDirNotFoundError(
@@ -177,6 +177,7 @@ def build_page(url, source_dir, build_dir):
 
 
 def build_html_file(url, source_dir, build_dir):
+    logger.debug('build_html_file(): source_dir: {}'.format(source_dir))
     target_dir = build_dir.join(url)
 
     html_content = get_html_content(source_dir)
@@ -190,8 +191,7 @@ def build_html_file(url, source_dir, build_dir):
     logger.warning("No source file found: {}".format(source_file))
     # No source file detected, so use a template
     template = get_page_template(source_dir)
-    html_template = get_html_template(template)
-    html = render(html_template, html_content)
+    html = get_html(template, html_content)
     target_dir.ensure(dir=1)
     target_dir.join('index.html').write(html)
 
@@ -209,6 +209,7 @@ def get_html_content(source_dir):
 
 
 def get_page_template(source_dir):
+    logger.debug('get_page_template({})'.format(source_dir))
     with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
         templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
 
@@ -216,63 +217,84 @@ def get_page_template(source_dir):
         tplname = source_dir.basename
     else:
         tplname = 'page'
+    logger.debug('get_page_template(): template name: {}'.format(tplname))
 
     raw_page_tpl = inherit(tplname, 'pages', templates)
-    logger.debug('get_page_template(): raw:\n{}\n{}{}'.format(
-        STARTSTR, yamldump(raw_page_tpl), ENDSTR))
+    logger.debug('get_page_template(): {}: raw: {}'.format(
+        tplname, yamldump(raw_page_tpl)))
     
     page_tpl = {tpltype: inherit(tplname, tpltype, templates) 
         for tpltype, tplname in raw_page_tpl.items()} 
-    logger.debug('get_page_template(): processed:\n{}\n{}{}'.format(
-        STARTSTR, yamldump(page_tpl), ENDSTR))
+    logger.debug('get_page_template(): {}: processed: {}'.format(
+        tplname, yamldump(page_tpl)))
 
     return page_tpl
 
 
-def render(html_template, html_content):
-    jtemplate = jinja2.Template(html_template)
-    html = jtemplate.render(**html_content)
-    return prettify(html)
+def get_html(template, content):
+    logger.debug('get_html(template, content)')
+    rendered = render(template, content)
+    html = prettify(rendered)
+    logger.debug('get_html(): html: ' + dbgdump(html))
+    return html
 
 
-def get_html_template(template):
-    html_template = '\n'.join(partial_getter(template))
-    logger.debug('get_html_template():\n{}\n{}\n{}'.format(
-        STARTSTR, html_template, ENDSTR))
-    return html_template
+def render(template, content, j2=False):
+    logger.debug('render(template, content)')
+    template_str = '\n'.join(partial_getter(template, content))
+    logger.debug('render(): template_str: ' + dbgdump(template_str))
+    if j2:
+        jtemplate = jinja2.Template(template_str)
+        rendered_output = jtemplate.render(**content)
+    else:
+        vars = {}
+        vars.update(template['vars'])
+        vars.update(content)
+        rendered_output = template_str.format(**vars)
+    return rendered_output
 
 
-def partial_getter(source_template, name='doc'):
+def partial_getter(source_template, content, name='doc'):
     layouts = source_template['layouts']
     logger.debug('partial_getter(): ' + name)
-    if name not in layouts or not layouts[name]:
-        return
-    for child_name in layouts[name]:
-        child = '\n'.join(partial_getter(source_template, child_name))
-        if child:
-            child = '\n{}\n'.format(child)
-        logger.debug('partial_getter(): /' + child_name)
-        try:
-            partial = source_template['partials'][child_name]
-            # Skip partials that have no value assigned to them
+    if name in layouts and layouts[name]:
+        for child_name in layouts[name]:
+            child = '\n'.join(partial_getter(source_template, content, name=child_name))
+            vars = {}
+            vars.update(source_template['vars'])
+            if child:
+                child = '\n{}\n'.format(child)
+                vars.update({child_name: child})
+            else:
+                vars.update({child_name: '{{{}}}'.format(child_name)})
+            try:
+                partial = source_template['partials'][child_name]
+            except KeyError:
+                raise PartialNotFoundError(
+                    'Partial not found: {}'.format(child_name))
+            try:
+                expected_content = set(source_template['vars']['content'])
+            except KeyError:
+                pass
+            else:
+                if child_name in expected_content \
+                        and child_name not in content:
+                    raise MissingContentError('{}: Not found'.format(child_name))
             if not partial: 
+                # Skip partials that have no value assigned to them
                 continue
-        except KeyError:
-            #partial = '<${1}>{0}</${1}>'.format(child, child_name)
-            raise PartialNotFoundError(
-                'Partial not found: {}'.format(child_name))
-
-        yield partial.format(
-            block=child, 
-            **source_template['vars'])
+            partial = partial.format(**vars)
+            yield partial
+    logger.debug('partial_getter(): /' + name)
 
 
 def inherit(tplname, tpltype, templates):
+    logger.debug('inherit(): {}: {}'.format(tpltype, tplname))
     tpl = templates[tpltype][tplname]
     templates = templates[tpltype]
     ancestors = [tpl] + [anc for anc in inheritor(tpl, templates) if anc]
-    logger.debug('inherit(): ancestors:\n{}\n{}\n{}'.format(
-        STARTSTR, yamldump(ancestors), ENDSTR))
+    logger.debug('inherit(): ancestors: {}'.format(
+        yamldump(ancestors)))
     if not ancestors:
         return ordereddict()
     template = copy.deepcopy(ancestors[-1])
@@ -284,16 +306,17 @@ def inherit(tplname, tpltype, templates):
 
 
 def inheritor(template, root):
-    logger.debug('inheritor(): {}'.format(template))
     while (template):
         try:
             inherited = template['inherit']
         except KeyError:
             break
+        if not inherited:
+            break
         try:
             template = root[inherited]
         except KeyError:
-            break
+            raise TemplateNotFoundError('Inherited template not found: {}'.format(inherited))
         yield template
 
 
