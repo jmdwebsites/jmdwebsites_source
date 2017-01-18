@@ -4,6 +4,7 @@ import logging
 import os
 from pprint import pformat
 
+import jinja2
 import py
 import ruamel.yaml as ryaml
 from ruamel.yaml.compat import ordereddict
@@ -100,7 +101,7 @@ class ExtMatcher:
             extensions = []
         if isinstance(extensions, six.string_types):
             extensions = extensions.split()
-        self.extensions = extensions
+        self.extensions = set(extensions)
 
     def __call__(self, path):
         return path.ext in self.extensions
@@ -177,6 +178,9 @@ def build_page(url, source_dir, build_dir):
 
 def build_html_file(url, source_dir, build_dir):
     target_dir = build_dir.join(url)
+
+    html_content = get_html_content(source_dir)
+
     #TODO: Can also check for index.php file here too
     source_file = source_dir.join('index.html')
     if source_file.check():
@@ -187,18 +191,21 @@ def build_html_file(url, source_dir, build_dir):
     # No source file detected, so use a template
     template = get_page_template(source_dir)
     html_template = get_html_template(template)
-    html = render(html_template)
+    html = render(html_template, html_content)
     target_dir.ensure(dir=1)
     target_dir.join('index.html').write(html)
 
 
-def build_page_assets(url, source_dir, build_dir):
-    target_dir = build_dir.join(url)
-    for asset in source_dir.visit(fil='*.css'):
-        logger.info('Get asset /{} from {}'.format(
-            target_dir.relto(build_dir).join(asset.basename), 
-            asset))
-        asset.copy(target_dir)
+def get_html_content(source_dir):
+    def is_content(path):
+        if path.basename.startswith('_') and path.ext in set(['.html','.md']):
+            return True
+        return False
+    content = {}
+    for partial_file in source_dir.visit(fil=is_content):
+        partial_name = partial_file.purebasename.lstrip('_')
+        content[partial_name] = partial_file.read()
+    return content
 
 
 def get_page_template(source_dir):
@@ -222,8 +229,10 @@ def get_page_template(source_dir):
     return page_tpl
 
 
-def render(html_template):
-    return prettify(html_template)
+def render(html_template, html_content):
+    jtemplate = jinja2.Template(html_template)
+    html = jtemplate.render(content=html_content)
+    return prettify(html)
 
 
 def get_html_template(template):
@@ -286,6 +295,15 @@ def inheritor(template, root):
         except KeyError:
             break
         yield template
+
+
+def build_page_assets(url, source_dir, build_dir):
+    target_dir = build_dir.join(url)
+    for asset in source_dir.visit(fil='*.css'):
+        logger.info('Get asset /{} from {}'.format(
+            target_dir.relto(build_dir).join(asset.basename), 
+            asset))
+        asset.copy(target_dir)
 
 
 class Website(object):
