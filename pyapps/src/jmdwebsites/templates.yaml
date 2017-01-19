@@ -46,6 +46,7 @@ layouts:
     products:
         inherit: headlines
         head:
+            charset:
             title:
             author:
             robots:
@@ -58,11 +59,13 @@ layouts:
             article:
 partials:
     default:
-        doctype: '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">'
-        html: '<html lang="{lang}">{html}</html>'
+        #doctype: '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">'
+        doctype: '<!DOCTYPE {doctype}>'
+        html: '<html lang="{{lang}}">{html}</html>'
         head: '<head>{head}</head>'
         charset: '<meta charset="{charset}"/>'
-        title: <title>{{{{title}}}}</title>
+        #title: <title>{{{{title}}}}</title>
+        title: <title>{{title}}</title>
         author: '<meta content="{author}" name="author"/>'
         robots: '<meta content="{robots}" name="robots"/>'
         stylesheet: '<link href="{stylesheet}" rel="stylesheet"/>'
@@ -78,14 +81,13 @@ partials:
         inherit: default
     html5tagless:
         inherit: default
-        doctype: '<!DOCTYPE html>'
+        #doctype: '<!DOCTYPE html>'
         html5shiv: '<!--[if ls IE 9] <script src="{html5shiv}"></script><![endif]-->'
     html5:
         inherit: html5tagless
         header: '<header>{header}</header>'
         main: '<main>{main}</main>'
         footer: '<footer>{footer}</footer>'
-        #article: '<article>{{{{article}}}}</article>'
         article: '<article>{article}</article>'
 vars:
     default:
@@ -95,30 +97,20 @@ vars:
         robots: 'noindex'
         stylesheet: '/page.css'
         html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
-        doctype: 'blah'
+        doctype: 'html'
         title: 'My Web Page'
         header: ''
+        #article: 'Default article text ...'
         article: ''
-        headlines:
+        headlines: ''
         footer: ''
         cards: ''
+    html4:
+        inherit: default
+        html5shiv: 'blah'
+        #article: 'df'
+        doctype: 'HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"'
     products:
-        inherit: default
-        article:
-
-
-
-vars2-delete:
-    default:
-        lang: 'en'
-        charset: 'utf-8'
-        author: 'jmdwebsites'
-        robots: 'noindex'
-        stylesheet: '/page.css'
-        html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
-    products:
-        inherit: default
-        content: ["article"]
-    a-page:
-        inherit: default
-        content: ['header', 'article', 'footer']
+        #inherit: default
+        inherit: html4
+        #article:

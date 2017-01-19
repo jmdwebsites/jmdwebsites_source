@@ -42,7 +42,7 @@ class SourceDirNotFoundError(WebsiteError): pass
 class TemplateNotFoundError(WebsiteError): pass
 class PartialNotFoundError(WebsiteError): pass
 class MissingContentError(WebsiteError): pass
-class MissingContentTemplateError(WebsiteError): pass
+class UnusedContentError(WebsiteError): pass
 
 
 def dir_getter(root_path):
@@ -187,8 +187,7 @@ def build_html_file(url, source_dir, build_dir):
     if source_file.check():
         source_file.copy(target_dir)
         return
-    #logger.debug("No source file found: {}".format(source_file))
-    logger.warning("No source file found: {}".format(source_file))
+    logger.debug("No source file found: {}".format(source_file))
     # No source file detected, so use a template
     template = get_page_template(source_dir)
     html = get_html(template, html_content)
@@ -241,7 +240,7 @@ def get_html(template, content):
 
 def render(template, content, j2=False):
     logger.debug('render(template, content)')
-    template_str = '\n'.join(partial_getter(template, content))
+    template_str = get_template_str(template, content)
     logger.debug('render(): template_str: ' + dbgdump(template_str))
     if j2:
         jtemplate = jinja2.Template(template_str)
@@ -254,39 +253,70 @@ def render(template, content, j2=False):
     return rendered_output
 
 
-def partial_getter(source_template, content, name='doc'):
-    layouts = source_template['layouts']
-    logger.debug('partial_getter(): ' + name)
-    if name in layouts and layouts[name]:
-        for child_name in layouts[name]:
-            child = '\n'.join(partial_getter(source_template, content, name=child_name))
-            vars = {}
-            vars.update(source_template['vars'])
-            if child:
-                child = '\n{}\n'.format(child)
-                vars.update({child_name: child})
-            else:
-                vars.update({child_name: '{{{}}}'.format(child_name)})
-            try:
-                partial = source_template['partials'][child_name]
-            except KeyError:
-                raise PartialNotFoundError(
-                    'Partial not found: {}'.format(child_name))
-            try:
-                expected_content = set(source_template['vars']['content'])
-            except KeyError:
-                pass
-            else:
-                if child_name in expected_content \
-                        and child_name not in content:
-                    raise MissingContentError('{}: Not found'.format(child_name))
-            if not partial: 
-                # Skip partials that have no value assigned to them
-                continue
-            partial = partial.format(**vars)
-            yield partial
-    logger.debug('partial_getter(): /' + name)
+def get_template_str(template, content, name='doc'):
+    print('111111111111111111111111111')
+    template_str = '\n'.join(partial_getter(template))
+    #template_str = partial_filler(template)
+    print('222222222222222222222222222')
+    print(template_str)
+    vars = template['vars']
+    print('vars: ', vars.keys())
+    
+    valid_vars = {var:value for var, value in vars.items() if value is not None}
+    print('valid_vars: ', valid_vars)
+    
+    empty_vars = {var:value for var, value in vars.items() if value is None}
+    print('empty_vars: ', empty_vars.keys())
+    
+    available_content = {var:'\n{}'.format(content[var]) for var in empty_vars if var in content}
+    print('available_content: ', available_content.keys())
+    
+    missing_content = {var:value for var, value in empty_vars.items() if var not in content}
+    print('missing_content: ', missing_content.keys())
+    overrides = {var:value for var, value in valid_vars.items() if var in content}
+    print('overrides: ', overrides.keys())
+    unused_content = [key for key in content if key not in vars]
+    print('unused_content: ', unused_content)
 
+    if missing_content:
+        raise MissingContentError('Not found: {}'.format(missing_content.keys()))
+    if unused_content:
+        raise UnusedContentError('Unused content: {}'.format(unused_content))
+
+    valid = valid_vars
+    print('valid: before: ', valid.keys())
+    print('valid: before: ', valid['article'])
+    print('available_content: ', available_content.keys())
+    valid.update(available_content)
+    print('valid: after:  ', valid.keys())
+    print('valid: after:  ', valid['article'])
+    print('valid: ', valid.keys())
+    print('333333333333333333333333333')
+    template_str = template_str.format(**valid)
+    print(dbgdump(template_str))
+    print('444444444444444444444444444')
+    #assert 0
+    return template_str
+
+
+def partial_getter(template, name='doc'):
+    layouts = template['layouts']
+    try:
+        top = layouts[name]
+    except KeyError:
+        return
+    logger.debug('partial_getter(): stem: ' + name)
+    if top:
+        for child_name in top:
+            fmt = template['partials'][child_name]
+            if child_name in layouts and layouts[child_name]:
+                child = '\n'.join(partial_getter(template, name=child_name))
+                child = '\n{}\n'.format(child)
+            else:
+                logger.debug('partial_getter(): leaf: ' + child_name)
+                child = '{{{0}}}'.format(child_name)
+            partial = fmt.format(**{child_name: child})
+            yield partial
 
 def inherit(tplname, tpltype, templates):
     logger.debug('inherit(): {}: {}'.format(tpltype, tplname))
