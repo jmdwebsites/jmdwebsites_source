@@ -243,13 +243,13 @@ def render(template, content, j2=False):
     logger.debug('render(template, content)')
     template_str = get_template_str(template, content)
     logger.debug('render(): template_str: ' + dbgdump(template_str))
+    vars = get_vars(template)
+    selected_content = get_content(template, content)
+    vars.update(selected_content)
     if j2:
         jtemplate = jinja2.Template(template_str)
-        rendered_output = jtemplate.render(**content)
+        rendered_output = jtemplate.render(**vars)
     else:
-        vars = get_vars(template)
-        selected_content = get_content(template, content)
-        vars.update(selected_content)
         rendered_output = template_str.format(**vars)
         logger.debug('get_template_str(): rendered_output: {}'.format(dbgdump(rendered_output)))
     return rendered_output
