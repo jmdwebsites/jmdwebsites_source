@@ -116,6 +116,6 @@ content:
         cards: ''
     products:
         inherit: default
-        #article: 'Default article text ...'
-        article:
+        article: 'Default article text ...'
+        #article:
         footer: 'Products footer!'

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 BUILD = 'build'
 CONTENT = 'content'
 CONFIG_FILE = 'site.yaml'
-TEMPLATE_FILE = 'templates.yaml'
+PAGE_SPECS_FILE = 'pagespecs.yaml'
 PROJDIR = '.jmdwebsite'
 HOME = 'home'
 PAGES = 'pages'
@@ -212,7 +212,7 @@ def build_html_file(url, source_dir, build_dir):
 def get_page_spec(url, specs=None):
     logger.debug('get_page_spec({})'.format(url))
     if specs is None:
-        with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
+        with py.path.local(__file__).dirpath(PAGE_SPECS_FILE).open() as f:
             specs = ryaml.load(f, Loader=ryaml.RoundTripLoader)
 
     page_spec_name = os.path.basename(url)
