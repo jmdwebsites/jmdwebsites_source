@@ -44,6 +44,7 @@ class PartialNotFoundError(WebsiteError): pass
 class MissingContentError(WebsiteError): pass
 class UnusedContentError(WebsiteError): pass
 class MissingVarsError(WebsiteError): pass
+class FileFilterError(Exception): pass
 
 
 def dir_getter(root_path):
@@ -95,16 +96,27 @@ def protected_remove(path, valid_basenames=None):
     path.remove()
 
 
-class ExtMatcher:
-    def __init__(self, extensions=None):
+class FileFilter:
+
+    def __init__(self, startswith=None, extensions=None):
         if extensions is None:
-            extensions = []
-        if isinstance(extensions, six.string_types):
-            extensions = extensions.split()
-        self.extensions = set(extensions)
+            self.extensions = extensions
+        elif isinstance(extensions, six.string_types):
+            self.extensions = set(extensions.split())
+        else:
+            self.extensions = set(extensions)
+        if isinstance(startswith, six.string_types):
+            self.startswith = startswith
+        else:
+            raise FileFilterError('Not a string: startswith: {}'.format(repr(startswith)))
 
     def __call__(self, path):
-        return path.ext in self.extensions
+        allow = True
+        if self.extensions is not None and path.ext not in self.extensions:
+            allow = False
+        if allow and not path.basename.startswith(self.startswith):
+            allow = False
+        return allow
 
 
 def dict_walker(parent, parent_path=''):
@@ -191,7 +203,7 @@ def build_html_file(url, source_dir, build_dir):
 
     template = get_template(source_dir)
     template_str = get_template_str(template)
-    content = get_content(template, source_dir, fil=is_html_content)
+    content = get_content(template, source_dir, fil=FileFilter('_', ['.html','.md']))
     html = render_html(template_str, content)
     target_dir.ensure(dir=1)
     target_dir.join('index.html').write(html)
@@ -246,12 +258,6 @@ def get_content(template, source_dir, fil=None):
     content = get_vars(template)
     content.update(selected_content)
     return content
-
-
-def is_html_content(path):
-    if path.basename.startswith('_') and path.ext in set(['.html','.md']):
-        return True
-    return False
 
 
 def get_source_content(source_dir, fil=None):
