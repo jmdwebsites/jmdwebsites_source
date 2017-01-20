@@ -181,8 +181,6 @@ def build_html_file(url, source_dir, build_dir):
     logger.debug('build_html_file(): source_dir: {}'.format(source_dir))
     target_dir = build_dir.join(url)
 
-    html_content = get_html_content(source_dir)
-
     #TODO: Can also check for index.php file here too
     source_file = source_dir.join('index.html')
     if source_file.check():
@@ -190,25 +188,16 @@ def build_html_file(url, source_dir, build_dir):
         return
     logger.debug("No source file found: {}".format(source_file))
     # No source file detected, so use a template
-    template = get_page_template(source_dir)
-    html = get_html(template, html_content)
+
+    template = get_template(source_dir)
+    template_str = get_template_str(template)
+    content = get_content(template, source_dir, fil=is_html_content)
+    html = render_html(template_str, content)
     target_dir.ensure(dir=1)
     target_dir.join('index.html').write(html)
 
 
-def get_html_content(source_dir):
-    def is_content(path):
-        if path.basename.startswith('_') and path.ext in set(['.html','.md']):
-            return True
-        return False
-    content = {}
-    for partial_file in source_dir.visit(fil=is_content):
-        partial_name = partial_file.purebasename.lstrip('_')
-        content[partial_name] = partial_file.read()
-    return content
-
-
-def get_page_template(source_dir):
+def get_template(source_dir):
     logger.debug('get_page_template({})'.format(source_dir))
     with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
         templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
@@ -231,32 +220,49 @@ def get_page_template(source_dir):
     return page_tpl
 
 
-def get_html(template, content):
-    logger.debug('get_html(template, content)')
+def render_html(template, content):
+    logger.debug('render_html(template, content)')
     rendered = render(template, content)
     html = prettify(rendered)
-    logger.debug('get_html(): html: ' + dbgdump(html))
+    logger.debug('render_html(): html: ' + dbgdump(html))
     return html
 
 
 def render(template, content, j2=False):
     logger.debug('render(template, content)')
-    template_str = get_template_str(template, content)
-    logger.debug('render(): template_str: ' + dbgdump(template_str))
-    vars = get_vars(template)
-    selected_content = get_content(template, content)
-    vars.update(selected_content)
+    vars = content
     if j2:
-        jtemplate = jinja2.Template(template_str)
+        jtemplate = jinja2.Template(template)
         rendered_output = jtemplate.render(**vars)
     else:
-        rendered_output = template_str.format(**vars)
-        logger.debug('get_template_str(): rendered_output: {}'.format(dbgdump(rendered_output)))
+        rendered_output = template.format(**vars)
+    logger.debug('render(): rendered_output: {}'.format(dbgdump(rendered_output)))
     return rendered_output
 
 
-def get_content(template, content):
-    # content
+def get_content(template, source_dir, fil=None):
+    source_content = get_source_content(source_dir, fil=fil)
+    selected_content = get_selected_content(template, source_content)
+    content = get_vars(template)
+    content.update(selected_content)
+    return content
+
+
+def is_html_content(path):
+    if path.basename.startswith('_') and path.ext in set(['.html','.md']):
+        return True
+    return False
+
+
+def get_source_content(source_dir, fil=None):
+    content = {}
+    for partial_file in source_dir.visit(fil=fil):
+        partial_name = partial_file.purebasename.lstrip('_')
+        content[partial_name] = partial_file.read()
+    return content
+
+
+def get_selected_content(template, content):
     logger.debug('content: {}'.format(content.keys()))
     logger.debug('template_content: {}'.format(template['content'].keys()))
     used_content = {key:'\n{}'.format(content[key]) for key in template['content'] if key in content}
@@ -270,7 +276,6 @@ def get_content(template, content):
     logger.debug('missing_content: {}'.format(missing_content.keys()))
     unused_content = [key for key in content if key not in selected_content]
     logger.debug('unused_content: {}'.format(unused_content))
-
     if missing_content:
         raise MissingContentError('Not found: {}'.format(missing_content.keys()))
     if unused_content:
@@ -279,7 +284,6 @@ def get_content(template, content):
 
 
 def get_vars(template):
-    # vars
     vars = template['vars']
     logger.debug('vars: {}'.format(vars.keys()))
     valid_vars = {var:value for var, value in vars.items() if value is not None}
@@ -290,7 +294,8 @@ def get_vars(template):
         raise MissingVarsError('Not found: {}'.format(empty_vars.keys()))
     return valid_vars
 
-def get_template_str(template, content, name='doc'):
+
+def get_template_str(template, name='doc'):
     logger.debug('get_template_str(): Get template partials. {}'.format(
         '-----------------------------------'))
     template_str = '\n'.join(partial_getter(template))
