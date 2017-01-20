@@ -201,7 +201,7 @@ def build_html_file(url, source_dir, build_dir):
     logger.debug("No source file found: {}".format(source_file))
     # No source file detected, so use a template
 
-    template = get_template(source_dir)
+    template = get_page_template(url)
     template_str = get_template_str(template)
     content = get_content(template, source_dir, fil=FileFilter('_', ['.html','.md']))
     html = render_html(template_str, content)
@@ -209,14 +209,14 @@ def build_html_file(url, source_dir, build_dir):
     target_dir.join('index.html').write(html)
 
 
-def get_template(source_dir):
-    logger.debug('get_page_template({})'.format(source_dir))
-    with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
-        templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
+def get_page_template(url, templates=None):
+    logger.debug('get_page_template({})'.format(url))
+    if templates is None:
+        with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
+            templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
 
-    if source_dir.basename in templates['pages']:
-        tplname = source_dir.basename
-    else:
+    tplname = os.path.basename(url)
+    if tplname not in templates['pages']:
         tplname = 'page'
     logger.debug('get_page_template(): template name: {}'.format(tplname))
 
