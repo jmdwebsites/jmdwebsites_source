@@ -39,7 +39,7 @@ class PathNotFoundError(ProtectedRemoveError): pass
 class PathAlreadyExists(WebsiteError): pass
 class WebsiteProjectAlreadyExists(WebsiteError): pass
 class SourceDirNotFoundError(WebsiteError): pass
-class TemplateNotFoundError(WebsiteError): pass
+class AncestorNotFoundError(WebsiteError): pass
 class PartialNotFoundError(WebsiteError): pass
 class MissingContentError(WebsiteError): pass
 class UnusedContentError(WebsiteError): pass
@@ -201,35 +201,37 @@ def build_html_file(url, source_dir, build_dir):
     logger.debug("No source file found: {}".format(source_file))
     # No source file detected, so use a template
 
-    template = get_page_template(url)
-    template_str = get_template_str(template)
-    content = get_content(template, source_dir, fil=FileFilter('_', ['.html','.md']))
-    html = render_html(template_str, content)
+    page_spec = get_page_spec(url)
+    template = get_template_str(page_spec)
+    content = get_content(page_spec, source_dir, fil=FileFilter('_', ['.html','.md']))
+    html = render_html(template, content)
     target_dir.ensure(dir=1)
     target_dir.join('index.html').write(html)
 
 
-def get_page_template(url, templates=None):
-    logger.debug('get_page_template({})'.format(url))
+def get_page_spec(url, templates=None):
+    logger.debug('get_page_spec({})'.format(url))
     if templates is None:
         with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
             templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
 
-    tplname = os.path.basename(url)
-    if tplname not in templates['pages']:
-        tplname = 'page'
-    logger.debug('get_page_template(): template name: {}'.format(tplname))
+    page_spec_name = os.path.basename(url)
+    if page_spec_name not in templates['pages']:
+        page_spec_name = 'page'
+    logger.debug('get_page_spec(): spec name: {}'.format(page_spec_name))
 
-    raw_page_tpl = inherit(tplname, 'pages', templates)
-    logger.debug('get_page_template(): {}: raw: {}'.format(
-        tplname, yamldump(raw_page_tpl)))
+    #raw_page_spec = inherit(page_spec_name, 'pages', templates)
+    raw_page_spec = inherit(page_spec_name, templates['pages'])
+    logger.debug('get_page_spec(): {}: raw: {}'.format(
+        page_spec_name, yamldump(raw_page_spec)))
     
-    page_tpl = {tpltype: inherit(tplname, tpltype, templates) 
-        for tpltype, tplname in raw_page_tpl.items()} 
-    logger.debug('get_page_template(): {}: processed: {}'.format(
-        tplname, yamldump(page_tpl)))
+    #page_spec = {type_: inherit(name, type_, templates) 
+    page_spec = {type_: inherit(name, templates[type_]) 
+        for type_, name in raw_page_spec.items()} 
+    logger.debug('get_page_spec(): {}: processed: {}'.format(
+        page_spec_name, yamldump(page_spec)))
 
-    return page_tpl
+    return page_spec
 
 
 def render_html(template, content):
@@ -329,11 +331,9 @@ def partial_getter(template, name='doc'):
             partial = fmt.format(**{child_name: child})
             yield partial
 
-def inherit(tplname, tpltype, templates):
-    logger.debug('inherit(): {}: {}'.format(tpltype, tplname))
-    tpl = templates[tpltype][tplname]
-    templates = templates[tpltype]
-    ancestors = [tpl] + [anc for anc in inheritor(tpl, templates) if anc]
+def inherit(name, root):
+    logger.debug('inherit(): {}'.format(name))
+    ancestors = [root[name]] + [anc for anc in inheritor(root[name], root) if anc]
     logger.debug('inherit(): ancestors: {}'.format(
         yamldump(ancestors)))
     if not ancestors:
@@ -346,19 +346,19 @@ def inherit(tplname, tpltype, templates):
     return template
 
 
-def inheritor(template, root):
-    while (template):
+def inheritor(current, root):
+    while(current):
         try:
-            inherited = template['inherit']
+            inherited = current['inherit']
         except KeyError:
             break
         if not inherited:
             break
         try:
-            template = root[inherited]
+            current = root[inherited]
         except KeyError:
-            raise TemplateNotFoundError('Inherited template not found: {}'.format(inherited))
-        yield template
+            raise AncestorNotFoundError('Not found: inherited: {}'.format(inherited))
+        yield current
 
 
 def build_page_assets(url, source_dir, build_dir):
