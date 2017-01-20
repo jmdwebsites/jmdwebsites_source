@@ -254,29 +254,33 @@ def render(template, content, j2=False):
 
 
 def get_template_str(template, content, name='doc'):
-    print('111111111111111111111111111')
+    logger.debug('get_template_str(): Get template partials. {}'.format(
+        '-----------------------------------'))
     template_str = '\n'.join(partial_getter(template))
-    #template_str = partial_filler(template)
-    print('222222222222222222222222222')
-    print(template_str)
+    logger.debug('get_template_str(): template_str: {}'.format(dbgdump(template_str)))
+
+    # vars
     vars = template['vars']
-    print('vars: ', vars.keys())
-    
+    logger.debug('vars: {}'.format(vars.keys()))
     valid_vars = {var:value for var, value in vars.items() if value is not None}
-    print('valid_vars: ', valid_vars)
-    
+    logger.debug('valid_vars: {}'.format(valid_vars.keys()))
     empty_vars = {var:value for var, value in vars.items() if value is None}
-    print('empty_vars: ', empty_vars.keys())
+    logger.debug('empty_vars: {}'.format(empty_vars.keys()))
     
-    available_content = {var:'\n{}'.format(content[var]) for var in empty_vars if var in content}
-    print('available_content: ', available_content.keys())
-    
-    missing_content = {var:value for var, value in empty_vars.items() if var not in content}
-    print('missing_content: ', missing_content.keys())
-    overrides = {var:value for var, value in valid_vars.items() if var in content}
-    print('overrides: ', overrides.keys())
-    unused_content = [key for key in content if key not in vars]
-    print('unused_content: ', unused_content)
+    # content
+    logger.debug('content: {}'.format(content.keys()))
+    logger.debug('template_content: {}'.format(template['content'].keys()))
+    used_content = {key:'\n{}'.format(content[key]) for key in template['content'] if key in content}
+    logger.debug('used_content: {}'.format(used_content.keys()))
+    overrides = [key for key in used_content if template['content'][key] is not None]
+    logger.debug('overrides: {}'.format(overrides))
+    selected_content = template['content']
+    selected_content.update(used_content)
+    logger.debug('selected_content: {}'.format(selected_content.keys()))
+    missing_content = {key:value for key, value in selected_content.items() if value is None}
+    logger.debug('missing_content: {}'.format(missing_content.keys()))
+    unused_content = [key for key in content if key not in selected_content]
+    logger.debug('unused_content: {}'.format(unused_content))
 
     if missing_content:
         raise MissingContentError('Not found: {}'.format(missing_content.keys()))
@@ -284,18 +288,9 @@ def get_template_str(template, content, name='doc'):
         raise UnusedContentError('Unused content: {}'.format(unused_content))
 
     valid = valid_vars
-    print('valid: before: ', valid.keys())
-    print('valid: before: ', valid['article'])
-    print('available_content: ', available_content.keys())
-    valid.update(available_content)
-    print('valid: after:  ', valid.keys())
-    print('valid: after:  ', valid['article'])
-    print('valid: ', valid.keys())
-    print('333333333333333333333333333')
+    valid.update(selected_content)
     template_str = template_str.format(**valid)
-    print(dbgdump(template_str))
-    print('444444444444444444444444444')
-    #assert 0
+    logger.debug('get_template_str(): template_str: filled: {}'.format(dbgdump(template_str)))
     return template_str
 
 
