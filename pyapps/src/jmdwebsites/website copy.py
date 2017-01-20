@@ -254,6 +254,7 @@ def render(template, content, j2=False):
 def get_content(spec, source_dir, fil=None):
     content_spec = spec['content']
     source_content = get_source_content(source_dir, fil=fil)
+    vars = get_vars(spec)
 
     missing_content = {key:value for key, value in content_spec.items() if value is None and key not in source_content}
     if missing_content:
@@ -262,41 +263,74 @@ def get_content(spec, source_dir, fil=None):
     if unused_content:
         raise UnusedContentError('Unused content: {}'.format(unused_content))
 
-    vars = get_vars(spec['vars'])
-
     content = copy(content_spec)
-    logger.debug('content: spec: {}'.format(content.keys()))
-
+    logger.debug('content: content_spec: {}'.format(content.keys()))
     content.update(source_content)
     logger.debug('content: source_content update: {}'.format(content.keys()))
-
     content.update(vars)
     logger.debug('content: vars update: {}'.format(content.keys()))
+    #assert 0
 
     return content
 
 
+def get_content1(spec, source_dir, fil=None):
+    source_content = get_source_content(source_dir, fil=fil)
+    selected_content = get_selected_content(spec, source_content)
+    content = get_vars(spec)
+    content.update(selected_content)
+    return content
+
+
 def get_source_content(source_dir, fil=None):
-    source_content = {}
+    content = {}
     for partial_file in source_dir.visit(fil=fil):
         partial_name = partial_file.purebasename.lstrip('_')
-        source_content[partial_name] = partial_file.read()
-    return source_content
+        content[partial_name] = partial_file.read()
+    return content
 
 
-def get_vars(vars):
+def get_selected_content(spec, content):
+    logger.debug('content: {}'.format(content.keys()))
+    logger.debug('template_content: {}'.format(spec['content'].keys()))
+
+    used_content = {key:'\n{}'.format(content[key]) for key in spec['content'] if key in content}
+    logger.debug('used_content: {}'.format(used_content.keys()))
+
+    overwritten = [key for key in used_content if spec['content'][key] is not None]
+    logger.debug('overrides: {}'.format(overwritten))
+    
+    selected_content = copy(spec['content'])
+    selected_content.update(used_content)
+    logger.debug('selected_content: {}'.format(selected_content.keys()))
+    
+    missing_content = {key:value for key, value in selected_content.items() if value is None}
+    unused_content = [key for key in content if key not in selected_content]
+    if missing_content:
+        raise MissingContentError('Not found: {}'.format(missing_content.keys()))
+    if unused_content:
+        raise UnusedContentError('Unused content: {}'.format(unused_content))
+    return selected_content
+
+
+def get_vars(spec):
+    vars = spec['vars']
     logger.debug('vars: {}'.format(vars.keys()))
-    missing_vars = {var:value for var, value in vars.items() if value is None}
-    if missing_vars:
-        raise MissingVarsError('Not found: {}'.format(missing_vars.keys()))
-    return vars
+    valid_vars = {var:value for var, value in vars.items() if value is not None}
+    logger.debug('valid_vars: {}'.format(valid_vars.keys()))
+    empty_vars = {var:value for var, value in vars.items() if value is None}
+    logger.debug('empty_vars: {}'.format(empty_vars.keys()))
+    if empty_vars:
+        raise MissingVarsError('Not found: {}'.format(empty_vars.keys()))
+    return valid_vars
 
 
 def get_template(spec, name='doc'):
-    logger.debug('get_template(): Get partials. {}')
-    template = '\n'.join(partial_getter(spec))
-    logger.debug('get_template(): template: {}'.format(dbgdump(template)))
-    return template
+    logger.debug('get_template(): Get partials. {}'.format(
+        '-----------------------------------'))
+    template_str = '\n'.join(partial_getter(spec))
+    logger.debug('get_template(): template_str: {}'.format(dbgdump(template_str)))
+    return template_str
 
 
 def partial_getter(spec, name='doc'):
