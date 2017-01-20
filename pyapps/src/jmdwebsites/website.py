@@ -1,5 +1,5 @@
 from __future__ import print_function
-import copy
+from copy import deepcopy
 import logging
 import os
 from pprint import pformat
@@ -43,6 +43,7 @@ class TemplateNotFoundError(WebsiteError): pass
 class PartialNotFoundError(WebsiteError): pass
 class MissingContentError(WebsiteError): pass
 class UnusedContentError(WebsiteError): pass
+class MissingVarsError(WebsiteError): pass
 
 
 def dir_getter(root_path):
@@ -246,27 +247,15 @@ def render(template, content, j2=False):
         jtemplate = jinja2.Template(template_str)
         rendered_output = jtemplate.render(**content)
     else:
-        vars = {}
-        vars.update(template['vars'])
-        vars.update(content)
+        vars = get_vars(template)
+        selected_content = get_content(template, content)
+        vars.update(selected_content)
         rendered_output = template_str.format(**vars)
+        logger.debug('get_template_str(): rendered_output: {}'.format(dbgdump(rendered_output)))
     return rendered_output
 
 
-def get_template_str(template, content, name='doc'):
-    logger.debug('get_template_str(): Get template partials. {}'.format(
-        '-----------------------------------'))
-    template_str = '\n'.join(partial_getter(template))
-    logger.debug('get_template_str(): template_str: {}'.format(dbgdump(template_str)))
-
-    # vars
-    vars = template['vars']
-    logger.debug('vars: {}'.format(vars.keys()))
-    valid_vars = {var:value for var, value in vars.items() if value is not None}
-    logger.debug('valid_vars: {}'.format(valid_vars.keys()))
-    empty_vars = {var:value for var, value in vars.items() if value is None}
-    logger.debug('empty_vars: {}'.format(empty_vars.keys()))
-    
+def get_content(template, content):
     # content
     logger.debug('content: {}'.format(content.keys()))
     logger.debug('template_content: {}'.format(template['content'].keys()))
@@ -274,7 +263,7 @@ def get_template_str(template, content, name='doc'):
     logger.debug('used_content: {}'.format(used_content.keys()))
     overrides = [key for key in used_content if template['content'][key] is not None]
     logger.debug('overrides: {}'.format(overrides))
-    selected_content = template['content']
+    selected_content = deepcopy(template['content'])
     selected_content.update(used_content)
     logger.debug('selected_content: {}'.format(selected_content.keys()))
     missing_content = {key:value for key, value in selected_content.items() if value is None}
@@ -286,11 +275,27 @@ def get_template_str(template, content, name='doc'):
         raise MissingContentError('Not found: {}'.format(missing_content.keys()))
     if unused_content:
         raise UnusedContentError('Unused content: {}'.format(unused_content))
+    return selected_content
 
-    valid = valid_vars
-    valid.update(selected_content)
-    template_str = template_str.format(**valid)
-    logger.debug('get_template_str(): template_str: filled: {}'.format(dbgdump(template_str)))
+
+def get_vars(template):
+    # vars
+    vars = template['vars']
+    logger.debug('vars: {}'.format(vars.keys()))
+    valid_vars = {var:value for var, value in vars.items() if value is not None}
+    logger.debug('valid_vars: {}'.format(valid_vars.keys()))
+    empty_vars = {var:value for var, value in vars.items() if value is None}
+    logger.debug('empty_vars: {}'.format(empty_vars.keys()))
+    if empty_vars:
+        raise MissingVarsError('Not found: {}'.format(empty_vars.keys()))
+    return valid_vars
+
+def get_template_str(template, content, name='doc'):
+    logger.debug('get_template_str(): Get template partials. {}'.format(
+        '-----------------------------------'))
+    template_str = '\n'.join(partial_getter(template))
+    logger.debug('get_template_str(): template_str: {}'.format(dbgdump(template_str)))
+
     return template_str
 
 
@@ -322,7 +327,7 @@ def inherit(tplname, tpltype, templates):
         yamldump(ancestors)))
     if not ancestors:
         return ordereddict()
-    template = copy.deepcopy(ancestors[-1])
+    template = deepcopy(ancestors[-1])
     for ancestor in reversed(ancestors):
         for key, value in ancestor.items():
             template[key] = value
