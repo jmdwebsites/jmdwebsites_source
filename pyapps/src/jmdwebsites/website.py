@@ -202,31 +202,29 @@ def build_html_file(url, source_dir, build_dir):
     # No source file detected, so use a template
 
     page_spec = get_page_spec(url)
-    template = get_template_str(page_spec)
+    template = get_template(page_spec)
     content = get_content(page_spec, source_dir, fil=FileFilter('_', ['.html','.md']))
     html = render_html(template, content)
     target_dir.ensure(dir=1)
     target_dir.join('index.html').write(html)
 
 
-def get_page_spec(url, templates=None):
+def get_page_spec(url, specs=None):
     logger.debug('get_page_spec({})'.format(url))
-    if templates is None:
+    if specs is None:
         with py.path.local(__file__).dirpath(TEMPLATE_FILE).open() as f:
-            templates = ryaml.load(f, Loader=ryaml.RoundTripLoader)
+            specs = ryaml.load(f, Loader=ryaml.RoundTripLoader)
 
     page_spec_name = os.path.basename(url)
-    if page_spec_name not in templates['pages']:
+    if page_spec_name not in specs['pages']:
         page_spec_name = 'page'
     logger.debug('get_page_spec(): spec name: {}'.format(page_spec_name))
 
-    #raw_page_spec = inherit(page_spec_name, 'pages', templates)
-    raw_page_spec = inherit(page_spec_name, templates['pages'])
+    raw_page_spec = get_spec(page_spec_name, specs['pages'])
     logger.debug('get_page_spec(): {}: raw: {}'.format(
         page_spec_name, yamldump(raw_page_spec)))
     
-    #page_spec = {type_: inherit(name, type_, templates) 
-    page_spec = {type_: inherit(name, templates[type_]) 
+    page_spec = {type_: get_spec(name, specs[type_]) 
         for type_, name in raw_page_spec.items()} 
     logger.debug('get_page_spec(): {}: processed: {}'.format(
         page_spec_name, yamldump(page_spec)))
@@ -244,20 +242,19 @@ def render_html(template, content):
 
 def render(template, content, j2=False):
     logger.debug('render(template, content)')
-    vars = content
     if j2:
         jtemplate = jinja2.Template(template)
-        rendered_output = jtemplate.render(**vars)
+        rendered_output = jtemplate.render(**content)
     else:
-        rendered_output = template.format(**vars)
+        rendered_output = template.format(**content)
     logger.debug('render(): rendered_output: {}'.format(dbgdump(rendered_output)))
     return rendered_output
 
 
-def get_content(template, source_dir, fil=None):
+def get_content(spec, source_dir, fil=None):
     source_content = get_source_content(source_dir, fil=fil)
-    selected_content = get_selected_content(template, source_content)
-    content = get_vars(template)
+    selected_content = get_selected_content(spec, source_content)
+    content = get_vars(spec)
     content.update(selected_content)
     return content
 
@@ -270,14 +267,14 @@ def get_source_content(source_dir, fil=None):
     return content
 
 
-def get_selected_content(template, content):
+def get_selected_content(spec, content):
     logger.debug('content: {}'.format(content.keys()))
-    logger.debug('template_content: {}'.format(template['content'].keys()))
-    used_content = {key:'\n{}'.format(content[key]) for key in template['content'] if key in content}
+    logger.debug('template_content: {}'.format(spec['content'].keys()))
+    used_content = {key:'\n{}'.format(content[key]) for key in spec['content'] if key in content}
     logger.debug('used_content: {}'.format(used_content.keys()))
-    overrides = [key for key in used_content if template['content'][key] is not None]
+    overrides = [key for key in used_content if spec['content'][key] is not None]
     logger.debug('overrides: {}'.format(overrides))
-    selected_content = deepcopy(template['content'])
+    selected_content = deepcopy(spec['content'])
     selected_content.update(used_content)
     logger.debug('selected_content: {}'.format(selected_content.keys()))
     missing_content = {key:value for key, value in selected_content.items() if value is None}
@@ -291,8 +288,8 @@ def get_selected_content(template, content):
     return selected_content
 
 
-def get_vars(template):
-    vars = template['vars']
+def get_vars(spec):
+    vars = spec['vars']
     logger.debug('vars: {}'.format(vars.keys()))
     valid_vars = {var:value for var, value in vars.items() if value is not None}
     logger.debug('valid_vars: {}'.format(valid_vars.keys()))
@@ -303,17 +300,16 @@ def get_vars(template):
     return valid_vars
 
 
-def get_template_str(template, name='doc'):
-    logger.debug('get_template_str(): Get template partials. {}'.format(
+def get_template(spec, name='doc'):
+    logger.debug('get_template(): Get partials. {}'.format(
         '-----------------------------------'))
-    template_str = '\n'.join(partial_getter(template))
-    logger.debug('get_template_str(): template_str: {}'.format(dbgdump(template_str)))
-
+    template_str = '\n'.join(partial_getter(spec))
+    logger.debug('get_template(): template_str: {}'.format(dbgdump(template_str)))
     return template_str
 
 
-def partial_getter(template, name='doc'):
-    layouts = template['layouts']
+def partial_getter(spec, name='doc'):
+    layouts = spec['layouts']
     try:
         top = layouts[name]
     except KeyError:
@@ -321,9 +317,9 @@ def partial_getter(template, name='doc'):
     logger.debug('partial_getter(): stem: ' + name)
     if top:
         for child_name in top:
-            fmt = template['partials'][child_name]
+            fmt = spec['partials'][child_name]
             if child_name in layouts and layouts[child_name]:
-                child = '\n'.join(partial_getter(template, name=child_name))
+                child = '\n'.join(partial_getter(spec, name=child_name))
                 child = '\n{}\n'.format(child)
             else:
                 logger.debug('partial_getter(): leaf: ' + child_name)
@@ -331,19 +327,19 @@ def partial_getter(template, name='doc'):
             partial = fmt.format(**{child_name: child})
             yield partial
 
-def inherit(name, root):
-    logger.debug('inherit(): {}'.format(name))
+def get_spec(name, root):
+    logger.debug('get_spec(): {}'.format(name))
     ancestors = [root[name]] + [anc for anc in inheritor(root[name], root) if anc]
-    logger.debug('inherit(): ancestors: {}'.format(
+    logger.debug('get_spec(): ancestors: {}'.format(
         yamldump(ancestors)))
     if not ancestors:
         return ordereddict()
-    template = deepcopy(ancestors[-1])
+    spec = deepcopy(ancestors[-1])
     for ancestor in reversed(ancestors):
         for key, value in ancestor.items():
-            template[key] = value
-    del template['inherit']
-    return template
+            spec[key] = value
+    del spec['inherit']
+    return spec
 
 
 def inheritor(current, root):
@@ -401,9 +397,6 @@ class Website(object):
         #else:
         #    print('clobber: No such build dir: {}'.format(self.build_dir))
         protected_remove(self.build_dir)
-
-    def build_templates(self):
-        """Build templates."""
 
     def build(self):
         """Build the website."""
