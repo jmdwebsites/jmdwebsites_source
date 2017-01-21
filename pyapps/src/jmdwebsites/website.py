@@ -201,7 +201,7 @@ def build_html_file(url, source_dir, build_dir):
     logger.debug("No source file found: {}".format(source_file))
     # No source file detected, so use a template
 
-    page_spec = get_page_spec(url)
+    page_spec = get_page_spec(url, source_dir)
     template = get_template(page_spec)
     content = get_content(page_spec, source_dir, fil=FileFilter('_', ['.html','.md']))
     html = render_html(template, content)
@@ -209,11 +209,10 @@ def build_html_file(url, source_dir, build_dir):
     target_dir.join('index.html').write(html)
 
 
-def get_page_spec(url, specs=None):
-    logger.debug('get_page_spec({})'.format(url))
-    if specs is None:
-        with py.path.local(__file__).dirpath(PAGE_SPECS_FILE).open() as f:
-            specs = ryaml.load(f, Loader=ryaml.RoundTripLoader)
+def get_page_spec(url, source_dir=None):
+    logger.debug('get_page_spec({})'.format(url, source_dir))
+    
+    specs = get_page_specs(source_dir)
 
     page_spec_name = os.path.basename(url)
     if page_spec_name not in specs['pages']:
@@ -230,6 +229,17 @@ def get_page_spec(url, specs=None):
         page_spec_name, yamldump(page_spec)))
 
     return page_spec
+
+
+def get_page_specs(source_dir=None):
+    page_specs_file = source_dir.join(PAGE_SPECS_FILE)
+    if source_dir and page_specs_file.check():
+        pass
+    else:
+        page_specs_file = py.path.local(__file__).dirpath(PAGE_SPECS_FILE)
+    with page_specs_file.open() as f:
+        specs = ryaml.load(f, Loader=ryaml.RoundTripLoader)
+    return specs
 
 
 def render_html(template, content):
