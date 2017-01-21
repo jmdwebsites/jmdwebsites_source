@@ -166,12 +166,32 @@ def init_website():
     site_dir.ensure(CONFIG_FILE)
 
 
-def build_home_page(url, source_dir, build_dir):
-    try:
-        build_page(url, source_dir, build_dir)
-    except SourceDirNotFoundError as e:
-        logger.error(e)
-    build_dir.ensure(url, 'index.html')
+def content_dir_getter(site, site_dir):
+    for content_type, dirname in site[CONTENT].items():
+        if content_type not in set([HOME, PAGES, POSTS]):
+            raise InvalidContentTypeError(
+                'Invalid content type: {}'.format(content_type))
+        if dirname is None:
+            dirname = os.path.join(CONTENT, content_type)
+        logger.info('content_dir_getter(): {}: {}'.format(
+            content_type, dirname))
+        yield content_type, site_dir.join(dirname)
+
+
+def page_path_getter(content_type, content_dir):
+    logger.info('Build content: {}: {}'.format(
+        content_type, content_dir))
+    if content_type == HOME:
+        yield content_dir, ''
+    else:
+        for page_path in content_dir.visit(fil=isdir):
+            yield content_dir, page_path.relto(content_dir)
+
+
+def get_url(rel_page_path, site):
+    #TODO: Check site config to get slugs and relpagepath to url mappings.
+    url = os.path.join('/', rel_page_path)
+    return url
 
 
 def build_page(url, source_dir, build_dir):
@@ -405,30 +425,9 @@ class Website(object):
             'Build directory already exists.'.format(self.build_dir)
         self.build_dir.ensure(dir=1)
         site = get_site_design(self.site_dir)
-        
-        for content_name, content_dir in self.content_dir_getter(site):
-            logger.info('Build content: {}: {}'.format(
-                content_name, content_dir))
-            if content_name == HOME:
-                build_home_page('/', content_dir, self.build_dir)
-            else:
-                for page_path in content_dir.visit(fil=isdir):
-                    url = self.get_url(page_path.relto(content_dir), site)
-                    build_page(url, page_path, self.build_dir)
-
-    def get_url(self, rel_page_path, site):
-        #TODO: Check site config to get slugs and relpagepath to url mappings.
-        url = os.path.join('/', rel_page_path)
-        return url
-
-    def content_dir_getter(self, site):
-        for content_type, dirname in site[CONTENT].items():
-            if content_type not in set([HOME, PAGES, POSTS]):
-                raise InvalidContentTypeError(
-                    'Invalid content type: {}'.format(content_type))
-            if dirname is None:
-                dirname = os.path.join(CONTENT, content_type)
-            logger.info('content_dir_getter(): {}: {}'.format(
-                content_type, dirname))
-            yield content_type, self.site_dir.join(dirname)
+        for content_type, content_dir in content_dir_getter(site, self.site_dir):
+            for page_root, rel_page_path in page_path_getter(content_type, content_dir):
+                page_path = page_root.join(rel_page_path)
+                url = get_url(rel_page_path, site)
+                build_page(url, page_path, self.build_dir)
 
