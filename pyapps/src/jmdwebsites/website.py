@@ -45,16 +45,11 @@ class MissingContentError(WebsiteError): pass
 class UnusedContentError(WebsiteError): pass
 class MissingVarsError(WebsiteError): pass
 class FileFilterError(Exception): pass
+class InvalidContentTypeError(Exception): pass
 
 
-def dir_getter(root_path):
-    return (path for path in root_path.visit() if path.check(dir=1))
-
-
-def url_and_dir_getter(root):
-    for dir in dir_getter(root):
-        url = os.path.join('/', dir.relto(root))
-        yield url, dir  
+def isdir(path): 
+    return path.check(dir=1)
 
 
 def get_project_dir(config_basename =  PROJDIR):
@@ -413,21 +408,27 @@ class Website(object):
         
         for content_name, content_dir in self.content_dir_getter(site):
             logger.info('Build content: {}: {}'.format(
-                content_name, 
-                content_dir))
+                content_name, content_dir))
             if content_name == HOME:
                 build_home_page('/', content_dir, self.build_dir)
             else:
-                for url, source_dir in url_and_dir_getter(content_dir):
-                    build_page(url, source_dir, self.build_dir)
+                for page_path in content_dir.visit(fil=isdir):
+                    url = self.get_url(page_path.relto(content_dir), site)
+                    build_page(url, page_path, self.build_dir)
+
+    def get_url(self, rel_page_path, site):
+        #TODO: Check site config to get slugs and relpagepath to url mappings.
+        url = os.path.join('/', rel_page_path)
+        return url
 
     def content_dir_getter(self, site):
-        for name in site[CONTENT]:
-            if name in set([HOME, PAGES, POSTS]):
-                dirname = site[CONTENT][name]
-                if dirname is None:
-                    dirname = os.path.join(CONTENT, name)
-                yield name, self.site_dir.join(dirname)
-            else:
-                assert 0, \
-                    'Content not recognized: {}'.format(name)
+        for content_type, dirname in site[CONTENT].items():
+            if content_type not in set([HOME, PAGES, POSTS]):
+                raise InvalidContentTypeError(
+                    'Invalid content type: {}'.format(content_type))
+            if dirname is None:
+                dirname = os.path.join(CONTENT, content_type)
+            logger.info('content_dir_getter(): {}: {}'.format(
+                content_type, dirname))
+            yield content_type, self.site_dir.join(dirname)
+
