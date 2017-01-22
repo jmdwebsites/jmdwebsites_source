@@ -1,6 +1,4 @@
 pages:
-    empty:
-        layouts: empty
     default:
         layouts: default
         partials: default
@@ -21,8 +19,6 @@ pages:
         vars: products
         content: products
 layouts:
-    empty:
-        doc:
     default:
         inherit:
         doc:

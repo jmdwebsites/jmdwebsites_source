@@ -194,19 +194,25 @@ def get_url(rel_page_path, site):
     return url
 
 
-def build_page(url, source_dir, build_dir):
+def build_page(page_root, rel_page_path, build_dir, site):
+    source_dir = page_root.join(rel_page_path)
+    url = get_url(rel_page_path, site)
+    specs = get_page_specs(source_dir)
+    page_spec = get_page_spec(rel_page_path, specs)
+    target_dir = build_dir.join(url)
+
     logger.debug('%%%%%%%%%%%%%%%%%%%%% {} %%%%%%%%%%%%%%%%%%%%%'.format(url))
     logger.info("Build page: {}".format(url))
     if not source_dir.check(dir=1):
         raise SourceDirNotFoundError(
             'Source dir not found: {}'.format(source_dir))
-    build_html_file(url, source_dir, build_dir)
-    build_page_assets(url, source_dir, build_dir)
+    build_html_file(source_dir, target_dir, page_spec)
+    build_page_assets(source_dir, target_dir)
 
 
-def build_html_file(url, source_dir, build_dir):
+def build_html_file(source_dir, target_dir, page_spec):
     logger.debug('build_html_file(): source_dir: {}'.format(source_dir))
-    target_dir = build_dir.join(url)
+    #target_dir = build_dir.join(url)
 
     #TODO: Can also check for index.php file here too
     source_file = source_dir.join('index.html')
@@ -216,7 +222,7 @@ def build_html_file(url, source_dir, build_dir):
     logger.debug("No source file found: {}".format(source_file))
     # No source file detected, so use a template
 
-    page_spec = get_page_spec(url, source_dir)
+    #page_spec = get_page_spec(url, source_dir)
     template = get_template(page_spec)
     content = get_content(page_spec, source_dir, fil=FileFilter('_', ['.html','.md']))
     html = render_html(template, content)
@@ -224,12 +230,9 @@ def build_html_file(url, source_dir, build_dir):
     target_dir.join('index.html').write(html)
 
 
-def get_page_spec(url, source_dir=None):
-    logger.debug('get_page_spec({})'.format(url, source_dir))
+def get_page_spec(page_spec_name, specs):
+    logger.debug('get_page_spec(): {}'.format(page_spec_name))
     
-    specs = get_page_specs(source_dir)
-
-    page_spec_name = os.path.basename(url)
     if page_spec_name not in specs['pages']:
         page_spec_name = 'page'
     logger.debug('get_page_spec(): spec name: {}'.format(page_spec_name))
@@ -373,11 +376,10 @@ def inheritor(current, root):
         yield current
 
 
-def build_page_assets(url, source_dir, build_dir):
-    target_dir = build_dir.join(url)
+def build_page_assets(source_dir, target_dir):
     for asset in source_dir.visit(fil='*.css'):
-        logger.info('Get asset /{} from {}'.format(
-            target_dir.relto(build_dir).join(asset.basename), 
+        logger.info('Get asset {} from {}'.format(
+            target_dir.relto(target_dir).join(asset.basename), 
             asset))
         asset.copy(target_dir)
 
@@ -427,7 +429,4 @@ class Website(object):
         site = get_site_design(self.site_dir)
         for content_type, content_dir in content_dir_getter(site, self.site_dir):
             for page_root, rel_page_path in page_path_getter(content_type, content_dir):
-                page_path = page_root.join(rel_page_path)
-                url = get_url(rel_page_path, site)
-                build_page(url, page_path, self.build_dir)
-
+                build_page(page_root, rel_page_path, self.build_dir, site)
