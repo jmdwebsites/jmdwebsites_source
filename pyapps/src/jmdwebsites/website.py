@@ -177,15 +177,20 @@ def init_website():
 
 
 def content_dir_getter(site, site_dir):
-    for content_group, dirname in site[CONTENT_GROUP].items():
-        if content_group not in set([HOME, PAGES, POSTS]):
-            raise InvalidContentTypeError(
-                'Invalid content type: {}'.format(content_group))
-        if dirname is None:
-            dirname = os.path.join(CONTENT, content_group)
-        logger.info('content_dir_getter(): {}: {}'.format(
-            content_group, dirname))
-        yield content_group, site_dir.join(dirname)
+    if CONTENT_GROUP in site:
+        for content_group, dirname in site[CONTENT_GROUP].items():
+            if content_group not in set([HOME, PAGES, POSTS]):
+                raise InvalidContentTypeError(
+                    'Invalid content type: {}'.format(content_group))
+            if dirname is None:
+                dirname = os.path.join(CONTENT, content_group)
+            logger.info('content_dir_getter(): {}: {}'.format(
+                content_group, dirname))
+            yield content_group, site_dir.join(dirname)
+    else:
+        root, dirs, files = next(os.walk(site_dir.join(CONTENT).strpath))
+        for content_group in dirs: 
+            yield content_group, site_dir.join(CONTENT, content_group)
 
 
 def page_path_getter(content_group, content_dir):
@@ -241,7 +246,7 @@ def get_page_spec(page_spec_name, specs):
     logger.debug('get_page_spec(): {}'.format(page_spec_name))
     
     if page_spec_name not in specs['pages']:
-        page_spec_name = 'page'
+        page_spec_name = 'default'
     logger.debug('get_page_spec(): spec name: {}'.format(page_spec_name))
 
     raw_page_spec = get_spec(page_spec_name, specs['pages'])
