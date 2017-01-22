@@ -125,23 +125,40 @@ def dict_walker(parent, parent_path=''):
 
 
 def get_site_design(site_dir):
-    #TODO: If a CONFIG_FILE exists, use it. 
-    #      Otherwise, use a default version in the theme dir
-    config_file = site_dir.join(CONFIG_FILE)
-    if config_file.check():
-        logger.info('Site config file: {}'.format(config_file))
-        with site_dir.join(CONFIG_FILE).open() as f:
-            config = yaml.load(f)
-    else:
-        if 0:
-            #TODO: Change this to theme.yaml and use as a default theme
-            theme_dir = py.path.local(__file__).dirpath('themes','base')
-            with theme_dir.join(CONFIG_FILE).open() as f:
-                config = yaml.load(f)
+    config_file = None
+    if not config_file:
+        config_file = site_dir.join(CONFIG_FILE)
+        if not config_file.check():
+            config_file = None
+    ##TODO: If a CONFIG_FILE exists, use it. 
+    ##      Otherwise, use a default version in the theme dir
+    #if not config_file:
+    #    config_file = theme_dir.join(CONFIG_FILE)
+    #    if not config_file.check():
+    #        config_file = None
+    if not config_file:
+        config_file = py.path.local(__file__).dirpath(CONFIG_FILE)
+        if not config_file.check():
+            config_file = None
+    logger.info('Site config file: {}'.format(config_file))
+    if not config_file:
         config = { CONTENT_GROUP: {HOME: None, PAGES: None}}
+    else:
+        with config_file.open() as f:
+            config = ryaml.load(f, Loader=ryaml.RoundTripLoader)
     logger.info('Site config: {}'.format(config))
     return config
 
+
+def get_page_specs(source_dir=None):
+    page_specs_file = source_dir.join(PAGE_SPECS_FILE)
+    if source_dir and page_specs_file.check():
+        pass
+    else:
+        page_specs_file = py.path.local(__file__).dirpath(PAGE_SPECS_FILE)
+    with page_specs_file.open() as f:
+        specs = ryaml.load(f, Loader=ryaml.RoundTripLoader)
+    return specs
 
 def new_website(site_dirname = ''):
     """New website."""
