@@ -253,8 +253,8 @@ def get_page_spec(page_spec_name, specs):
     logger.debug('get_page_spec(): {}: raw: {}'.format(
         page_spec_name, yamldump(raw_page_spec)))
     
-    page_spec = {type_: get_spec(name, specs[type_]) 
-        for type_, name in raw_page_spec.items()} 
+    page_spec = CommentedMap((type_, get_spec(name, specs[type_])) 
+        for type_, name in raw_page_spec.items())
     logger.debug('get_page_spec(): {}: processed: {}'.format(
         page_spec_name, yamldump(page_spec)))
 
@@ -346,6 +346,7 @@ def partial_getter(spec, name='doc'):
                 child = '{{{0}}}'.format(child_name)
             partial = fmt.format(**{child_name: child})
             yield partial
+
 
 def get_spec(name, root):
     logger.debug('get_spec(): name: {}'.format(name))

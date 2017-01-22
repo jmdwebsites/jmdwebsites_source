@@ -31,6 +31,7 @@ layouts:
             main:
             footer:
         header:
+        navbar:
         main:
             article:
     default:
@@ -41,7 +42,7 @@ layouts:
             headlines:
             article:
     products:
-        inherit: headlines
+        inherit: default
         head:
             charset:
             title:
