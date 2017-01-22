@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 BUILD = 'build'
 CONTENT = 'content'
+CONTENT_GROUP = 'content_group'
 CONFIG_FILE = 'site.yaml'
 PAGE_SPECS_FILE = 'pagespecs.yaml'
 PROJDIR = '.jmdwebsite'
@@ -137,7 +138,7 @@ def get_site_design(site_dir):
             theme_dir = py.path.local(__file__).dirpath('themes','base')
             with theme_dir.join(CONFIG_FILE).open() as f:
                 config = yaml.load(f)
-        config = { CONTENT: {HOME: None, PAGES: None}}
+        config = { CONTENT_GROUP: {HOME: None, PAGES: None}}
     logger.info('Site config: {}'.format(config))
     return config
 
@@ -167,21 +168,21 @@ def init_website():
 
 
 def content_dir_getter(site, site_dir):
-    for content_type, dirname in site[CONTENT].items():
-        if content_type not in set([HOME, PAGES, POSTS]):
+    for content_group, dirname in site[CONTENT_GROUP].items():
+        if content_group not in set([HOME, PAGES, POSTS]):
             raise InvalidContentTypeError(
-                'Invalid content type: {}'.format(content_type))
+                'Invalid content type: {}'.format(content_group))
         if dirname is None:
-            dirname = os.path.join(CONTENT, content_type)
+            dirname = os.path.join(CONTENT, content_group)
         logger.info('content_dir_getter(): {}: {}'.format(
-            content_type, dirname))
-        yield content_type, site_dir.join(dirname)
+            content_group, dirname))
+        yield content_group, site_dir.join(dirname)
 
 
-def page_path_getter(content_type, content_dir):
+def page_path_getter(content_group, content_dir):
     logger.info('Build content: {}: {}'.format(
-        content_type, content_dir))
-    if content_type == HOME:
+        content_group, content_dir))
+    if content_group == HOME:
         yield content_dir, ''
     else:
         for page_path in content_dir.visit(fil=isdir):
@@ -397,7 +398,6 @@ class Website(object):
             self.build_dir = self.site_dir.join(BUILD)
         else:
             self.build_dir = py.path.local(build_dir)
-        #self.content_dir = self.site_dir.join(CONTENT)
         logger.info('site dir name: {}'.format(self.site_dir))
         logger.info('build dir name: {}'.format(self.build_dir))
 
@@ -427,6 +427,6 @@ class Website(object):
             'Build directory already exists.'.format(self.build_dir)
         self.build_dir.ensure(dir=1)
         site = get_site_design(self.site_dir)
-        for content_type, content_dir in content_dir_getter(site, self.site_dir):
-            for page_root, rel_page_path in page_path_getter(content_type, content_dir):
+        for content_group, content_dir in content_dir_getter(site, self.site_dir):
+            for page_root, rel_page_path in page_path_getter(content_group, content_dir):
                 build_page(page_root, rel_page_path, self.build_dir, site)
