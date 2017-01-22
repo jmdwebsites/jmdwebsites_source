@@ -47,6 +47,7 @@ class UnusedContentError(WebsiteError): pass
 class MissingVarsError(WebsiteError): pass
 class FileFilterError(Exception): pass
 class InvalidContentTypeError(Exception): pass
+class FileNotFoundError(Exception): pass
 
 
 def isdir(path): 
@@ -140,25 +141,16 @@ def get_site_design(site_dir):
         config_file = py.path.local(__file__).dirpath(CONFIG_FILE)
         if not config_file.check():
             config_file = None
-    logger.info('Site config file: {}'.format(config_file))
     if not config_file:
+        raise FileNotFoundError('Site config file: Not found: {}'.format(config_file))
         config = { CONTENT_GROUP: {HOME: None, PAGES: None}}
     else:
+        logger.info('Site config file: {}'.format(config_file))
         with config_file.open() as f:
             config = ryaml.load(f, Loader=ryaml.RoundTripLoader)
     logger.info('Site config: {}'.format(config))
     return config
 
-
-def get_page_specs(source_dir=None):
-    page_specs_file = source_dir.join(PAGE_SPECS_FILE)
-    if source_dir and page_specs_file.check():
-        pass
-    else:
-        page_specs_file = py.path.local(__file__).dirpath(PAGE_SPECS_FILE)
-    with page_specs_file.open() as f:
-        specs = ryaml.load(f, Loader=ryaml.RoundTripLoader)
-    return specs
 
 def new_website(site_dirname = ''):
     """New website."""
@@ -215,8 +207,7 @@ def get_url(rel_page_path, site):
 def build_page(page_root, rel_page_path, build_dir, site):
     source_dir = page_root.join(rel_page_path)
     url = get_url(rel_page_path, site)
-    specs = get_page_specs(source_dir)
-    page_spec = get_page_spec(rel_page_path, specs)
+    page_spec = get_page_spec(rel_page_path, site)
     target_dir = build_dir.join(url)
 
     logger.debug('%%%%%%%%%%%%%%%%%%%%% {} %%%%%%%%%%%%%%%%%%%%%'.format(url))
@@ -230,7 +221,6 @@ def build_page(page_root, rel_page_path, build_dir, site):
 
 def build_html_file(source_dir, target_dir, page_spec):
     logger.debug('build_html_file(): source_dir: {}'.format(source_dir))
-    #target_dir = build_dir.join(url)
 
     #TODO: Can also check for index.php file here too
     source_file = source_dir.join('index.html')
@@ -240,7 +230,6 @@ def build_html_file(source_dir, target_dir, page_spec):
     logger.debug("No source file found: {}".format(source_file))
     # No source file detected, so use a template
 
-    #page_spec = get_page_spec(url, source_dir)
     template = get_template(page_spec)
     content = get_content(page_spec, source_dir, fil=FileFilter('_', ['.html','.md']))
     html = render_html(template, content)
@@ -265,17 +254,6 @@ def get_page_spec(page_spec_name, specs):
         page_spec_name, yamldump(page_spec)))
 
     return page_spec
-
-
-def get_page_specs(source_dir=None):
-    page_specs_file = source_dir.join(PAGE_SPECS_FILE)
-    if source_dir and page_specs_file.check():
-        pass
-    else:
-        page_specs_file = py.path.local(__file__).dirpath(PAGE_SPECS_FILE)
-    with page_specs_file.open() as f:
-        specs = ryaml.load(f, Loader=ryaml.RoundTripLoader)
-    return specs
 
 
 def render_html(template, content):

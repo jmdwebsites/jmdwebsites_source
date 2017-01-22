@@ -1,3 +1,6 @@
+content_group:
+    pages:
+    home:
 pages:
     default:
         layouts: default

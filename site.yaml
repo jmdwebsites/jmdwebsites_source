@@ -1,3 +1,120 @@
 content_group:
     home:
     pages:
+pages:
+    default:
+        layouts: default
+        partials: default
+        vars: default
+        content: default
+    basepage:
+        inherit: default
+        partials: html5
+    page:
+        inherit: basepage
+        layouts: default
+    about:
+        inherit: page
+        layouts: about
+    products:
+        inherit: page
+        layouts: products
+        vars: products
+        content: products
+layouts:
+    default:
+        inherit:
+        doc:
+            doctype:
+            html:
+        html:
+            head:
+            body:
+        head:
+            charset:
+        body:
+            header:
+            main:
+            footer:
+        header:
+        main:
+            article:
+    headlines:
+        inherit: default
+        main:
+            headlines:
+            article:
+    products:
+        inherit: headlines
+        head:
+            charset:
+            title:
+            author:
+            robots:
+            stylesheet:
+            html5shiv:
+    about:
+        inherit: default
+        main:
+            cards:
+            article:
+partials:
+    default:
+        #doctype: '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">'
+        doctype: '<!DOCTYPE {doctype}>'
+        html: '<html lang="{{lang}}">{html}</html>'
+        head: '<head>{head}</head>'
+        charset: '<meta charset="{charset}"/>'
+        #title: <title>{{{{title}}}}</title>
+        title: <title>{{title}}</title>
+        author: '<meta content="{author}" name="author"/>'
+        robots: '<meta content="{robots}" name="robots"/>'
+        stylesheet: '<link href="{stylesheet}" rel="stylesheet"/>'
+        html5shiv:
+        body: '<body>{body}</body>'
+        header: '<div class="header">{header}</div>'
+        main: '<div class="main">{main}</div>'
+        footer: '<div class="footer">{footer}</div>'
+        headlines: '<div class="headlines">{headlines}</div>'
+        article: '<div class="article">{article}</div>'
+        cards: '<div class="cards">{cards}</div>'
+    html4:
+        inherit: default
+    html5tagless:
+        inherit: default
+        #doctype: '<!DOCTYPE html>'
+        html5shiv: '<!--[if ls IE 9] <script src="{html5shiv}"></script><![endif]-->'
+    html5:
+        inherit: html5tagless
+        header: '<header>{header}</header>'
+        main: '<main>{main}</main>'
+        footer: '<footer>{footer}</footer>'
+        article: '<article>{article}</article>'
+vars:
+    default:
+        lang: 'en'
+        charset: 'utf-8'
+        author: 'jmdwebsites'
+        robots: 'noindex'
+        stylesheet: '/page.css'
+        html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
+        doctype: 'html'
+        title: 'My Web Page'
+    html4:
+        inherit: default
+        html5shiv: 'blah'
+        doctype: 'HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"'
+    products:
+        inherit: html4
+content:
+    default:
+        header: ''
+        article: ''
+        footer: ''
+        headlines: ''
+        cards: ''
+    products:
+        inherit: default
+        article: 'Default article text ...'
+        #article:
+        footer: 'Products footer!'
