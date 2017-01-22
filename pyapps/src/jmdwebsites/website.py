@@ -243,11 +243,11 @@ def build_html_file(source_dir, target_dir, page_spec):
 
 
 def get_page_spec(page_spec_name, specs):
-    logger.debug('get_page_spec(): {}'.format(page_spec_name))
+    logger.debug('get_page_spec(): page_spec_name: {}'.format(repr(page_spec_name)))
     
     if page_spec_name not in specs['pages']:
         page_spec_name = 'default'
-    logger.debug('get_page_spec(): spec name: {}'.format(page_spec_name))
+        logger.debug('get_page_spec(): page_spec_name: {}'.format(repr(page_spec_name)))
 
     raw_page_spec = get_spec(page_spec_name, specs['pages'])
     logger.debug('get_page_spec(): {}: raw: {}'.format(
@@ -348,7 +348,8 @@ def partial_getter(spec, name='doc'):
             yield partial
 
 def get_spec(name, root):
-    logger.debug('get_spec(): {}'.format(name))
+    logger.debug('get_spec(): name: {}'.format(name))
+    logger.debug('get_spec(): root[name]: {}'.format(root[name]))
     ancestors = [root[name]] + [anc for anc in inheritor(root[name], root) if anc]
     logger.debug('get_spec(): ancestors: {}'.format(
         yamldump(ancestors)))
@@ -357,7 +358,12 @@ def get_spec(name, root):
     spec = deepcopy(ancestors[-1])
     for ancestor in reversed(ancestors):
         for key, value in ancestor.items():
-            spec[key] = value
+            if isinstance(value, dict) and 'inherit' in value:
+                spec.setdefault(key, CommentedMap())
+                spec[key].update(value)
+                del spec[key]['inherit']
+            else:
+                spec[key] = value
     del spec['inherit']
     return spec
 
