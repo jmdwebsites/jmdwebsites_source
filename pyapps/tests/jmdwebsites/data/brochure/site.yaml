@@ -11,11 +11,7 @@ pages:
     about:
         inherit: default
         layouts: about
-    products:
-        inherit: default
-        layouts: products
-        vars: products
-        content: products
+        content: about
 layouts:
     base:
         inherit:
@@ -41,15 +37,6 @@ layouts:
         main:
             headlines:
             article:
-    products:
-        inherit: headlines
-        head:
-            charset:
-            title:
-            author:
-            robots:
-            stylesheet:
-            html5shiv:
     about:
         inherit: default
         main:
@@ -57,31 +44,35 @@ layouts:
             article:
 partials:
     base:
-        doctype: '<!DOCTYPE {doctype}>'
-        html: '<html lang="{{lang}}">{html}</html>'
-        head: '<head>{head}</head>'
-        charset: '<meta charset="{charset}"/>'
+        doctype: '<!DOCTYPE {partial}>'
+        html: '<html lang="{{lang}}">{partial}</html>'
+        head: '<head>{partial}</head>'
+        charset: '<meta charset="{partial}"/>'
         title: <title>{{title}}</title>
-        author: '<meta content="{author}" name="author"/>'
-        robots: '<meta content="{robots}" name="robots"/>'
-        stylesheet: '<link href="{stylesheet}" rel="stylesheet"/>'
+        author: '<meta content="{partial}" name="author"/>'
+        robots: '<meta content="{partial}" name="robots"/>'
+        stylesheet: '<link href="{partial}" rel="stylesheet"/>'
         html5shiv: ''
-        body: '<body>{body}</body>'
-        header: '<div class="header">{header}</div>'
-        main: '<div class="main">{main}</div>'
-        footer: '<div class="footer">{footer}</div>'
-        headlines: '<div class="headlines">{headlines}</div>'
-        article: '<div class="article">{article}</div>'
-        cards: '<div class="cards">{cards}</div>'
+        body: '<body>{partial}</body>'
+        header: '<div class="header">{partial}</div>'
+        navbar: '<div class="navbar">{partial}</div>'
+        navs: '<ul class="{partialname}">{partial}</ul>'
+        navlink: '<li><a href="{partial}">{partialname}</a></li>'
+        main: '<div class="main">{partial}</div>'
+        footer: '<div class="footer">{partial}</div>'
+        headlines: '<div class="headlines">{partial}</div>'
+        article: '<div class="article">{partial}</div>'
+        cards: '<div class="cards">{partial}</div>'
     html4:
         inherit: base
     html5:
         inherit: base
-        html5shiv: '<!--[if ls IE 9] <script src="{html5shiv}"></script><![endif]-->'
-        header: '<header>{header}</header>'
-        main: '<main>{main}</main>'
-        footer: '<footer>{footer}</footer>'
-        article: '<article>{article}</article>'
+        html5shiv: '<!--[if ls IE 9] <script src="{partial}"></script><![endif]-->'
+        header: '<header>{partial}</header>'
+        navbar: '<nav>{partial}</nav>'
+        main: '<main>{partial}</main>'
+        footer: '<footer>{partial}</footer>'
+        article: '<article>{partial}</article>'
     default:
         inherit: html5
 vars:
@@ -101,16 +92,21 @@ vars:
         html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
     default:
         inherit: html5
-    products:
-        inherit: default
+navlinks:
+    default:
+        'Home': '/'
+        'About Us': '/about'
+        'Contact Us': '/contact'
+        'Products': '/products'
+        'Login': '#'
+        'Sign Up': '#'
 content:
     default:
         header: ''
         article: ''
         footer: ''
         headlines: ''
-        cards: ''
-    products:
+        #cards: ''
+    about:
         inherit: default
-        article: 'Default article text ...'
-        footer: 'Products footer!'
+        cards: ''

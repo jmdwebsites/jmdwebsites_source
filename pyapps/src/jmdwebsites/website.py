@@ -341,13 +341,11 @@ def partial_getter(spec, name='doc'):
     except KeyError:
         return
     logger.debug('partial_getter(): stem: ' + name)
-
     if top:
         for child_name, partial_name in top.items():
             if partial_name is None:
                 partial_name = child_name
             try:
-                #fmt = spec['partials'][child_name]
                 fmt = spec['partials'][partial_name]
             except KeyError:
                 raise PartialNotFoundError('Partial not found: {}'.format(partial_name))
@@ -357,12 +355,7 @@ def partial_getter(spec, name='doc'):
             else:
                 logger.debug('partial_getter(): leaf: ' + child_name)
                 child = '{{{0}}}'.format(child_name)
-            
-            #partial = fmt.format(**{child_name: child})
-            params = {partial_name: child_name}
-            params.update({partial_name: child, 'blockname': child_name, 'partialname': child_name, 'partial': child})
-            partial = fmt.format(**params)
-            
+            partial = fmt.format(**{'partialname': child_name, 'partial': child})
             yield partial
 
 
