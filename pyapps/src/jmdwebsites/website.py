@@ -345,10 +345,16 @@ def partial_getter(spec, name='doc'):
         for child_name, partial_name in top.items():
             if partial_name is None:
                 partial_name = child_name
+                #logger.error(partial_name)
+                #assert 0
             try:
                 fmt = spec['partials'][partial_name]
             except KeyError:
                 raise PartialNotFoundError('Partial not found: {}'.format(partial_name))
+                #try:
+                #    fmt = spec['partials']['partial']
+                #except KeyError:
+                #    raise PartialNotFoundError('Partial not found: {}'.format(partial_name))
             if child_name in layouts and layouts[child_name]:
                 child = '\n'.join(partial_getter(spec, name=child_name))
                 child = '\n{}\n'.format(child)

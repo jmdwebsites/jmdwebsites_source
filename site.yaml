@@ -7,7 +7,6 @@ pages:
         partials: default
         vars: default
         content: default
-        #navbar: default
         navlinks: default
     about:
         inherit: default
@@ -80,15 +79,15 @@ partials:
         stylesheet: '<link href="{partial}" rel="stylesheet"/>'
         html5shiv: ''
         body: '<body>{partial}</body>'
-        header: '<div class="header">{partial}</div>'
-        navbar: '<div class="navbar">{partial}</div>'
+        header: '<div class="{partialname}">{partial}</div>'
+        navbar: '<div class="{partialname}">{partial}</div>'
         navs: '<ul class="{partialname}">{partial}</ul>'
         navlink: '<li><a href="{partial}">{partialname}</a></li>'
-        main: '<div class="main">{partial}</div>'
-        footer: '<div class="footer">{partial}</div>'
-        headlines: '<div class="headlines">{partial}</div>'
-        article: '<div class="article">{partial}</div>'
-        cards: '<div class="cards">{partial}</div>'
+        main: '<div class="{partialname}">{partial}</div>'
+        footer: '<div class="{partialname}">{partial}</div>'
+        headlines: '<div class="{partialname}">{partial}</div>'
+        article: '<div class="{partialname}">{partial}</div>'
+        cards: '<div class="{partialname}">{partial}</div>'
     html4:
         inherit: base
     html5:
@@ -100,7 +99,7 @@ partials:
         footer: '<footer>{partial}</footer>'
         article: '<article>{partial}</article>'
     default:
-        inherit: base
+        inherit: html5
 vars:
     base:
         lang: 'en'
