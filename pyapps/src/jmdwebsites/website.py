@@ -304,6 +304,10 @@ def get_content(spec, source_dir, fil=None):
     content.update(vars)
     logger.debug('content: vars update: {}'.format(content.keys()))
 
+    if 'navlinks' in spec:
+        content.update(spec['navlinks'])
+        logger.debug('content: navlinks update: {}'.format(content.keys()))
+
     return content
 
 
@@ -339,24 +343,32 @@ def partial_getter(spec, name='doc'):
     logger.debug('partial_getter(): stem: ' + name)
 
     if top:
-        for child_name in top:
+        for child_name, partial_name in top.items():
+            if partial_name is None:
+                partial_name = child_name
             try:
-                fmt = spec['partials'][child_name]
+                #fmt = spec['partials'][child_name]
+                fmt = spec['partials'][partial_name]
             except KeyError:
-                raise PartialNotFoundError('Partial not found: {}'.format(child_name))
+                raise PartialNotFoundError('Partial not found: {}'.format(partial_name))
             if child_name in layouts and layouts[child_name]:
                 child = '\n'.join(partial_getter(spec, name=child_name))
                 child = '\n{}\n'.format(child)
             else:
                 logger.debug('partial_getter(): leaf: ' + child_name)
                 child = '{{{0}}}'.format(child_name)
-            partial = fmt.format(**{child_name: child})
+            
+            #partial = fmt.format(**{child_name: child})
+            params = {partial_name: child_name}
+            params.update({partial_name: child, 'blockname': child_name, 'partialname': child_name, 'partial': child})
+            partial = fmt.format(**params)
+            
             yield partial
 
 
 def get_spec(name, root):
     logger.debug('get_spec(): name: {}'.format(name))
-    logger.debug('get_spec(): root[name]: {}'.format(root[name]))
+    logger.debug('get_spec(): root[{}]: {}'.format(name, root[name]))
     ancestors = [root[name]] + [anc for anc in inheritor(root[name], root) if anc]
     logger.debug('get_spec(): ancestors: {}'.format(
         yamldump(ancestors)))

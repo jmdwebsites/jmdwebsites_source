@@ -7,6 +7,8 @@ pages:
         partials: default
         vars: default
         content: default
+        #navbar: default
+        navlinks: default
     about:
         inherit: default
         layouts: about
@@ -34,7 +36,15 @@ layouts:
         header:
         navbar:
             navs:
-            navs2:
+            navs2: navs
+        navs:
+            'Home': navlink
+            'About Us': navlink
+            'Contact Us': navlink
+            'Products': navlink
+        navs2:
+            'Login': navlink
+            'Sign Up': navlink
         main:
             article:
     default:
@@ -72,8 +82,10 @@ partials:
         body: '<body>{body}</body>'
         header: '<div class="header">{header}</div>'
         navbar: '<div class="navbar">{navbar}</div>'
-        navs: '<ul class="navs">{navs}</ul>'
-        navs2: '<ul class="navs2">{navs2}</ul>'
+        #navs: '<ul class="navs">{navs}</ul>'
+        navs: '<ul class="{partialname}">{partial}</ul>'
+        #navlink: '<li><a href="{{{navlink}}}">{navlink}</a></li>'
+        navlink: '<li><a href="{partial}">{partialname}</a></li>'
         main: '<div class="main">{main}</div>'
         footer: '<div class="footer">{footer}</div>'
         headlines: '<div class="headlines">{headlines}</div>'
@@ -123,11 +135,11 @@ content:
     products:
         inherit: default
         article: 'Default article text ...'
-# Sort this out
-navbar: 
+navlinks:
     default:
-        navs:
-            home: home
-            contact: contact us 
-            about: about us
-        navs2:
+        'Home': '/'
+        'About Us': '/about'
+        'Contact Us': '/contact'
+        'Products': '/products'
+        'Login': '#'
+        'Sign Up': '#'
