@@ -28,10 +28,13 @@ layouts:
             charset:
         body:
             header:
+            navbar:
             main:
             footer:
         header:
         navbar:
+            navs:
+            navs2:
         main:
             article:
     default:
@@ -68,6 +71,9 @@ partials:
         html5shiv: ''
         body: '<body>{body}</body>'
         header: '<div class="header">{header}</div>'
+        navbar: '<div class="navbar">{navbar}</div>'
+        navs: '<ul class="navs">{navs}</ul>'
+        navs2: '<ul class="navs2">{navs2}</ul>'
         main: '<div class="main">{main}</div>'
         footer: '<div class="footer">{footer}</div>'
         headlines: '<div class="headlines">{headlines}</div>'
@@ -79,6 +85,7 @@ partials:
         inherit: base
         html5shiv: '<!--[if ls IE 9] <script src="{html5shiv}"></script><![endif]-->'
         header: '<header>{header}</header>'
+        navbar: '<nav>{navbar}</nav>'
         main: '<main>{main}</main>'
         footer: '<footer>{footer}</footer>'
         article: '<article>{article}</article>'
@@ -106,11 +113,21 @@ vars:
 content:
     default:
         header: ''
+        navs: ''
+        navs2: ''
         article: ''
-        footer: ''
+        #footer: '<p><em>&copy jmdwebsites</em></p>' #Need to sort out unicode!
+        footer: '<p><em>COPYRIGHT jmdwebsites</em></p>'
         headlines: ''
         cards: ''
     products:
         inherit: default
         article: 'Default article text ...'
-        footer: 'Products footer!'
+# Sort this out
+navbar: 
+    default:
+        navs:
+            home: home
+            contact: contact us 
+            about: about us
+        navs2:

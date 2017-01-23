@@ -48,6 +48,7 @@ class MissingVarsError(WebsiteError): pass
 class FileFilterError(Exception): pass
 class InvalidContentTypeError(Exception): pass
 class FileNotFoundError(Exception): pass
+class NotFoundError(Exception): pass
 
 
 def isdir(path): 
@@ -272,10 +273,11 @@ def render_html(template, content):
 def render(template, content, j2=False):
     logger.debug('render(template, content)')
     if j2:
-        jtemplate = jinja2.Template(template)
-        rendered_output = jtemplate.render(**content)
-    else:
+        template = jinja2.Template(template)
+    try:
         rendered_output = template.format(**content)
+    except KeyError as e:
+        raise NotFoundError('Missing content or var: {}'.format(e))
     logger.debug('render(): rendered_output: {}'.format(dbgdump(rendered_output)))
     return rendered_output
 
@@ -335,9 +337,13 @@ def partial_getter(spec, name='doc'):
     except KeyError:
         return
     logger.debug('partial_getter(): stem: ' + name)
+
     if top:
         for child_name in top:
-            fmt = spec['partials'][child_name]
+            try:
+                fmt = spec['partials'][child_name]
+            except KeyError:
+                raise PartialNotFoundError('Partial not found: {}'.format(child_name))
             if child_name in layouts and layouts[child_name]:
                 child = '\n'.join(partial_getter(spec, name=child_name))
                 child = '\n{}\n'.format(child)
