@@ -10,21 +10,21 @@ pages:
         vars: default
         content: default
         navlinks: default
-    '':
+    '/':
         inherit: default
-        layouts: ''
-    about:
+        layouts: '/'
+    /about:
         inherit: default
-        layouts: about
-    products:
+        layouts: /about
+    /products:
         inherit: default
-        layouts: products
-        vars: products
-        content: products
-    testpage:
+        layouts: /products
+        vars: /products
+        content: /products
+    /testpage:
         inherit: default
-        layouts: testpage
-        content: testpage
+        layouts: /testpage
+        content: /testpage
 layouts:
     base:
         inherit:
@@ -68,21 +68,20 @@ layouts:
         main:
             headlines:
             article:
-    '':
+    '/':
         inherit: default
         main:
             headlines:
             cards:
             article:
-    about:
+    /about:
         inherit: default
-    products:
+    /products:
         inherit: default
         main:
             headlines:
-            cards:
             article:
-    testpage:
+    /testpage:
         inherit: default
         header:
         navbar:
@@ -142,10 +141,10 @@ vars:
         html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
     default:
         inherit: html5
-    products:
+    /products:
         inherit: default
 content:
-    testpage:
+    /testpage:
         header: '<hr>HEADER: Page URL = {info.url} <br><br><hr>'
         navbar: '<hr>NAVBAR: <br><br><hr>'
         headlines: '<hr>HEADLINES: <br><br><hr>'
@@ -153,13 +152,13 @@ content:
         article: '<hr>ARTICLE: <br><br><hr>'
         footer: '<hr>FOOTER: <br><br><hr>'
     base:
-        inherit: testpage
+        inherit: /testpage
         #article: '<hr>Default article text ...'
         #footer: '<p><em>&copy jmdwebsites</em></p>' #Need to sort out unicode!
         footer: '<p><em>COPYRIGHT jmdwebsites</em></p>'
     default:
         inherit: base
-    products:
+    /products:
         inherit: default
         article: 'Default article text ...'
 navlinks:

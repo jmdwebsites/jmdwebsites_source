@@ -257,7 +257,7 @@ def build_page(page_root, rel_page_path, build_dir, site):
     logger.info("Build page: {}".format(rel_page_path))
     source_dir = page_root.join(rel_page_path)
     url = get_url(rel_page_path, site)
-    page_spec = get_page_spec(rel_page_path, site, url)
+    page_spec = get_page_spec(url, site)
     target_dir = build_dir.join(url)
 
     logger.debug('22222222222222222222 {} 22222222222222222222'.format(url))
@@ -293,14 +293,14 @@ def get_html(source_dir, page_spec, info=None):
     return html
 
 
-def get_page_spec(page_spec_name, specs, url):
-    logger.debug('get_page_spec(): page_spec_name: {}'.format(repr(page_spec_name)))
+def get_page_spec(url, specs):
+    logger.debug('get_page_spec(): url: {}'.format(repr(url)))
     
-    if page_spec_name not in specs['pages']:
-        ##logger.error(repr(page_spec_name))
-        ##assert 0
+    if url in specs['pages']:
+        page_spec_name = url
+    else:
         page_spec_name = 'default'
-        logger.debug('get_page_spec(): page_spec_name: {}'.format(repr(page_spec_name)))
+    logger.debug('get_page_spec(): page_spec_name: {}'.format(repr(page_spec_name)))
 
     raw_page_spec = get_spec(page_spec_name, specs['pages'])
     logger.debug('get_page_spec(): {}: raw: {}'.format(

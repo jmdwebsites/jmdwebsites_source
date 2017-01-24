@@ -8,10 +8,10 @@ pages:
         partials: default
         vars: default
         content: default
-    about:
+    /about:
         inherit: default
-        layouts: about
-        content: about
+        layouts: /about
+        content: /about
 layouts:
     base:
         inherit:
@@ -37,7 +37,7 @@ layouts:
         main:
             headlines:
             article:
-    about:
+    /about:
         inherit: default
         main:
             cards:
@@ -107,6 +107,6 @@ content:
         footer: ''
         headlines: ''
         #cards: ''
-    about:
+    /about:
         inherit: default
         cards: ''
