@@ -157,6 +157,39 @@ def get_site_design(site_dir):
     return config
 
 
+#TODO: Use this for testing inherit_file_data() and path_inheritor(). 
+#      Will come back to it.
+def get_site_design2(site_dir):
+    return inherit_file_data(CONFIG_FILE, site_dir)
+
+
+def inherit_file_data(basename, site_dir):
+    for filepath in path_inheritor(basename, site_dir):
+        with filepath.open() as file:
+            if filepath.ext == '.yaml':
+                data = ryaml.load(file, Loader=ryaml.RoundTripLoader)
+            else:
+                assert 0
+                data = file.read()
+    logger.error(yamldump(data))
+    return data
+
+
+def path_inheritor(basename, site_dir):
+    path = None
+    locations = [
+        site_dir,  
+        py.path.local(__file__).dirpath()
+    ]
+    look_for = [dirpath.join(basename) for dirpath in locations]
+    available = [filepath for filepath in look_for if filepath.check(file=1)]
+    if not available:
+        raise FileNotFoundError('Not found: {}'.format(basename))
+    for filepath in available:
+        yield filepath
+        break
+    
+
 def new_website(site_dirname = ''):
     """New website."""
     site_dir = py.path.local(site_dirname)
