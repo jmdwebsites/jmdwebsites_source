@@ -1,6 +1,8 @@
-content_group:
-    home:
-    pages:
+## May need this in future if content is not in the default location.
+#
+#content_group:
+#    home:
+#    pages:
 pages:
     default:
         layouts: default
@@ -8,6 +10,9 @@ pages:
         vars: default
         content: default
         navlinks: default
+    '/':
+        inherit: default
+        layouts: ''
     about:
         inherit: default
         layouts: about
@@ -53,6 +58,8 @@ layouts:
         main:
             headlines:
             article:
+    '/':
+        inherit: default
     products:
         inherit: default
         head:
@@ -83,6 +90,7 @@ partials:
         navbar: '<div class="{partialname}">{partial}</div>'
         navs: '<ul class="{partialname}">{partial}</ul>'
         navlink: '<li><a href="{partial}">{partialname}</a></li>'
+        activenavlink: '<li class="active"><a href="{partial}">{partialname}</a></li>'
         main: '<div class="{partialname}">{partial}</div>'
         footer: '<div class="{partialname}">{partial}</div>'
         headlines: '<div class="{partialname}">{partial}</div>'

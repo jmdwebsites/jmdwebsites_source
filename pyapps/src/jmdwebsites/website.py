@@ -49,6 +49,7 @@ class FileFilterError(Exception): pass
 class InvalidContentTypeError(Exception): pass
 class FileNotFoundError(Exception): pass
 class NotFoundError(Exception): pass
+class DictWalkerError(Exception): pass
 
 
 def isdir(path): 
@@ -118,12 +119,15 @@ class FileFilter:
 
 
 def dict_walker(parent, parent_path=''):
-    if isinstance(parent, dict):
-        for child_name, child in parent.items():
-            child_path = os.path.join(parent_path, child_name)
-            yield child_path, child
-            for path, value in dict_walker(child, parent_path = child_path):
-                yield path, value
+    if not isinstance(parent, dict):
+        raise DictWalkerError('Not a dictionary: {}'.format(root))
+    for key, value in parent.items():
+        path = os.path.join(parent_path, key)
+        root = parent
+        yield path, root, key, value
+        if isinstance(value, dict):
+            for path, root, key, value in dict_walker(value, parent_path=path):
+                yield path, root, key, value
 
 
 def get_site_design(site_dir):
@@ -149,7 +153,7 @@ def get_site_design(site_dir):
         logger.info('Site config file: {}'.format(config_file))
         with config_file.open() as f:
             config = ryaml.load(f, Loader=ryaml.RoundTripLoader)
-    logger.info('Site config: {}'.format(config))
+    logger.info('Site config: {}'.format(yamldump(config)))
     return config
 
 
@@ -211,13 +215,15 @@ def get_url(rel_page_path, site):
 
 
 def build_page(page_root, rel_page_path, build_dir, site):
+    logger.debug('%%%%%%%%%%%%%%%%%%%%% {} %%%%%%%%%%%%%%%%%%%%%'.format(rel_page_path))
+    logger.info("Build page: {}".format(rel_page_path))
     source_dir = page_root.join(rel_page_path)
     url = get_url(rel_page_path, site)
-    page_spec = get_page_spec(rel_page_path, site)
+    page_spec = get_page_spec(rel_page_path, site, url)
     target_dir = build_dir.join(url)
 
-    logger.debug('%%%%%%%%%%%%%%%%%%%%% {} %%%%%%%%%%%%%%%%%%%%%'.format(url))
-    logger.info("Build page: {}".format(url))
+    logger.debug('22222222222222222222 {} 22222222222222222222'.format(url))
+    logger.info("Build file: {}".format(url))
     if not source_dir.check(dir=1):
         raise SourceDirNotFoundError(
             'Source dir not found: {}'.format(source_dir))
@@ -231,7 +237,8 @@ def build_html_file(source_dir, target_dir, page_spec):
     #TODO: Can also check for index.php file here too
     source_file = source_dir.join('index.html')
     if source_file.check():
-        source_file.copy(target_dir)
+        logger.debug('build_html_file(): Copy source file to target dir: {} {}'.format(source_file, target_dir))
+        source_file.copy(target_dir.ensure(dir=1))
         return
     logger.debug("No source file found: {}".format(source_file))
     # No source file detected, so use a template
@@ -243,7 +250,7 @@ def build_html_file(source_dir, target_dir, page_spec):
     target_dir.join('index.html').write(html)
 
 
-def get_page_spec(page_spec_name, specs):
+def get_page_spec(page_spec_name, specs, url):
     logger.debug('get_page_spec(): page_spec_name: {}'.format(repr(page_spec_name)))
     
     if page_spec_name not in specs['pages']:
@@ -256,6 +263,12 @@ def get_page_spec(page_spec_name, specs):
     
     page_spec = CommentedMap((type_, get_spec(name, specs[type_])) 
         for type_, name in raw_page_spec.items())
+
+    # Active nav links
+    for path, root, key, value in dict_walker(page_spec):
+        if value == 'navlink' and page_spec['navlinks'][key] == url:
+            root[key] = 'activenavlink'
+
     logger.debug('get_page_spec(): {}: processed: {}'.format(
         page_spec_name, yamldump(page_spec)))
 
@@ -360,6 +373,7 @@ def partial_getter(spec, name='doc'):
 
 
 def get_spec(name, root):
+    logger.debug('+++++++++++++++++++++++ get_spec() ++++++++++++++++++++++++++++++1')
     logger.debug('get_spec(): name: {}'.format(name))
     logger.debug('get_spec(): root[{}]: {}'.format(name, root[name]))
     ancestors = [root[name]] + [anc for anc in inheritor(root[name], root) if anc]
@@ -370,12 +384,13 @@ def get_spec(name, root):
     spec = deepcopy(ancestors[-1])
     for ancestor in reversed(ancestors):
         for key, value in ancestor.items():
+            value_copy = deepcopy(value)
             if isinstance(value, dict) and 'inherit' in value:
                 spec.setdefault(key, CommentedMap())
-                spec[key].update(value)
+                spec[key].update(value_copy)
                 del spec[key]['inherit']
             else:
-                spec[key] = value
+                spec[key] = value_copy
     del spec['inherit']
     return spec
 
