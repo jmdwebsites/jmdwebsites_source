@@ -260,11 +260,40 @@ def build_page(page_root, rel_page_path, build_dir, site):
     if not source_dir.check(dir=1):
         raise SourceDirNotFoundError(
             'Source dir not found: {}'.format(source_dir))
-    build_html_file(source_dir, target_dir, page_spec)
+    html = get_html(source_dir, page_spec, url)
+    build_html_file(html, target_dir)
     build_page_assets(source_dir, target_dir)
 
 
-def build_html_file(source_dir, target_dir, page_spec):
+def build_html_file(html, target_dir):
+    #target_dir.ensure(dir=1)
+    #target_dir.join('index.html').write(html)
+    target_dir.ensure(dir=1).join('index.html').write(html)
+
+def get_html(source_dir, page_spec, url):
+    logger.debug('build_html_file(): source_dir: {}'.format(source_dir))
+
+    #TODO: Can also check for index.php file here too
+    source_file = source_dir.join('index.html')
+    if source_file.check():
+        #logger.debug('build_html_file(): Copy source file to target dir: {} {}'.format(source_file, target_dir))
+        #source_file.copy(target_dir.ensure(dir=1))
+        html = source_file.read()
+        # Validate that the file is unicode and that the html is ok
+    else:
+        logger.debug("No source file found: {}".format(source_file))
+        # No source file detected, so use a template
+
+        template = get_template(page_spec)
+        content = get_content(page_spec, source_dir, fil=FileFilter('_', ['.html','.md']))
+        content.update({'url': url})
+        #logger.error(template)
+        #assert 0
+        html = render_html(template, content)
+    return html
+
+
+def build_html_file1(source_dir, target_dir, page_spec):
     logger.debug('build_html_file(): source_dir: {}'.format(source_dir))
 
     #TODO: Can also check for index.php file here too

@@ -32,6 +32,11 @@ layouts:
             body:
         head:
             charset:
+            title:
+            author:
+            robots:
+            stylesheet:
+            html5shiv:
         body:
             header:
             navbar:
@@ -62,13 +67,8 @@ layouts:
         inherit: default
     products:
         inherit: default
-        head:
-            charset:
-            title:
-            author:
-            robots:
-            stylesheet:
-            html5shiv:
+        #head:
+        #    title:
     about:
         inherit: default
         main:
@@ -80,7 +80,7 @@ partials:
         html: '<html lang="{{lang}}">{partial}</html>'
         head: '<head>{partial}</head>'
         charset: '<meta charset="{partial}"/>'
-        title: <title>{{title}}</title>
+        title: <title>{{url}} | {{title}}</title>
         author: '<meta content="{partial}" name="author"/>'
         robots: '<meta content="{partial}" name="robots"/>'
         stylesheet: '<link href="{partial}" rel="stylesheet"/>'
@@ -115,7 +115,7 @@ vars:
         author: 'jmdwebsites'
         robots: 'noindex'
         stylesheet: '/page.css'
-        title: 'My Web Page'
+        title: 'My Web Site'
     html4:
         inherit: base
         doctype: 'HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"'
