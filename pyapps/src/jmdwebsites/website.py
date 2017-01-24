@@ -247,6 +247,11 @@ def get_url(rel_page_path, site):
     return url
 
 
+class Info():
+    def __init__(self, url):
+        self.url = url
+
+
 def build_page(page_root, rel_page_path, build_dir, site):
     logger.debug('%%%%%%%%%%%%%%%%%%%%% {} %%%%%%%%%%%%%%%%%%%%%'.format(rel_page_path))
     logger.info("Build page: {}".format(rel_page_path))
@@ -260,62 +265,40 @@ def build_page(page_root, rel_page_path, build_dir, site):
     if not source_dir.check(dir=1):
         raise SourceDirNotFoundError(
             'Source dir not found: {}'.format(source_dir))
-    html = get_html(source_dir, page_spec, url)
+    html = get_html(source_dir, page_spec, info=Info(url))
+
     build_html_file(html, target_dir)
     build_page_assets(source_dir, target_dir)
 
 
 def build_html_file(html, target_dir):
-    #target_dir.ensure(dir=1)
-    #target_dir.join('index.html').write(html)
     target_dir.ensure(dir=1).join('index.html').write(html)
 
-def get_html(source_dir, page_spec, url):
-    logger.debug('build_html_file(): source_dir: {}'.format(source_dir))
 
+def get_html(source_dir, page_spec, info=None):
+    logger.debug('build_html_file(): source_dir: {}'.format(source_dir))
     #TODO: Can also check for index.php file here too
     source_file = source_dir.join('index.html')
     if source_file.check():
-        #logger.debug('build_html_file(): Copy source file to target dir: {} {}'.format(source_file, target_dir))
         #source_file.copy(target_dir.ensure(dir=1))
+        logger.debug('build_html_file(): Validate source file: {}'.format(source_file))
         html = source_file.read()
         # Validate that the file is unicode and that the html is ok
     else:
         logger.debug("No source file found: {}".format(source_file))
         # No source file detected, so use a template
-
         template = get_template(page_spec)
-        content = get_content(page_spec, source_dir, fil=FileFilter('_', ['.html','.md']))
-        content.update({'url': url})
-        #logger.error(template)
-        #assert 0
-        html = render_html(template, content)
+        content = get_content(page_spec, source_dir, fil=FileFilter('_', ['.html','.md']), info=info)
+        html = render_html(template, content, info=info)
     return html
-
-
-def build_html_file1(source_dir, target_dir, page_spec):
-    logger.debug('build_html_file(): source_dir: {}'.format(source_dir))
-
-    #TODO: Can also check for index.php file here too
-    source_file = source_dir.join('index.html')
-    if source_file.check():
-        logger.debug('build_html_file(): Copy source file to target dir: {} {}'.format(source_file, target_dir))
-        source_file.copy(target_dir.ensure(dir=1))
-        return
-    logger.debug("No source file found: {}".format(source_file))
-    # No source file detected, so use a template
-
-    template = get_template(page_spec)
-    content = get_content(page_spec, source_dir, fil=FileFilter('_', ['.html','.md']))
-    html = render_html(template, content)
-    target_dir.ensure(dir=1)
-    target_dir.join('index.html').write(html)
 
 
 def get_page_spec(page_spec_name, specs, url):
     logger.debug('get_page_spec(): page_spec_name: {}'.format(repr(page_spec_name)))
     
     if page_spec_name not in specs['pages']:
+        ##logger.error(repr(page_spec_name))
+        ##assert 0
         page_spec_name = 'default'
         logger.debug('get_page_spec(): page_spec_name: {}'.format(repr(page_spec_name)))
 
@@ -337,27 +320,27 @@ def get_page_spec(page_spec_name, specs, url):
     return page_spec
 
 
-def render_html(template, content):
+def render_html(template, content, **kwargs):
     logger.debug('render_html(template, content)')
-    rendered = render(template, content)
+    rendered = render(template, content, **kwargs)
     html = prettify(rendered)
     logger.debug('render_html(): html: ' + dbgdump(html))
     return html
 
 
-def render(template, content, j2=False):
+def render(template, content, info=None, j2=False, **kwargs):
     logger.debug('render(template, content)')
     if j2:
         template = jinja2.Template(template)
     try:
-        rendered_output = template.format(**content)
+        rendered_output = template.format(info=info, **content)
     except KeyError as e:
         raise NotFoundError('Missing content or var: {}'.format(e))
     logger.debug('render(): rendered_output: {}'.format(dbgdump(rendered_output)))
     return rendered_output
 
 
-def get_content(spec, source_dir, fil=None):
+def get_content(spec, source_dir, info=None, fil=None):
     content_spec = spec['content']
     source_content = get_source_content(source_dir, fil=fil)
 
@@ -371,6 +354,10 @@ def get_content(spec, source_dir, fil=None):
     vars = get_vars(spec['vars'])
 
     content = copy(content_spec)
+    if info:
+        logger.error(repr(info))
+        for key, value in content.items():
+            content[key] = value.format(info=info)
     logger.debug('content: spec: {}'.format(content.keys()))
 
     content.update(source_content)
@@ -441,6 +428,8 @@ def get_spec(name, root):
     ancestors = [root[name]] + [anc for anc in inheritor(root[name], root) if anc]
     logger.debug('get_spec(): ancestors: {}'.format(
         yamldump(ancestors)))
+    ##logger.warning(repr(name))
+    ##assert 0
     if not ancestors:
         return ordereddict()
     spec = deepcopy(ancestors[-1])
@@ -462,9 +451,14 @@ def inheritor(current, root):
         try:
             inherited = current['inherit']
         except KeyError:
+            logger.warning('NO INHERIT')
             break
         if not inherited:
+            logger.error(inherited)
+            #assert 0
             break
+        if inherited == '/':
+            assert 0
         try:
             current = root[inherited]
         except KeyError:

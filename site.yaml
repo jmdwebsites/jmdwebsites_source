@@ -10,7 +10,7 @@ pages:
         vars: default
         content: default
         navlinks: default
-    '/':
+    '':
         inherit: default
         layouts: ''
     about:
@@ -21,6 +21,10 @@ pages:
         layouts: products
         vars: products
         content: products
+    testpage:
+        inherit: default
+        layouts: testpage
+        content: testpage
 layouts:
     base:
         inherit:
@@ -51,6 +55,7 @@ layouts:
             'About Us': navlink
             'Contact Us': navlink
             'Products': navlink
+            'Test Page': navlink
         navs2:
             'Login': navlink
             'Sign Up': navlink
@@ -63,24 +68,36 @@ layouts:
         main:
             headlines:
             article:
-    '/':
+    '':
+        inherit: default
+        main:
+            headlines:
+            cards:
+            article:
+    about:
         inherit: default
     products:
         inherit: default
-        #head:
-        #    title:
-    about:
-        inherit: default
         main:
+            headlines:
             cards:
             article:
+    testpage:
+        inherit: default
+        header:
+        navbar:
+        main:
+            headlines:
+            cards:
+            article:
+        footer:
 partials:
     base:
         doctype: '<!DOCTYPE {partial}>'
         html: '<html lang="{{lang}}">{partial}</html>'
         head: '<head>{partial}</head>'
         charset: '<meta charset="{partial}"/>'
-        title: <title>{{url}} | {{title}}</title>
+        title: '<title>{{info.url}} | {{title}}</title>'
         author: '<meta content="{partial}" name="author"/>'
         robots: '<meta content="{partial}" name="robots"/>'
         stylesheet: '<link href="{partial}" rel="stylesheet"/>'
@@ -128,15 +145,20 @@ vars:
     products:
         inherit: default
 content:
-    default:
-        header: ''
-        navs: ''
-        navs2: ''
-        article: ''
+    testpage:
+        header: '<hr>HEADER: Page URL = {info.url} <br><br><hr>'
+        navbar: '<hr>NAVBAR: <br><br><hr>'
+        headlines: '<hr>HEADLINES: <br><br><hr>'
+        cards: '<hr>CARDS: <br><br><hr>'
+        article: '<hr>ARTICLE: <br><br><hr>'
+        footer: '<hr>FOOTER: <br><br><hr>'
+    base:
+        inherit: testpage
+        #article: '<hr>Default article text ...'
         #footer: '<p><em>&copy jmdwebsites</em></p>' #Need to sort out unicode!
         footer: '<p><em>COPYRIGHT jmdwebsites</em></p>'
-        headlines: ''
-        cards: ''
+    default:
+        inherit: base
     products:
         inherit: default
         article: 'Default article text ...'
@@ -146,5 +168,6 @@ navlinks:
         'About Us': '/about'
         'Contact Us': '/contact'
         'Products': '/products'
+        'Test Page': '/testpage'
         'Login': '#'
         'Sign Up': '#'
