@@ -133,48 +133,17 @@ def dict_walker(parent, parent_path=''):
                 yield path, root, key, value
 
 
-def get_site_design(site_dir):
-    config_file = None
-    if not config_file:
-        config_file = site_dir.join(CONFIG_FILE)
-        if not config_file.check():
-            config_file = None
-    ##TODO: If a CONFIG_FILE exists, use it. 
-    ##      Otherwise, use a default version in the theme dir
-    #if not config_file:
-    #    config_file = theme_dir.join(CONFIG_FILE)
-    #    if not config_file.check():
-    #        config_file = None
-    if not config_file:
-        config_file = py.path.local(__file__).dirpath(CONFIG_FILE)
-        if not config_file.check():
-            config_file = None
-    if not config_file:
-        raise FileNotFoundError('Site config file: Not found: {}'.format(config_file))
-        config = { CONTENT_GROUP: {HOME: None, PAGES: None}}
-    else:
-        logger.info('Site config file: {}'.format(config_file))
-        with config_file.open() as f:
-            config = ryaml.load(f, Loader=ryaml.RoundTripLoader)
-    logger.info('Site config: {}'.format(yamldump(config)))
-    return config
-
-
-#TODO: Use this for testing inherit_file_data() and path_inheritor(). 
-#      Will come back to it.
-def get_site_design2(site_dir):
-    return inherit_file_data(CONFIG_FILE, site_dir)
-
-
 def inherit_file_data(basename, site_dir):
     for filepath in path_inheritor(basename, site_dir):
         with filepath.open() as file:
             if filepath.ext == '.yaml':
                 data = ryaml.load(file, Loader=ryaml.RoundTripLoader)
-                logger.info('Load {} from {} {}'.format(basename, filepath, yamldump(data)))
+                logger.info('Load {} data from {} {}'.format(
+                    filepath.purebasename, filepath, yamldump(data)))
             else:
                 data = file.read()
-                logger.info('Load {}: {}'.format(basename, dbgdump(data)))
+                logger.info('Load {} data from {} {}'.format(
+                    filepath.purebasename, filepath, dbgdump(data)))
                 assert 0
     return data
 
@@ -191,6 +160,7 @@ def path_inheritor(basename, site_dir):
         raise FileNotFoundError('Not found: {}'.format(basename))
     for filepath in available:
         yield filepath
+        # Break because only the first available file is needed.
         break
     
 
@@ -510,19 +480,20 @@ def build_page_assets(source_dir, target_dir):
 
 class Website(object):
     def __init__(self, site_dir=None, build_dir=None):
-        logger.debug('Instantiate: {}({})'.format(
+        logger.debug('Create website: {}(site_dir={}, build_dir={})'.format(
             self.__class__.__name__, 
+            repr(site_dir),
             repr(build_dir)))
         if site_dir is None:
             self.site_dir = get_project_dir()
         else:
             self.site_dir = py.path.local(site_dir)
+        logger.info('Site root directory: {}'.format(self.site_dir))
         if build_dir is None:
             self.build_dir = self.site_dir.join(BUILD)
         else:
             self.build_dir = py.path.local(build_dir)
-        logger.info('site dir name: {}'.format(self.site_dir))
-        logger.info('build dir name: {}'.format(self.build_dir))
+        logger.info('Build website in {}'.format(self.build_dir))
 
     def clean(self):
         """Clean up the build."""
@@ -559,7 +530,6 @@ class Website(object):
             'Build directory already exists.'.format(self.build_dir)
         self.build_dir.ensure(dir=1)
 
-        #self.site = get_site_design(self.site_dir)
         self.site = get_specs(CONFIG_FILE, self.site_dir)
         #TODO: Choose the theme from a themes.yaml file
         self.theme = get_specs(THEME_FILE, self.site_dir)
