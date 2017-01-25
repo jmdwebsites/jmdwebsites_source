@@ -10,12 +10,17 @@ pages:
         vars: default
         content: default
         navlinks: default
-    '/':
+    /:
         inherit: default
-        layouts: '/'
+        layouts: /
+        content: /
     /about:
         inherit: default
         layouts: /about
+        content: /about
+    /contact:
+        inherit: default
+        content: /contact
     /products:
         inherit: default
         layouts: /products
@@ -144,6 +149,25 @@ vars:
     /products:
         inherit: default
 content:
+    base:
+        header: '<hr>HEADER: Page URL = {info.url} <br><br><hr>'
+        article: '<hr>Default article text ...'
+        #footer: '<p><em>&copy jmdwebsites</em></p>' #Need to sort out unicode!
+        footer: '<p><em>COPYRIGHT jmdwebsites</em></p>'
+    default:
+        inherit: base
+    /:
+        inherit: default
+        headlines: ''
+        cards: ''
+        article: ''
+    /about:
+        inherit: default
+    /contact:
+        inherit: default
+    /products:
+        inherit: default
+        headlines: ''
     /testpage:
         header: '<hr>HEADER: Page URL = {info.url} <br><br><hr>'
         navbar: '<hr>NAVBAR: <br><br><hr>'
@@ -151,16 +175,6 @@ content:
         cards: '<hr>CARDS: <br><br><hr>'
         article: '<hr>ARTICLE: <br><br><hr>'
         footer: '<hr>FOOTER: <br><br><hr>'
-    base:
-        inherit: /testpage
-        #article: '<hr>Default article text ...'
-        #footer: '<p><em>&copy jmdwebsites</em></p>' #Need to sort out unicode!
-        footer: '<p><em>COPYRIGHT jmdwebsites</em></p>'
-    default:
-        inherit: base
-    /products:
-        inherit: default
-        article: 'Default article text ...'
 navlinks:
     default:
         'Home': '/'

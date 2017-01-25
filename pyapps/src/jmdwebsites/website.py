@@ -5,6 +5,7 @@ import os
 from pprint import pformat
 
 import jinja2
+import mistune
 import py
 import ruamel.yaml as ryaml
 from ruamel.yaml.compat import ordereddict
@@ -50,6 +51,7 @@ class InvalidContentTypeError(Exception): pass
 class FileNotFoundError(Exception): pass
 class NotFoundError(Exception): pass
 class DictWalkerError(Exception): pass
+class ContentFileError(WebsiteError): pass
 
 
 def isdir(path): 
@@ -341,21 +343,20 @@ def render(template, content, info=None, j2=False, **kwargs):
 
 
 def get_content(spec, source_dir, info=None, fil=None):
-    content_spec = spec['content']
+    spec_content = spec['content']
     source_content = get_source_content(source_dir, fil=fil)
 
-    missing_content = {key:value for key, value in content_spec.items() if value is None and key not in source_content}
+    missing_content = {key:value for key, value in spec_content.items() if value is None and key not in source_content}
     if missing_content:
         raise MissingContentError('Not found: {}'.format(missing_content.keys()))
-    unused_content = [key for key in source_content if key not in content_spec]
+    unused_content = [key for key in source_content if key not in spec_content]
     if unused_content:
         raise UnusedContentError('Unused content: {}'.format(unused_content))
 
     vars = get_vars(spec['vars'])
 
-    content = copy(content_spec)
+    content = copy(spec_content)
     if info:
-        logger.error(repr(info))
         for key, value in content.items():
             content[key] = value.format(info=info)
     logger.debug('content: spec: {}'.format(content.keys()))
@@ -373,11 +374,18 @@ def get_content(spec, source_dir, info=None, fil=None):
     return content
 
 
-def get_source_content(source_dir, fil=None):
+def get_source_content(source_dir, fil=None, markdown=mistune.Markdown()):
     source_content = {}
     for partial_file in source_dir.visit(fil=fil):
         partial_name = partial_file.purebasename.lstrip('_')
-        source_content[partial_name] = partial_file.read()
+        text = partial_file.read()
+        if partial_file.ext == '.html':
+            html = text
+        elif partial_file.ext == '.md':
+            html = markdown(text)
+        else:
+            raise ContentFileError('Invalid file type: {}'.format(partial_file))
+        source_content[partial_name] = html
     return source_content
 
 
@@ -428,8 +436,6 @@ def get_spec(name, root):
     ancestors = [root[name]] + [anc for anc in inheritor(root[name], root) if anc]
     logger.debug('get_spec(): ancestors: {}'.format(
         yamldump(ancestors)))
-    ##logger.warning(repr(name))
-    ##assert 0
     if not ancestors:
         return ordereddict()
     spec = deepcopy(ancestors[-1])
@@ -451,14 +457,9 @@ def inheritor(current, root):
         try:
             inherited = current['inherit']
         except KeyError:
-            logger.warning('NO INHERIT')
             break
         if not inherited:
-            logger.error(inherited)
-            #assert 0
             break
-        if inherited == '/':
-            assert 0
         try:
             current = root[inherited]
         except KeyError:
