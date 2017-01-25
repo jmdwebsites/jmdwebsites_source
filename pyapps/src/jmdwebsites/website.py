@@ -22,6 +22,7 @@ BUILD = 'build'
 CONTENT = 'content'
 CONTENT_GROUP = 'content_group'
 CONFIG_FILE = 'site.yaml'
+THEME_FILE = 'theme.yaml'
 PAGE_SPECS_FILE = 'pagespecs.yaml'
 PROJDIR = '.jmdwebsite'
 HOME = 'home'
@@ -170,10 +171,11 @@ def inherit_file_data(basename, site_dir):
         with filepath.open() as file:
             if filepath.ext == '.yaml':
                 data = ryaml.load(file, Loader=ryaml.RoundTripLoader)
+                logger.info('Load {} from {} {}'.format(basename, filepath, yamldump(data)))
             else:
-                assert 0
                 data = file.read()
-    logger.error(yamldump(data))
+                logger.info('Load {}: {}'.format(basename, dbgdump(data)))
+                assert 0
     return data
 
 
@@ -218,7 +220,6 @@ def init_website():
 
 def content_dir_getter(site, site_dir):
     site = ensure_spec(site, [])
-    logger.error(site)
     if CONTENT_GROUP in site:
         for content_group, dirname in site[CONTENT_GROUP].items():
             if content_group not in set([HOME, PAGES, POSTS]):
@@ -256,13 +257,13 @@ class Info():
         self.url = url
 
 
-def build_page(page_root, rel_page_path, build_dir, site):
+def build_page(page_root, rel_page_path, site):
     logger.debug('%%%%%%%%%%%%%%%%%%%%% {} %%%%%%%%%%%%%%%%%%%%%'.format(rel_page_path))
     logger.info("Build page: {}".format(rel_page_path))
     source_dir = page_root.join(rel_page_path)
     url = get_url(rel_page_path, site)
     page_spec = get_page_spec(url, site)
-    target_dir = build_dir.join(url)
+    target_dir = site.build_dir.join(url)
 
     logger.debug('22222222222222222222 {} 22222222222222222222'.format(url))
     logger.info("Build file: {}".format(url))
@@ -297,8 +298,13 @@ def get_html(source_dir, page_spec, info=None):
     return html
 
 
-def get_page_spec(url, specs):
+def get_page_spec(url, site):
     logger.debug('get_page_spec(): url: {}'.format(repr(url)))
+    specs = CommentedMap()
+    if isinstance(site.theme, dict):
+        specs.update(site.theme)
+    if isinstance(site.site, dict):
+        specs.update(site.site)
 
     try:
         page_specs = specs['pages']
@@ -352,13 +358,13 @@ def render(template, content, info=None, j2=False, **kwargs):
 def ensure_spec(spec, names=['content_group', 'content', 'layouts', 'partials', 'vars', 'navlinks']):
     names = set(names)
     if spec is None:
-        logger.warning('Invalid spec: spec: {}'.format(repr(spec)))
+        logger.warning('No spec: spec: {}'.format(repr(spec)))
         spec = CommentedMap()
     for name in names:
         try:
             _subspec = spec[name]
         except TypeError:
-            logger.warning('Invalid spec: spec: {}'.format(repr(spec)))
+            logger.warning('Invalid spec type: spec: {}'.format(repr(spec)))
             spec = CommentedMap()
             spec[name] = CommentedMap()
             raise TypeError
@@ -534,6 +540,15 @@ class Website(object):
         protected_remove(self.build_dir)
 
     def build(self):
+        def get_specs(basename, dirpath):
+            try:
+                data = inherit_file_data(basename, dirpath)
+            except FileNotFoundError as error:
+                #raise FileNotFoundError(error)
+                logger.warning(error)
+                return None
+            return data
+
         """Build the website."""
         #TODO: Write code to update files only if they have changed.
         #      But until then, clobber the build first, 
@@ -543,7 +558,12 @@ class Website(object):
         assert self.build_dir.check() == False, \
             'Build directory already exists.'.format(self.build_dir)
         self.build_dir.ensure(dir=1)
-        site = get_site_design(self.site_dir)
-        for content_group, content_dir in content_dir_getter(site, self.site_dir):
+
+        #self.site = get_site_design(self.site_dir)
+        self.site = get_specs(CONFIG_FILE, self.site_dir)
+        #TODO: Choose the theme from a themes.yaml file
+        self.theme = get_specs(THEME_FILE, self.site_dir)
+ 
+        for content_group, content_dir in content_dir_getter(self.site, self.site_dir):
             for page_root, rel_page_path in page_path_getter(content_group, content_dir):
-                build_page(page_root, rel_page_path, self.build_dir, site)
+                build_page(page_root, rel_page_path, self)

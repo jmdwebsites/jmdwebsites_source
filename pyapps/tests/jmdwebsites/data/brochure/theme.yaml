@@ -1,0 +1,108 @@
+pages:
+    default:
+        layouts: default
+        partials: default
+        vars: default
+        content: default
+    /about:
+        inherit: default
+        layouts: /about
+        content: /about
+layouts:
+    base:
+        inherit:
+        doc:
+            doctype:
+            html:
+        html:
+            head:
+            body:
+        head:
+            charset:
+        body:
+            header:
+            main:
+            footer:
+        header:
+        main:
+            article:
+    default:
+        inherit: base
+    headlines:
+        inherit: default
+        main:
+            headlines:
+            article:
+    /about:
+        inherit: default
+        main:
+            cards:
+            article:
+partials:
+    base:
+        doctype: '<!DOCTYPE {partial}>'
+        html: '<html lang="{{lang}}">{partial}</html>'
+        head: '<head>{partial}</head>'
+        charset: '<meta charset="{partial}"/>'
+        title: <title>{{title}}</title>
+        author: '<meta content="{partial}" name="author"/>'
+        robots: '<meta content="{partial}" name="robots"/>'
+        stylesheet: '<link href="{partial}" rel="stylesheet"/>'
+        html5shiv: ''
+        body: '<body>{partial}</body>'
+        header: '<div class="header">{partial}</div>'
+        navbar: '<div class="navbar">{partial}</div>'
+        navs: '<ul class="{partialname}">{partial}</ul>'
+        navlink: '<li><a href="{partial}">{partialname}</a></li>'
+        main: '<div class="main">{partial}</div>'
+        footer: '<div class="footer">{partial}</div>'
+        headlines: '<div class="headlines">{partial}</div>'
+        article: '<div class="article">{partial}</div>'
+        cards: '<div class="cards">{partial}</div>'
+    html4:
+        inherit: base
+    html5:
+        inherit: base
+        html5shiv: '<!--[if ls IE 9] <script src="{partial}"></script><![endif]-->'
+        header: '<header>{partial}</header>'
+        navbar: '<nav>{partial}</nav>'
+        main: '<main>{partial}</main>'
+        footer: '<footer>{partial}</footer>'
+        article: '<article>{partial}</article>'
+    default:
+        inherit: html5
+vars:
+    base:
+        lang: 'en'
+        charset: 'utf-8'
+        author: 'jmdwebsites'
+        robots: 'noindex'
+        stylesheet: '/page.css'
+        title: 'My Web Page'
+    html4:
+        inherit: base
+        doctype: 'HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"'
+    html5:
+        inherit: base
+        doctype: 'html'
+        html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
+    default:
+        inherit: html5
+navlinks:
+    default:
+        'Home': '/'
+        'About Us': '/about'
+        'Contact Us': '/contact'
+        'Products': '/products'
+        'Login': '#'
+        'Sign Up': '#'
+content:
+    default:
+        header: ''
+        article: ''
+        footer: ''
+        headlines: ''
+        #cards: ''
+    /about:
+        inherit: default
+        cards: ''
