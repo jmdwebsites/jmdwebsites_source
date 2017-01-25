@@ -47,7 +47,7 @@ class MissingContentError(WebsiteError): pass
 class UnusedContentError(WebsiteError): pass
 class MissingVarsError(WebsiteError): pass
 class FileFilterError(Exception): pass
-class InvalidContentTypeError(Exception): pass
+class InvalidContentGroupError(Exception): pass
 class FileNotFoundError(Exception): pass
 class NotFoundError(Exception): pass
 class DictWalkerError(Exception): pass
@@ -217,11 +217,13 @@ def init_website():
 
 
 def content_dir_getter(site, site_dir):
+    site = ensure_spec(site, [])
+    logger.error(site)
     if CONTENT_GROUP in site:
         for content_group, dirname in site[CONTENT_GROUP].items():
             if content_group not in set([HOME, PAGES, POSTS]):
-                raise InvalidContentTypeError(
-                    'Invalid content type: {}'.format(content_group))
+                raise InvalidContentGroupError(
+                    'Invalid content group: {}'.format(content_group))
             if dirname is None:
                 dirname = os.path.join(CONTENT, content_group)
             logger.info('content_dir_getter(): {}: {}'.format(
@@ -290,21 +292,26 @@ def get_html(source_dir, page_spec, info=None):
         logger.debug("No source file found: {}".format(source_file))
         # No source file detected, so use a template
         template = get_template(page_spec)
-        content = get_content(page_spec, source_dir, fil=FileFilter('_', ['.html','.md']), info=info)
+        content = get_content(source_dir, page_spec, fil=FileFilter('_', ['.html','.md']), info=info)
         html = render_html(template, content, info=info)
     return html
 
 
 def get_page_spec(url, specs):
     logger.debug('get_page_spec(): url: {}'.format(repr(url)))
-    
-    if url in specs['pages']:
+
+    try:
+        page_specs = specs['pages']
+    except (KeyError, TypeError):
+        return None
+
+    if url in page_specs:
         page_spec_name = url
     else:
         page_spec_name = 'default'
     logger.debug('get_page_spec(): page_spec_name: {}'.format(repr(page_spec_name)))
 
-    raw_page_spec = get_spec(page_spec_name, specs['pages'])
+    raw_page_spec = get_spec(page_spec_name, page_specs)
     logger.debug('get_page_spec(): {}: raw: {}'.format(
         page_spec_name, yamldump(raw_page_spec)))
     
@@ -342,34 +349,53 @@ def render(template, content, info=None, j2=False, **kwargs):
     return rendered_output
 
 
-def get_content(spec, source_dir, info=None, fil=None):
-    spec_content = spec['content']
+def ensure_spec(spec, names=['content_group', 'content', 'layouts', 'partials', 'vars', 'navlinks']):
+    names = set(names)
+    if spec is None:
+        logger.warning('Invalid spec: spec: {}'.format(repr(spec)))
+        spec = CommentedMap()
+    for name in names:
+        try:
+            _subspec = spec[name]
+        except TypeError:
+            logger.warning('Invalid spec: spec: {}'.format(repr(spec)))
+            spec = CommentedMap()
+            spec[name] = CommentedMap()
+            raise TypeError
+        except KeyError:
+            logger.warning('Not found in spec: {}'.format(repr(name)))
+            spec[name] = CommentedMap()
+    return spec
+
+
+def get_content(source_dir, spec=None, info=None, fil=None):
+    spec = ensure_spec(spec, ['content', 'vars', 'navlinks'])
+        
     source_content = get_source_content(source_dir, fil=fil)
 
-    missing_content = {key:value for key, value in spec_content.items() if value is None and key not in source_content}
+    missing_content = {key:value for key, value in spec['content'].items() if value is None and key not in source_content}
     if missing_content:
         raise MissingContentError('Not found: {}'.format(missing_content.keys()))
-    unused_content = [key for key in source_content if key not in spec_content]
+    unused_content = [key for key in source_content if key not in spec['content']]
     if unused_content:
         raise UnusedContentError('Unused content: {}'.format(unused_content))
 
-    vars = get_vars(spec['vars'])
-
-    content = copy(spec_content)
+    content = copy(spec['content'])
     if info:
         for key, value in content.items():
             content[key] = value.format(info=info)
-    logger.debug('content: spec: {}'.format(content.keys()))
+    logger.debug('Default: content: {}'.format(content.keys()))
 
     content.update(source_content)
-    logger.debug('content: source_content update: {}'.format(content.keys()))
+    logger.debug('Update with source_content: content: {}'.format(content.keys()))
 
+    vars = get_vars(spec['vars'])
     content.update(vars)
-    logger.debug('content: vars update: {}'.format(content.keys()))
+    logger.debug('Update with vars : content: {}'.format(content.keys()))
 
     if 'navlinks' in spec:
         content.update(spec['navlinks'])
-        logger.debug('content: navlinks update: {}'.format(content.keys()))
+        logger.debug('Update with navlinks: content: {}'.format(content.keys()))
 
     return content
 
@@ -405,6 +431,7 @@ def get_template(spec, name='doc'):
 
 
 def partial_getter(spec, name='doc'):
+    spec = ensure_spec(spec, ['layouts', 'partials'])
     layouts = spec['layouts']
     try:
         top = layouts[name]
