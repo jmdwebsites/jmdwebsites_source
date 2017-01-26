@@ -133,7 +133,7 @@ def dict_walker(parent, parent_path=''):
                 yield path, root, key, value
 
 
-def inherit_file_data(basename, site_dir):
+def inherit_file_data1(basename, site_dir):
     for filepath in path_inheritor(basename, site_dir):
         with filepath.open() as file:
             if filepath.ext == '.yaml':
@@ -147,22 +147,6 @@ def inherit_file_data(basename, site_dir):
                 assert 0
     return data
 
-
-def path_inheritor(basename, site_dir):
-    path = None
-    locations = [
-        site_dir,  
-        py.path.local(__file__).dirpath()
-    ]
-    look_for = [dirpath.join(basename) for dirpath in locations]
-    available = [filepath for filepath in look_for if filepath.check(file=1)]
-    if not available:
-        raise FileNotFoundError('Not found: {}'.format(basename))
-    for filepath in available:
-        yield filepath
-        # Break because only the first available file is needed.
-        break
-    
 
 def new_website(site_dirname = ''):
     """New website."""
@@ -511,15 +495,6 @@ class Website(object):
         protected_remove(self.build_dir)
 
     def build(self):
-        def get_specs(basename, dirpath):
-            try:
-                data = inherit_file_data(basename, dirpath)
-            except FileNotFoundError as error:
-                #raise FileNotFoundError(error)
-                logger.warning(error)
-                return None
-            return data
-
         """Build the website."""
         #TODO: Write code to update files only if they have changed.
         #      But until then, clobber the build first, 
@@ -530,10 +505,36 @@ class Website(object):
             'Build directory already exists.'.format(self.build_dir)
         self.build_dir.ensure(dir=1)
 
-        self.site = get_specs(CONFIG_FILE, self.site_dir)
+        self.site = self.get_specs(CONFIG_FILE)
         #TODO: Choose the theme from a themes.yaml file
-        self.theme = get_specs(THEME_FILE, self.site_dir)
+        self.theme = self.get_specs(THEME_FILE)
  
         for content_group, content_dir in content_dir_getter(self.site, self.site_dir):
             for page_root, rel_page_path in page_path_getter(content_group, content_dir):
                 build_page(page_root, rel_page_path, self)
+
+    def get_specs(self, basename):
+        locations = [
+            self.site_dir,  
+            py.path.local(__file__).dirpath()
+        ]
+        for dirpath in locations:
+            filepath = dirpath.join(basename)
+            if filepath.check(file=1):
+                with filepath.open() as file:
+                    if filepath.ext == '.yaml':
+                        data = ryaml.load(file, Loader=ryaml.RoundTripLoader)
+                        logger.info('Load {} data from {} {}'.format(
+                            filepath.purebasename, filepath, yamldump(data)))
+                    else:
+                        data = file.read()
+                        logger.info('Load {} data from {} {}'.format(
+                            filepath.purebasename, filepath, dbgdump(data)))
+                        assert 0
+                break
+        else:
+            logger.warning('Not found: {}'.format(basename))
+            data = None
+        return data
+
+
