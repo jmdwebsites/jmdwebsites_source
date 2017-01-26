@@ -557,7 +557,7 @@ class Website(object):
 
     def build_stylesheets(self):
         logger.info('Build stylesheets')
-        #TODO:
-        #sass_cmdline = "sass {0} {1}".format(src, tgt)
-        #os.system(sass_cmdline)
-
+        src = self.theme_dir.join('stylesheets/page.scss')
+        tgt = self.build_dir.join('page.css')
+        sass_cmdline = "sass {0} {1}".format(src, tgt)
+        os.system(sass_cmdline)
