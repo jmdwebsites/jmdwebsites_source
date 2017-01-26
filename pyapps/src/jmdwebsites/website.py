@@ -200,7 +200,7 @@ def page_path_getter(content_group, content_dir):
             yield content_dir, page_path.relto(content_dir)
 
 
-def get_url(rel_page_path, site):
+def get_url(rel_page_path):
     #TODO: Check site config to get slugs and relpagepath to url mappings.
     url = os.path.join('/', rel_page_path)
     return url
@@ -209,25 +209,6 @@ def get_url(rel_page_path, site):
 class Info():
     def __init__(self, url):
         self.url = url
-
-
-def build_page(page_root, rel_page_path, site):
-    logger.debug('%%%%%%%%%%%%%%%%%%%%% {} %%%%%%%%%%%%%%%%%%%%%'.format(rel_page_path))
-    logger.info("Build page: {}".format(rel_page_path))
-    source_dir = page_root.join(rel_page_path)
-    url = get_url(rel_page_path, site)
-    page_spec = get_page_spec(url, site)
-    target_dir = site.build_dir.join(url)
-
-    logger.debug('22222222222222222222 {} 22222222222222222222'.format(url))
-    logger.info("Build file: {}".format(url))
-    if not source_dir.check(dir=1):
-        raise SourceDirNotFoundError(
-            'Source dir not found: {}'.format(source_dir))
-    html = get_html(source_dir, page_spec, info=Info(url))
-
-    build_html_file(html, target_dir)
-    build_page_assets(source_dir, target_dir)
 
 
 def build_html_file(html, target_dir):
@@ -252,13 +233,13 @@ def get_html(source_dir, page_spec, info=None):
     return html
 
 
-def get_page_spec(url, site):
+def get_page_spec(url, site_specs, theme_specs):
     logger.debug('get_page_spec(): url: {}'.format(repr(url)))
     specs = CommentedMap()
-    if isinstance(site.theme, dict):
-        specs.update(site.theme)
-    if isinstance(site.site, dict):
-        specs.update(site.site)
+    if isinstance(theme_specs, dict):
+        specs.update(theme_specs)
+    if isinstance(site_specs, dict):
+        specs.update(site_specs)
 
     try:
         page_specs = specs['pages']
@@ -511,7 +492,7 @@ class Website(object):
  
         for content_group, content_dir in content_dir_getter(self.site, self.site_dir):
             for page_root, rel_page_path in page_path_getter(content_group, content_dir):
-                build_page(page_root, rel_page_path, self)
+                self.build_page(page_root, rel_page_path)
 
     def get_specs(self, basename):
         locations = [
@@ -536,5 +517,25 @@ class Website(object):
             logger.warning('Not found: {}'.format(basename))
             data = None
         return data
+
+
+    def build_page(self, page_root, rel_page_path):
+        site = self
+        logger.debug('%%%%%%%%%%%%%%%%%%%%% {} %%%%%%%%%%%%%%%%%%%%%'.format(rel_page_path))
+        logger.info("Build page: {}".format(rel_page_path))
+        source_dir = page_root.join(rel_page_path)
+        url = get_url(rel_page_path)
+        page_spec = get_page_spec(url, self.site, self.theme)
+        target_dir = site.build_dir.join(url)
+
+        logger.debug('22222222222222222222 {} 22222222222222222222'.format(url))
+        logger.info("Build file: {}".format(url))
+        if not source_dir.check(dir=1):
+            raise SourceDirNotFoundError(
+                'Source dir not found: {}'.format(source_dir))
+        html = get_html(source_dir, page_spec, info=Info(url))
+
+        build_html_file(html, target_dir)
+        build_page_assets(source_dir, target_dir)
 
 
