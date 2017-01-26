@@ -104,12 +104,12 @@ def load(filepath):
         with filepath.open() as file:
             if filepath.ext == '.yaml':
                 data = ryaml.load(file, Loader=ryaml.RoundTripLoader)
-                logger.debug('Load {} data from {}: {}'.format(
-                    filepath.purebasename, filepath, yamldump(data)))
+                logger.debug('Load data from {}: {}'.format(
+                    filepath, yamldump(data)))
             else:
                 data = file.read()
-                logger.debug('Load {} data from {}: {}'.format(
-                    filepath.purebasename, filepath, dbgdump(data)))
+                logger.debug('Load data from {}: {}'.format(
+                    filepath, dbgdump(data)))
     else:
         raise FileNotFoundError('Not found: {}'.format(filepath))
     return data
@@ -461,20 +461,35 @@ class Website(object):
             self.build_dir = py.path.local(build_dir)
         logger.info('Build website in {}'.format(self.build_dir))
         self.site = self.get_specs(CONFIG_FILE)
-        self.theme = self.get_theme()
+        self.theme_dir, self.theme = self.get_theme()
+
+    def get_fallback(self, basename):
+        locations = [
+            self.site_dir,  
+            py.path.local(__file__).dirpath()
+        ]
+        for dirpath in locations:
+            filepath = dirpath.join(basename)
+            if filepath.check():
+                break
+        else:
+            raise NotFoundError()
+        return dirpath, filepath
 
     def get_theme(self):
         try:
             theme_name = self.site['theme']['name']
         except:
-            logger.warning('{}: Theme not specified: {}'.format(
-                CONFIG_FILE, yamldump(self.site)))
-            data = self.get_specs(THEME_FILE)
+            logger.warning('{}: Theme not specified, use fallback'.format(
+                CONFIG_FILE))
+            theme_dir, theme_file = self.get_fallback(THEME_FILE)
+            logger.debug('Load theme from {}'.format(theme_file))
         else:
-            filepath = self.site_dir.join('themes', theme_name, THEME_FILE)
-            logger.debug('Load theme {} from {}'.format(repr(theme_name), filepath))
-            data = load(filepath)
-        return data
+            theme_dir = self.site_dir.join('themes', theme_name)
+            theme_file = theme_dir.join(THEME_FILE)
+            logger.debug('Load theme {} from {}'.format(repr(theme_name), theme_file))
+        theme = load(theme_file)
+        return theme_dir, theme
 
     def clean(self):
         """Clean up the build."""
@@ -524,7 +539,6 @@ class Website(object):
             logger.warning('Not found: {}'.format(basename))
             data = None
         return data
-
 
     def build_page(self, source_root, source_rel_path):
         url = get_url(source_rel_path)
