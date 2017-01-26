@@ -1,5 +1,73 @@
 ## May need this in future if content is not in the default location.
-#
-content_group:
-    home:
-    pages:
+#content_group:
+#    home:
+#    pages:
+pages:
+    default:
+        layouts: default
+        partials: default
+        vars: default
+        content: default
+        navlinks: default
+    page:
+        layouts: page
+        partials: page
+        vars: page
+        content: page
+        navlinks: page
+    /:
+        inherit: page
+        layouts: home_page
+        content: home_page
+        vars:    /
+    /testpage:
+        inherit: default
+        layouts: test_page
+        content: test_page
+        vars:    /testpage
+    /about:
+        inherit: page
+        vars:    /about
+    /contact:
+        inherit: page
+        vars:    /contact
+    /products:
+        inherit: page
+        layouts: products_page
+        content: products_page
+        vars:    /products
+vars:
+    base:
+        lang: 'en'
+        charset: 'utf-8'
+        author: 'jmdwebsites'
+        robots: 'noindex'
+        stylesheet: '/page.css'
+        title: 'Web Page'
+        website: 'My Web Site'
+    html4:
+        inherit: base
+        doctype: 'HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"'
+    html5:
+        inherit: base
+        doctype: 'html'
+        html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
+    default:
+        inherit: html5
+    page:
+        inherit: default
+    /:
+        inherit: page
+        title: 'Home Page'
+    /testpage:
+        inherit: default
+        title: 'Test Page'
+    /about:
+        inherit: page
+        title: 'About Page'
+    /contact:
+        inherit: page
+        title: 'Contact Page'
+    /products:
+        inherit: page
+        title: 'Products Page'
