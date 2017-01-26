@@ -133,21 +133,6 @@ def dict_walker(parent, parent_path=''):
                 yield path, root, key, value
 
 
-def inherit_file_data1(basename, site_dir):
-    for filepath in path_inheritor(basename, site_dir):
-        with filepath.open() as file:
-            if filepath.ext == '.yaml':
-                data = ryaml.load(file, Loader=ryaml.RoundTripLoader)
-                logger.info('Load {} data from {} {}'.format(
-                    filepath.purebasename, filepath, yamldump(data)))
-            else:
-                data = file.read()
-                logger.info('Load {} data from {} {}'.format(
-                    filepath.purebasename, filepath, dbgdump(data)))
-                assert 0
-    return data
-
-
 def new_website(site_dirname = ''):
     """New website."""
     site_dir = py.path.local(site_dirname)
@@ -181,8 +166,6 @@ def content_dir_getter(site, site_dir):
                     'Invalid content group: {}'.format(content_group))
             if dirname is None:
                 dirname = os.path.join(CONTENT, content_group)
-            logger.info('content_dir_getter(): {}: {}'.format(
-                content_group, dirname))
             yield content_group, site_dir.join(dirname)
     else:
         root, dirs, files = next(os.walk(site_dir.join(CONTENT).strpath))
@@ -234,7 +217,7 @@ def get_html(source_dir, page_spec, info=None):
 
 
 def get_page_spec(url, site_specs, theme_specs):
-    logger.debug('get_page_spec(): url: {}'.format(repr(url)))
+    logger.debug('Get page spec for {}'.format(repr(url)))
     specs = CommentedMap()
     if isinstance(theme_specs, dict):
         specs.update(theme_specs)
@@ -250,10 +233,10 @@ def get_page_spec(url, site_specs, theme_specs):
         page_spec_name = url
     else:
         page_spec_name = 'default'
-    logger.debug('get_page_spec(): page_spec_name: {}'.format(repr(page_spec_name)))
+    logger.debug('Page spec name: {}'.format(repr(page_spec_name)))
 
     raw_page_spec = get_spec(page_spec_name, page_specs)
-    logger.debug('get_page_spec(): {}: raw: {}'.format(
+    logger.debug('{}: Raw page spec: {}'.format(
         page_spec_name, yamldump(raw_page_spec)))
     
     page_spec = CommentedMap((type_, get_spec(name, specs[type_])) 
@@ -264,7 +247,7 @@ def get_page_spec(url, site_specs, theme_specs):
         if value == 'navlink' and page_spec['navlinks'][key] == url:
             root[key] = 'activenavlink'
 
-    logger.debug('get_page_spec(): {}: processed: {}'.format(
+    logger.debug('{}: Compiled page spec: {}'.format(
         page_spec_name, yamldump(page_spec)))
 
     return page_spec
@@ -505,11 +488,11 @@ class Website(object):
                 with filepath.open() as file:
                     if filepath.ext == '.yaml':
                         data = ryaml.load(file, Loader=ryaml.RoundTripLoader)
-                        logger.info('Load {} data from {} {}'.format(
+                        logger.debug('Load {} data from {} {}'.format(
                             filepath.purebasename, filepath, yamldump(data)))
                     else:
                         data = file.read()
-                        logger.info('Load {} data from {} {}'.format(
+                        logger.debug('Load {} data from {} {}'.format(
                             filepath.purebasename, filepath, dbgdump(data)))
                         assert 0
                 break
@@ -519,16 +502,17 @@ class Website(object):
         return data
 
 
-    def build_page(self, page_root, rel_page_path):
-        logger.debug('%%%%%%%%%%%%%%%%%%%%% {} %%%%%%%%%%%%%%%%%%%%%'.format(rel_page_path))
-        logger.info("Build page: {}".format(rel_page_path))
-        source_dir = page_root.join(rel_page_path)
-        url = get_url(rel_page_path)
+    def build_page(self, source_root, source_rel_path):
+        #logger.debug('%' * 140)
+        source_dir = source_root.join(source_rel_path)
+        url = get_url(source_rel_path)
+        logger.debug('{0} {1} {0}'.format('%' * 60, url))
+        logger.info("Build page: {}".format(url))
+        logger.debug("Source data is in {}".format(source_dir))
         page_spec = get_page_spec(url, self.site, self.theme)
         target_dir = self.build_dir.join(url)
 
         logger.debug('22222222222222222222 {} 22222222222222222222'.format(url))
-        logger.info("Build file: {}".format(url))
         if not source_dir.check(dir=1):
             raise SourceDirNotFoundError(
                 'Source dir not found: {}'.format(source_dir))
