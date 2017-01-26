@@ -5,26 +5,28 @@ pages:
         vars: default
         content: default
         navlinks: default
+    page:
+        layouts: page
+        partials: page
+        vars: page
+        content: page
+        navlinks: page
     /:
-        inherit: default
-        layouts: /
-        content: /
-    /about:
-        inherit: default
-        layouts: /about
-        content: /about
-    /contact:
-        inherit: default
-        content: /contact
-    /products:
-        inherit: default
-        layouts: /products
-        vars: /products
-        content: /products
+        inherit: page
+        layouts: home_page
+        content: home_page
     /testpage:
         inherit: default
-        layouts: /testpage
-        content: /testpage
+        layouts: test_page
+        content: test_page
+    /about:
+        inherit: page
+    /contact:
+        inherit: page
+    /products:
+        inherit: page
+        layouts: products_page
+        content: products_page
 layouts:
     base:
         inherit:
@@ -63,25 +65,22 @@ layouts:
             article:
     default:
         inherit: base
-    headlines:
+    page:
         inherit: default
-        main:
-            headlines:
-            article:
-    '/':
-        inherit: default
+    home_page:
+        inherit: page
         main:
             headlines:
             cards:
             article:
-    /about:
-        inherit: default
-    /products:
-        inherit: default
+    headlines_page:
+        inherit: page
         main:
             headlines:
             article:
-    /testpage:
+    products_page:
+        inherit: headlines_page
+    test_page:
         inherit: default
         header:
         navbar:
@@ -124,6 +123,8 @@ partials:
         article: '<article>{partial}</article>'
     default:
         inherit: html5
+    page:
+        inherit: default
 vars:
     base:
         lang: 'en'
@@ -141,7 +142,7 @@ vars:
         html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
     default:
         inherit: html5
-    /products:
+    page:
         inherit: default
 content:
     base:
@@ -151,19 +152,19 @@ content:
         footer: '<p><em>COPYRIGHT jmdwebsites</em></p>'
     default:
         inherit: base
-    /:
+    page:
         inherit: default
+    home_page:
+        inherit: page
         headlines: ''
         cards: ''
         article: ''
-    /about:
-        inherit: default
-    /contact:
-        inherit: default
-    /products:
-        inherit: default
+    headlines_page:
+        inherit: page
         headlines: ''
-    /testpage:
+    products_page:
+        inherit: headlines_page
+    test_page:
         header: '<hr>HEADER: Page URL = {info.url} <br><br><hr>'
         navbar: '<hr>NAVBAR: <br><br><hr>'
         headlines: '<hr>HEADLINES: <br><br><hr>'
@@ -179,3 +180,5 @@ navlinks:
         'Test Page': '/testpage'
         'Login': '#'
         'Sign Up': '#'
+    page:
+        inherit: default

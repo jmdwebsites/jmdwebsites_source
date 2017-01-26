@@ -4,10 +4,15 @@ pages:
         partials: default
         vars: default
         content: default
+    page:
+        layouts: page
+        partials: page
+        vars: page
+        content: page
     /about:
-        inherit: default
-        layouts: /about
-        content: /about
+        inherit: page
+        layouts: about_page
+        content: about_page
 layouts:
     base:
         inherit:
@@ -28,13 +33,15 @@ layouts:
             article:
     default:
         inherit: base
-    headlines:
+    page:
         inherit: default
+    headlines_page:
+        inherit: page
         main:
             headlines:
             article:
-    /about:
-        inherit: default
+    about_page:
+        inherit: page
         main:
             cards:
             article:
@@ -71,6 +78,8 @@ partials:
         article: '<article>{partial}</article>'
     default:
         inherit: html5
+    page:
+        inherit: default
 vars:
     base:
         lang: 'en'
@@ -88,21 +97,16 @@ vars:
         html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
     default:
         inherit: html5
-navlinks:
-    default:
-        'Home': '/'
-        'About Us': '/about'
-        'Contact Us': '/contact'
-        'Products': '/products'
-        'Login': '#'
-        'Sign Up': '#'
+    page:
+        inherit: default
 content:
     default:
         header: ''
         article: ''
         footer: ''
         headlines: ''
-        #cards: ''
-    /about:
+    page:
         inherit: default
+    about_page:
+        inherit: page
         cards: ''

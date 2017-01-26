@@ -230,6 +230,8 @@ def get_page_spec(url, site_specs, theme_specs):
 
     if url in page_specs:
         page_spec_name = url
+    elif 'page' in page_specs:
+        page_spec_name = 'page'
     else:
         page_spec_name = 'default'
     logger.debug('Get subspec: {1}: {0}'.format(
