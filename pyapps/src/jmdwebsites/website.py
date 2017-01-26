@@ -506,6 +506,8 @@ class Website(object):
             for page_root, rel_page_path in page_path_getter(content_group, content_dir):
                 self.build_page(page_root, rel_page_path)
 
+        self.build_stylesheets()
+
     def get_specs(self, basename):
         locations = [
             self.site_dir,  
@@ -538,3 +540,10 @@ class Website(object):
         html = get_html(source_dir, page_spec, info=Info(url))
         build_html_file(html, target_dir)
         build_page_assets(source_dir, target_dir)
+
+    def build_stylesheets(self):
+        logger.info('Build stylesheets')
+        #TODO:
+        #sass_cmdline = "sass {0} {1}".format(src, tgt)
+        #os.system(sass_cmdline)
+
