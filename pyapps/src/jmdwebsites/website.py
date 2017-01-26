@@ -53,6 +53,7 @@ class FileNotFoundError(Exception): pass
 class NotFoundError(Exception): pass
 class DictWalkerError(Exception): pass
 class ContentFileError(WebsiteError): pass
+class ThemeNotFoundError(WebsiteError): pass
 
 
 def isdir(path): 
@@ -96,6 +97,22 @@ def protected_remove(path, valid_basenames=None):
             'Remove: Path not found: {}'.format(path))
     logger.info('Remove {}'.format(path))
     path.remove()
+
+
+def load(filepath):
+    if filepath.check(file=1):
+        with filepath.open() as file:
+            if filepath.ext == '.yaml':
+                data = ryaml.load(file, Loader=ryaml.RoundTripLoader)
+                logger.debug('Load {} data from {}: {}'.format(
+                    filepath.purebasename, filepath, yamldump(data)))
+            else:
+                data = file.read()
+                logger.debug('Load {} data from {}: {}'.format(
+                    filepath.purebasename, filepath, dbgdump(data)))
+    else:
+        raise FileNotFoundError('Not found: {}'.format(filepath))
+    return data
 
 
 class FileFilter:
@@ -443,10 +460,21 @@ class Website(object):
         else:
             self.build_dir = py.path.local(build_dir)
         logger.info('Build website in {}'.format(self.build_dir))
-
         self.site = self.get_specs(CONFIG_FILE)
-        #TODO: Choose the theme from a themes.yaml file
-        self.theme = self.get_specs(THEME_FILE)
+        self.theme = self.get_theme()
+
+    def get_theme(self):
+        try:
+            theme_name = self.site['theme']['name']
+        except:
+            logger.warning('{}: Theme not specified: {}'.format(
+                CONFIG_FILE, yamldump(self.site)))
+            data = self.get_specs(THEME_FILE)
+        else:
+            filepath = self.site_dir.join('themes', theme_name, THEME_FILE)
+            logger.debug('Load theme {} from {}'.format(repr(theme_name), filepath))
+            data = load(filepath)
+        return data
 
     def clean(self):
         """Clean up the build."""
@@ -485,18 +513,11 @@ class Website(object):
         ]
         for dirpath in locations:
             filepath = dirpath.join(basename)
-            if filepath.check(file=1):
-                with filepath.open() as file:
-                    if filepath.ext == '.yaml':
-                        data = ryaml.load(file, Loader=ryaml.RoundTripLoader)
-                        logger.debug('Load {} data from {} {}'.format(
-                            filepath.purebasename, filepath, yamldump(data)))
-                    else:
-                        data = file.read()
-                        logger.debug('Load {} data from {} {}'.format(
-                            filepath.purebasename, filepath, dbgdump(data)))
-                        assert 0
+            try:
+                data = load(filepath)
                 break
+            except FileNotFoundError:
+                pass
         else:
             logger.warning('Not found: {}'.format(basename))
             data = None

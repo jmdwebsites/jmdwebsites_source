@@ -2,6 +2,8 @@
 #content_group:
 #    home:
 #    pages:
+theme:
+    name: products
 pages:
     default:
         layouts: default
