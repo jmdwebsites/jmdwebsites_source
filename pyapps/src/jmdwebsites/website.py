@@ -460,6 +460,10 @@ class Website(object):
             self.build_dir = py.path.local(build_dir)
         logger.info('Build website in {}'.format(self.build_dir))
 
+        self.site = self.get_specs(CONFIG_FILE)
+        #TODO: Choose the theme from a themes.yaml file
+        self.theme = self.get_specs(THEME_FILE)
+
     def clean(self):
         """Clean up the build."""
         logger.info(self.clean.__doc__)
@@ -486,10 +490,6 @@ class Website(object):
             'Build directory already exists.'.format(self.build_dir)
         self.build_dir.ensure(dir=1)
 
-        self.site = self.get_specs(CONFIG_FILE)
-        #TODO: Choose the theme from a themes.yaml file
-        self.theme = self.get_specs(THEME_FILE)
- 
         for content_group, content_dir in content_dir_getter(self.site, self.site_dir):
             for page_root, rel_page_path in page_path_getter(content_group, content_dir):
                 self.build_page(page_root, rel_page_path)
@@ -520,13 +520,12 @@ class Website(object):
 
 
     def build_page(self, page_root, rel_page_path):
-        site = self
         logger.debug('%%%%%%%%%%%%%%%%%%%%% {} %%%%%%%%%%%%%%%%%%%%%'.format(rel_page_path))
         logger.info("Build page: {}".format(rel_page_path))
         source_dir = page_root.join(rel_page_path)
         url = get_url(rel_page_path)
         page_spec = get_page_spec(url, self.site, self.theme)
-        target_dir = site.build_dir.join(url)
+        target_dir = self.build_dir.join(url)
 
         logger.debug('22222222222222222222 {} 22222222222222222222'.format(url))
         logger.info("Build file: {}".format(url))
