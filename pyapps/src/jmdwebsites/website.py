@@ -212,9 +212,8 @@ class Info():
 
 
 def build_html_file(html, target_dir):
-    target_file = target_dir.ensure(dir=1).join('index.html') 
-    logger.debug('Build html file: {}'.format(target_file))
-    target_file.write(html)
+    target_file = target_dir.join('index.html') 
+    target_file.write_text(html.decode(), ensure=True, encoding='utf-8')
 
 
 def get_html(source_dir, page_spec, info=None):
