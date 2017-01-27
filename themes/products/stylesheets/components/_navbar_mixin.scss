@@ -1,0 +1,28 @@
+@mixin navbar($background, $action_color) {
+    background: $background;
+    //margin: 0 1em;
+    .navs, .navs2 {
+        float: left;
+        li {
+            display: inline-block;
+            //@include margin(0.2em 0.5em);
+            @include padding(0.2em 0.5em);
+            a {
+                color: $action_color;
+            }
+            &.active,
+            &:active,
+            &:focus,
+            &:hover {
+                a {
+                    color: shade($action_color, 35%);
+                }
+                //background: lighten($background, 15%);
+                //border-bottom: 1px solid white;
+            }
+        }
+    }
+    .navs2 {
+        float: right;
+    }
+}

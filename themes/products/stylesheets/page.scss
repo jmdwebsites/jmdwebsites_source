@@ -1,2 +1,11 @@
+@import "base/normalize";
+@import "libraries/bourbon/bourbon";
+@import "base/base";
+@import "libraries/neat/neat";
+
+// Mixins
+@import "components/header_mixin";
+@import "components/navbar_mixin";
+
 // Application
 @import "application/page";

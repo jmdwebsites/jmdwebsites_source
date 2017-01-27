@@ -1,0 +1,16 @@
+@mixin header($background) {
+    background: $background;
+    h1,h2,h3,h4,h5,h6 {
+        display: inline;
+        //float: left;
+        background: lighten($background, 45%);
+        color: blue;
+        margin-right: 5em;
+    }
+    p {
+        display: inline;
+        //float: right;
+        text-align: right;
+        margin-right: 5em;
+    }
+}

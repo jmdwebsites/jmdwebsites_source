@@ -13,7 +13,7 @@ pages:
         navlinks: default
     page:
         layouts: page
-        partials: page
+        partials: base
         vars: page
         content: page
         navlinks: page
@@ -23,7 +23,7 @@ pages:
         content: home_page
         vars:    /
     /testpage:
-        inherit: default
+        inherit: page
         layouts: test_page
         content: test_page
         vars:    /testpage

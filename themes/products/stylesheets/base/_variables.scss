@@ -1,0 +1,92 @@
+// Typography
+$base-font-family: $helvetica;
+$heading-font-family: $base-font-family;
+
+// Font Sizes
+$base-font-size: 1em;
+
+// Line height
+$base-line-height: 1.5;
+$heading-line-height: 1.2;
+
+// Other Sizes
+$base-border-radius: 3px;
+$base-spacing: $base-line-height * 1em;
+$small-spacing: $base-spacing / 2;
+$base-z-index: 0;
+
+// Colors
+$blue: #1565c0;
+$dark-gray: #333;
+$medium-gray: #999;
+$light-gray: #ddd;
+
+// Font Colors
+$base-font-color: $dark-gray;
+$action-color: $blue;
+
+// Border
+$base-border-color: $light-gray;
+$base-border: 1px solid $base-border-color;
+
+// Background Colors
+$base-background-color: #fff;
+$secondary-background-color: tint($base-border-color, 75%);
+
+// Forms
+$form-box-shadow: inset 0 1px 3px rgba(#000, 0.06);
+$form-box-shadow-focus: $form-box-shadow, 0 0 5px adjust-color($action-color, $lightness: -5%, $alpha: -0.3);
+
+// Animations
+$base-duration: 150ms;
+$base-timing: ease;
+
+
+//JMD - Application
+
+$debug: true;
+
+// Sizes
+$tiny-spacing: $base-spacing/4;
+
+// Body
+$light: white;
+$html-background: if($debug, red, $light);
+$body-background: if($debug, purple, $light);
+
+// Header
+$header-background: if($debug, yellow, yellow);
+
+// Navigation Bar
+$navbar-background: if($debug, black, black);
+$navbar_action_color: white;
+
+// Hero
+$hero-background-color: if($debug, orange, $body-background);
+$hero-background-image: 'https://raw.githubusercontent.com/thoughtbot/refills/master/source/images/mountains.png';
+
+// Main
+$main-background: if($debug, pink, $body-background);
+
+// Sidebar
+$sidebar-background: if($debug, darken(pink, 20%), $body-background);
+
+// Headlines
+$headlines-base-color: if($debug, lighten(blue, 20%), lightgrey);
+//$headline-border-color: $base-border-color !default;
+$headlines-background: if($debug, lighten(green, 40%), $light);
+
+// Cards
+//$cards-background: lighten(lightgrey, 4%);
+//$card-background: lighten($cards-background, 8%);
+//$card-image-background: lighten($cards-background, 12%);
+
+// Main Article
+$main-article-background: if($debug, turquoise, $light);
+
+// Footer
+$footer-background: if($debug, black, black);
+$footer_color: lightgrey;
+
+// Other
+$border-break: black;

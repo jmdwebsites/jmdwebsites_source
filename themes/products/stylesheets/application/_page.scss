@@ -1,8 +1,26 @@
-/////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // Site sections
 
-$html-background: red;
 
 html {
     background: $html-background;
 }
+
+
+body {
+    background: $body-background;
+}
+
+
+.header {
+    @include outer-container(100%);
+    @include header($header-background);    
+}
+
+
+.navbar {
+    @include outer-container(100%);
+    @include navbar($navbar-background, $navbar_action_color);
+}
+
+
