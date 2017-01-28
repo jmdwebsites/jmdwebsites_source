@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from __future__ import print_function
 import pytest
 import os
@@ -143,7 +144,7 @@ def test_html_file(file, expected):
     (py.path.local('pyapps/tests/data/example_build'), '*.html', expected_html_file)
 ])
 def test_html_files(input_dir, file_glob, expected):
-    for html_file in input_dir.visit(fil = file_glob):
+    for html_file in input_dir.visit(fil = str(file_glob)):
         test_html_file(html_file, expected)
 
 @pytest.mark.parametrize("site_dir, expected", [

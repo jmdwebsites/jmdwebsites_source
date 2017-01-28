@@ -1,8 +1,11 @@
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import logging
 import logging.config
 import os
 
-import click
-import ruamel.yaml as ryaml
+import ruamel
 
 STARTSTR = '---- START ----'
 ENDSTR   = '---- END ------'
@@ -12,13 +15,46 @@ def dbgdump(data, wrap='\n{}\n{}\n{}'):
     return wrap.format(STARTSTR, data, ENDSTR)
 
 
-def yamldump(data, wrap='\n{}\n{}{}'):
-    if wrap:
-        text = ryaml.dump(data, Dumper=ryaml.RoundTripDumper)
-        text = wrap.format(STARTSTR, text, ENDSTR)
-        return text
+def represent_yaml_str(self, data):
+    rdata = self.represent_str(data)
+    print('represent_yaml_str: ', repr(rdata))
+    return self.represent_str(data.encode('utf-8'))
+    #return self.represent_str(data)
+
+
+def represent_yaml_unicode(self, data):
+    rdata = self.represent_unicode(data)
+    if rdata.tag == u'tag:yaml.org,2002:python/unicode':
+        rdata = self.represent_str(data.encode('utf-8'))
+    elif rdata.tag == u'tag:yaml.org,2002:str':
+        pass
     else:
-        return ryaml.dump(data, Dumper=ryaml.RoundTripDumper)
+        raise Exception('YAML representer error: {}'.format(rdata.tag))
+    print('represent_yaml_unicode: ', repr(rdata))
+    return rdata
+    #return self.represent_unicode(data)
+
+
+ruamel.yaml.Dumper.add_representer(str, represent_yaml_str)
+ruamel.yaml.Dumper.add_representer(unicode, represent_yaml_unicode)
+# Not needed as RoundTripDumoer has own representers for string handling
+#ruamel.yaml.RoundTripDumper.add_representer(str, represent_yaml_str)
+#ruamel.yaml.RoundTripDumper.add_representer(unicode, represent_yaml_unicode)
+
+
+def yamldump(data, wrap='\n{}\n{}{}', enc=None):
+    text = ruamel.yaml.dump(
+        data, 
+        Dumper=ruamel.yaml.RoundTripDumper, 
+        allow_unicode=True, 
+        default_flow_style=False)
+    # The yaml output is a utf-8 string!
+    text = text.decode('utf-8')
+    if wrap:
+        text = wrap.format(STARTSTR, text, ENDSTR)
+    if enc:
+        text = text.encode(enc)
+    return text
 
 
 def remove(filename):
@@ -39,6 +75,7 @@ def reset_logging(disable = logging.NOTSET):
     }
     logging.config.dictConfig(_default_config)
     logging.disable(disable)
+
 
 def config_logging(level=None, info=False, debug=False, verbose=0, logfile=None, disable_existing_loggers=False):
     logger_level = 'DEBUG'

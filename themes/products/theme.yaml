@@ -100,8 +100,9 @@ content:
     base:
         header: '<hr>HEADER: Page URL = {info.url} <br><br><hr>'
         article: '<hr>Default article text ...'
-        #footer: '<p><em>&copy jmdwebsites</em></p>' #Need to sort out unicode!
-        footer: '<p><em>COPYRIGHT jmdwebsites</em></p>'
+        #footer: '<p><em>COPYRIGHT jmdwebsites</em></p>'
+        #footer: '<p><em>&copyjmdwebsites</em></p>' #Need to sort out unicode!
+        footer: '<p><em>©jmdwebsites</em></p>' #Need to sort out unicode!
     default:
         inherit: base
     page:

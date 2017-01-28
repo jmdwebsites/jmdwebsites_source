@@ -1,17 +1,19 @@
+from __future__ import unicode_literals
 from __future__ import print_function
+
 from copy import copy, deepcopy
 import logging
 import os
+import platform
 from pprint import pformat
 
 import jinja2
 import mistune
 import py
-import ruamel.yaml as ryaml
+import ruamel
 from ruamel.yaml.compat import ordereddict
 from ruamel.yaml.comments import CommentedMap
 import six
-import yaml
 
 from jmdwebsites.log import dbgdump, yamldump
 from jmdwebsites.html import prettify
@@ -101,15 +103,22 @@ def protected_remove(path, valid_basenames=None):
 
 def load(filepath):
     if filepath.check(file=1):
-        with filepath.open() as file:
-            if filepath.ext == '.yaml':
-                data = ryaml.load(file, Loader=ryaml.RoundTripLoader)
-                logger.debug('Load data from {}: {}'.format(
-                    filepath, yamldump(data)))
-            else:
-                data = file.read()
-                logger.debug('Load data from {}: {}'.format(
-                    filepath, dbgdump(data)))
+        system_platform = platform.system()
+        if system_platform == 'Darwin':
+            encoding='MacRoman'
+        elif system_platform == 'Windows':
+            encoding='windows-1252'
+        elif system_platform == 'Linux':
+            encoding='ISO-8859-1'
+        else:
+            encoding='utf-8'
+        data = filepath.read_text(encoding=encoding)
+        if filepath.ext == '.yaml':
+            data = ruamel.yaml.load(data, Loader=ruamel.yaml.RoundTripLoader)
+            data_dump = yamldump(data)
+        else:
+            data_dump = dbgdump(data)
+        logger.debug('Load data from {}: {}'.format(filepath, data_dump))
     else:
         raise FileNotFoundError('Not found: {}'.format(filepath))
     return data
@@ -213,7 +222,7 @@ class Info():
 
 def build_html_file(html, target_dir):
     target_file = target_dir.join('index.html') 
-    target_file.write_text(html.decode(), ensure=True, encoding='utf-8')
+    target_file.write_text(html, ensure=True, encoding='utf-8')
 
 
 def get_html(source_dir, page_spec, info=None):
@@ -221,7 +230,7 @@ def get_html(source_dir, page_spec, info=None):
     source_file = source_dir.join('index.html')
     if source_file.check():
         logger.debug("Get html source file".format(source_file))
-        html = source_file.read()
+        html = load(source_file)
         logger.debug('Validate source file: {}'.format(source_file))
         #TODO: Validate that the file is unicode and that the html is ok
     else:
@@ -286,6 +295,7 @@ def render(template, content, info=None, j2=False, **kwargs):
         template = jinja2.Template(template)
     try:
         rendered_output = template.format(info=info, **content)
+        assert isinstance(rendered_output, unicode)
     except KeyError as e:
         raise NotFoundError('Missing content: {}'.format(e))
     logger.debug('Rendered output: {}'.format(dbgdump(rendered_output)))
@@ -370,7 +380,7 @@ def get_vars(vars):
 
 def get_template(spec, name='doc'):
     logger.debug('Create template from spec')
-    template = '\n'.join(partial_getter(spec))
+    template = '\n'.join(partial_getter(spec))  #makeuni
     logger.debug('Show template: {}'.format(dbgdump(template)))
     return template
 
@@ -436,7 +446,7 @@ def inheritor(current, root):
 
 
 def build_page_assets(source_dir, target_dir):
-    for asset in source_dir.visit(fil='*.css'):
+    for asset in source_dir.visit(fil=str('*.css')):
         logger.info('Get asset {} from {}'.format(
             target_dir.relto(target_dir).join(asset.basename), 
             asset))
