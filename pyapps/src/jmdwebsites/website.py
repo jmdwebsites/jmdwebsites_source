@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from __future__ import print_function
 
 from copy import copy, deepcopy
@@ -17,6 +16,7 @@ import six
 
 from jmdwebsites.log import dbgdump, yamldump
 from jmdwebsites.html import prettify
+#TODO: import jmdwebsites.yaml
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +56,13 @@ class NotFoundError(Exception): pass
 class DictWalkerError(Exception): pass
 class ContentFileError(WebsiteError): pass
 class ThemeNotFoundError(WebsiteError): pass
+
+
+def ensure_unicode(text):
+    print('ensure_unicode:', type(text), repr(text))
+    #assert isinstance(text, unicode)
+    #TODO: Review how to ensure unicode
+    return unicode(text)
 
 
 def isdir(path): 
@@ -293,9 +300,12 @@ def render_html(template, content, **kwargs):
 def render(template, content, info=None, j2=False, **kwargs):
     if j2:
         template = jinja2.Template(template)
+        assert 0, "TODO:"
+        #TODO:
+        #rendered_output = template.render(info=info, **content)
     try:
         rendered_output = template.format(info=info, **content)
-        assert isinstance(rendered_output, unicode)
+        rendered_output = ensure_unicode(rendered_output)
     except KeyError as e:
         raise NotFoundError('Missing content: {}'.format(e))
     logger.debug('Rendered output: {}'.format(dbgdump(rendered_output)))
@@ -380,10 +390,11 @@ def get_vars(vars):
 
 def get_template(spec, name='doc'):
     logger.debug('Create template from spec')
-    template = '\n'.join(partial_getter(spec))  #makeuni
+    template = u'\n'.join(partial_getter(spec))
+    template = ensure_unicode(template)
     logger.debug('Show template: {}'.format(dbgdump(template)))
+    template = ensure_unicode(template)
     return template
-
 
 def partial_getter(spec, name='doc'):
     spec = ensure_spec(spec, ['layouts', 'partials'])
@@ -399,14 +410,18 @@ def partial_getter(spec, name='doc'):
                 partial_name = child_name
             try:
                 fmt = spec['partials'][partial_name]
+                fmt = ensure_unicode(fmt)
             except KeyError:
                 raise PartialNotFoundError('Partial not found: {}'.format(partial_name))
             if child_name in layouts and layouts[child_name]:
-                child = '\n'.join(partial_getter(spec, name=child_name))
-                child = '\n{}\n'.format(child)
+                child = u'\n'.join(partial_getter(spec, name=child_name))
+                child = u'\n{}\n'.format(child)
             else:
                 logger.debug('Get partial: leaf: ' + child_name)
-                child = '{{{0}}}'.format(child_name)
+                child = u'{{{0}}}'.format(child_name)
+            fmt = ensure_unicode(fmt)
+            child_name = ensure_unicode(child_name)
+            child = ensure_unicode(child)
             partial = fmt.format(**{'partialname': child_name, 'partial': child})
             yield partial
 

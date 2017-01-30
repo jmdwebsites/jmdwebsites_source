@@ -1,5 +1,4 @@
 from __future__ import print_function
-from __future__ import unicode_literals
 
 import logging
 import logging.config
@@ -11,8 +10,16 @@ STARTSTR = '---- START ----'
 ENDSTR   = '---- END ------'
 
 
-def dbgdump(data, wrap='\n{}\n{}\n{}'):
-    return wrap.format(STARTSTR, data, ENDSTR)
+def dbgdump(text, wrap=u'\n{}\n{}\n{}', enc='utf-8'):
+    text = unicode(text)
+    if wrap:
+        wrap = unicode(wrap)
+        startstr = unicode(STARTSTR)
+        endstr = unicode(ENDSTR)
+        text = wrap.format(STARTSTR, text, ENDSTR)
+    if enc:
+        text = text.encode(enc)
+    return text
 
 
 def represent_yaml_str(self, data):
@@ -42,18 +49,26 @@ ruamel.yaml.Dumper.add_representer(unicode, represent_yaml_unicode)
 #ruamel.yaml.RoundTripDumper.add_representer(unicode, represent_yaml_unicode)
 
 
-def yamldump(data, wrap='\n{}\n{}{}', enc=None):
+def yamldump(data, wrap='\n{}\n{}{}', enc='utf-8'):
     text = ruamel.yaml.dump(
         data, 
         Dumper=ruamel.yaml.RoundTripDumper, 
         allow_unicode=True, 
         default_flow_style=False)
     # The yaml output is a utf-8 string!
-    text = text.decode('utf-8')
-    if wrap:
-        text = wrap.format(STARTSTR, text, ENDSTR)
-    if enc:
-        text = text.encode(enc)
+    if wrap and enc:
+        startstr = unicode(STARTSTR).encode(enc)
+        endstr = unicode(ENDSTR).encode(enc)
+        wrap = unicode(wrap).encode(enc)
+        text = wrap.format(startstr, text, endstr)
+    elif wrap:
+        wrap = unicode(wrap)
+        startstr = unicode(STARTSTR)
+        endstr = unicode(ENDSTR)
+        text = text.decode()
+        text = wrap.format(startstr, text, endstr)
+    elif not enc:
+        text = text.decode()
     return text
 
 
