@@ -44,7 +44,7 @@ def main():
 def cli(change_dir, level, info, debug, verbose, logfile):
     jmdwebsites.log.config_logging(level, info, debug, verbose, logfile)
     if logfile:
-        logger.info('Logging to {}'.format(logfile))
+        logger.info('Logging to %s', logfile)
     if change_dir:
         try:
             os.chdir(change_dir)

@@ -43,13 +43,11 @@ def getter(dir1, dir2, recursive=True, ignore=None, **kargs):
         if platform.system() == 'Darwin':
             ignore = ['.DS_Store']
     top_dircmp = filecmp.dircmp(dir1, dir2, ignore=ignore, **kargs)
-    logger.debug('\n{0}\n{1}\n{2}'.format(
-        STARTSTR, dump(top_dircmp), ENDSTR))
+    logger.debug('\n%s\n%s\n%s', STARTSTR, dump(top_dircmp), ENDSTR)
     yield top_dircmp
     if recursive:
         for dcmp in walker(top_dircmp):
-            logger.debug('\n{0}\n{1}\n{2}'.format(
-                STARTSTR, dump(dcmp), ENDSTR))
+            logger.debug('\n%s\n%s\n%s', STARTSTR, dump(dcmp), ENDSTR)
             yield dcmp
 
 

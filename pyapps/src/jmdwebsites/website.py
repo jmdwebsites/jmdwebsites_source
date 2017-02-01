@@ -30,6 +30,7 @@ PROJDIR = '.jmdwebsite'
 HOME = 'home'
 PAGES = 'pages'
 POSTS = 'posts'
+DEBUG_SEPARATOR = '%%' * 60 + ' %s ' + '%%' * 60
 
 class FatalError(Exception): pass
 class NonFatalError(Exception): pass
@@ -104,7 +105,7 @@ def protected_remove(path, valid_basenames=None):
     if not path.check():
         raise PathNotFoundError(
             'Remove: Path not found: {}'.format(path))
-    logger.info('Remove {}'.format(path))
+    logger.info('Remove %s', path)
     path.remove()
 
 
@@ -125,7 +126,7 @@ def load(filepath):
             data_dump = yamldump(data)
         else:
             data_dump = dbgdump(data)
-        logger.debug('Load data from {}: {}'.format(filepath, data_dump))
+        logger.debug('Load data from %s: %s', filepath, data_dump)
     else:
         raise FileNotFoundError('Not found: {}'.format(filepath))
     return data
@@ -169,7 +170,7 @@ def dict_walker(parent, parent_path=''):
 def new_website(site_dirname = ''):
     """New website."""
     site_dir = py.path.local(site_dirname)
-    logger.info('Create new website {}'.format(site_dir.strpath))
+    logger.info('Create new website %s', site_dir.strpath)
     if site_dir.check():
         raise PathAlreadyExists(
             'Already exists: {}'.format(site_dir))
@@ -180,12 +181,12 @@ def new_website(site_dirname = ''):
 def init_website():
     """Initialize website."""
     site_dir = py.path.local()
-    logger.info('Init website {}'.format(site_dir.strpath))
+    logger.info('Init website %s', site_dir.strpath)
     project_dir = py.path.local( PROJDIR)
     if project_dir.check():
         raise WebsiteProjectAlreadyExists(
             'Website project already exists: {}'.format(project_dir))
-    logger.info('Create proj dir {}'.format(project_dir.strpath))
+    logger.info('Create proj dir %s', project_dir.strpath)
     project_dir.ensure(dir=1)
     site_dir.ensure(CONFIG_FILE)
 
@@ -207,8 +208,7 @@ def content_dir_getter(site, site_dir):
 
 
 def page_path_getter(content_group, content_dir):
-    logger.info('Build content: {}: {}'.format(
-        content_group, content_dir))
+    logger.info('Build content: %s: %s', content_group, content_dir)
     if content_group == HOME:
         yield content_dir, ''
     else:
@@ -236,9 +236,9 @@ def get_html(source_dir, page_spec, info=None):
     #TODO: Decide how to handle index.php files
     source_file = source_dir.join('index.html')
     if source_file.check():
-        logger.debug("Get html source file".format(source_file))
+        logger.debug("Get html source file %s", source_file)
         html = load(source_file)
-        logger.debug('Validate source file: {}'.format(source_file))
+        logger.debug('Validate source file: %s', source_file)
         #TODO: Validate that the file is unicode and that the html is ok
     else:
         # No source file detected, so use a template and content partials.
@@ -266,25 +266,23 @@ def get_page_spec(url, site_specs, theme_specs):
         page_spec_name = 'page'
     else:
         page_spec_name = 'default'
-    logger.debug('Get subspec: {1}: {0}'.format(
-        repr(page_spec_name), repr('pages')))
+    logger.debug('Get subspec: %s: %s', repr('pages'), repr(page_spec_name))
 
     raw_page_spec = get_spec(page_spec_name, page_specs)
     
     page_spec = CommentedMap()
     for type_, name in raw_page_spec.items():
-        logger.debug('Get subspec: {1}: {0}'.format(
-            repr(name), repr(type_)))
+        logger.debug('Get subspec: %s: %s', repr(type_), repr(name))
         page_spec[type_] = get_spec(name, specs[type_])
 
     # Active nav links
     for path, root, key, value in dict_walker(page_spec):
         if value == 'navlink' and page_spec['navlinks'][key] == url:
-            logger.debug('Change {} navlink to activenavlink'.format(repr(key)))
+            logger.debug('Change %s navlink to activenavlink', repr(key))
             root[key] = 'activenavlink'
 
-    logger.debug('Show compiled page spec {} for url {}: {}'.format(
-        repr(page_spec_name), repr(url), yamldump(page_spec)))
+    logger.debug('Show compiled page spec %s for url %s: %s',
+        repr(page_spec_name), repr(url), yamldump(page_spec))
 
     return page_spec
 
@@ -293,7 +291,7 @@ def render_html(template, content, **kwargs):
     logger.debug("Render html using template and content")
     rendered = render(template, content, **kwargs)
     html = prettify(rendered)
-    logger.debug('Rendered html: ' + dbgdump(html))
+    logger.debug('Rendered html: %s', dbgdump(html))
     return html
 
 
@@ -308,31 +306,31 @@ def render(template, content, info=None, j2=False, **kwargs):
         rendered_output = ensure_unicode(rendered_output)
     except KeyError as e:
         raise NotFoundError('Missing content: {}'.format(e))
-    logger.debug('Rendered output: {}'.format(dbgdump(rendered_output)))
+    logger.debug('Rendered output: %s', dbgdump(rendered_output))
     return rendered_output
 
 
 def ensure_spec(spec, names=['content_group', 'content', 'layouts', 'partials', 'vars', 'navlinks']):
     names = set(names)
     if spec is None:
-        logger.warning('No spec: spec: {}'.format(repr(spec)))
+        logger.warning('No spec: spec: %s', repr(spec))
         spec = CommentedMap()
     for name in names:
         try:
             _subspec = spec[name]
         except TypeError:
-            logger.warning('Invalid spec type: spec: {}'.format(repr(spec)))
+            logger.warning('Invalid spec type: spec: %s', repr(spec))
             spec = CommentedMap()
             spec[name] = CommentedMap()
             raise TypeError
         except KeyError:
-            logger.warning('Not found in spec: {}'.format(repr(name)))
+            logger.warning('Not found in spec: %s', repr(name))
             spec[name] = CommentedMap()
     return spec
 
 
 def get_content(source_dir, spec=None, info=None, fil=None):
-    logger.debug('Get content from {}'.format(source_dir))
+    logger.debug('Get content from %s', source_dir)
     spec = ensure_spec(spec, ['content', 'vars', 'navlinks'])
         
     source_content = get_source_content(source_dir, fil=fil)
@@ -350,17 +348,17 @@ def get_content(source_dir, spec=None, info=None, fil=None):
     if info:
         for key, value in content.items():
             content[key] = value.format(info=info)
-    logger.debug('content: {}: Initilized with default content from spec'.format(content.keys()))
+    logger.debug('content: %s: Initilized with default content from spec', content.keys())
 
     content.update(source_content)
-    logger.debug('content: {}: Updated with source content'.format(content.keys()))
+    logger.debug('content: %s: Updated with source content', content.keys())
 
     content.update(vars)
-    logger.debug('content: {}: Updated with vars'.format(content.keys()))
+    logger.debug('content: %s: Updated with vars', content.keys())
 
     if 'navlinks' in spec:
         content.update(spec['navlinks'])
-        logger.debug('content: {}: Updated with navlinks'.format(content.keys()))
+        logger.debug('content: %s: Updated with navlinks', content.keys())
 
     return content
 
@@ -381,7 +379,7 @@ def get_source_content(source_dir, fil=None, markdown=mistune.Markdown()):
 
 
 def get_vars(vars):
-    logger.debug('vars: {}'.format(vars.keys()))
+    logger.debug('vars: %s', vars.keys())
     missing_vars = {var:value for var, value in vars.items() if value is None}
     if missing_vars:
         raise MissingVarsError('Not found: {}'.format(missing_vars.keys()))
@@ -392,7 +390,7 @@ def get_template(spec, name='doc'):
     logger.debug('Create template from spec')
     template = u'\n'.join(partial_getter(spec))
     template = ensure_unicode(template)
-    logger.debug('Show template: {}'.format(dbgdump(template)))
+    logger.debug('Show template: %s', dbgdump(template))
     template = ensure_unicode(template)
     return template
 
@@ -403,7 +401,7 @@ def partial_getter(spec, name='doc'):
         top = layouts[name]
     except KeyError:
         return
-    logger.debug('Get partial: stem: ' + name)
+    logger.debug('Get partial: stem: %s', name)
     if top:
         for child_name, partial_name in top.items():
             if partial_name is None:
@@ -417,7 +415,7 @@ def partial_getter(spec, name='doc'):
                 child = u'\n'.join(partial_getter(spec, name=child_name))
                 child = u'\n{}\n'.format(child)
             else:
-                logger.debug('Get partial: leaf: ' + child_name)
+                logger.debug('Get partial: leaf: %s', child_name)
                 child = u'{{{0}}}'.format(child_name)
             fmt = ensure_unicode(fmt)
             child_name = ensure_unicode(child_name)
@@ -428,7 +426,7 @@ def partial_getter(spec, name='doc'):
 
 def get_spec(name, root):
     ancestors = [root[name]] + [anc for anc in inheritor(root[name], root) if anc]
-    logger.debug('Inheritance: {}'.format(yamldump(ancestors)))
+    logger.debug('Inheritance: %s', yamldump(ancestors))
     if not ancestors:
         return ordereddict()
     spec = deepcopy(ancestors[-1])
@@ -462,28 +460,28 @@ def inheritor(current, root):
 
 def build_page_assets(source_dir, target_dir):
     for asset in source_dir.visit(fil=str('*.css')):
-        logger.info('Get asset {} from {}'.format(
+        logger.info('Get asset %s from %s',
             target_dir.relto(target_dir).join(asset.basename), 
-            asset))
+            asset)
         asset.copy(target_dir)
 
 
 class Website(object):
     def __init__(self, site_dir=None, build_dir=None):
-        logger.debug('Create website: {}(site_dir={}, build_dir={})'.format(
+        logger.debug('Create website: %s(site_dir=%s, build_dir=%s)',
             self.__class__.__name__, 
             repr(site_dir),
-            repr(build_dir)))
+            repr(build_dir))
         if site_dir is None:
             self.site_dir = get_project_dir()
         else:
             self.site_dir = py.path.local(site_dir)
-        logger.info('Site root directory: {}'.format(self.site_dir))
+        logger.info('Site root directory: %s', self.site_dir)
         if build_dir is None:
             self.build_dir = self.site_dir.join(BUILD)
         else:
             self.build_dir = py.path.local(build_dir)
-        logger.info('Build website in {}'.format(self.build_dir))
+        logger.info('Build website in %s', self.build_dir)
         self.site = self.get_specs(CONFIG_FILE)
         self.theme_dir, self.theme = self.get_theme()
 
@@ -504,14 +502,13 @@ class Website(object):
         try:
             theme_name = self.site['theme']['name']
         except:
-            logger.warning('{}: Theme not specified, use fallback'.format(
-                CONFIG_FILE))
+            logger.warning('%s: Theme not specified, use fallback', CONFIG_FILE)
             theme_dir, theme_file = self.get_fallback(THEME_FILE)
-            logger.debug('Load theme from {}'.format(theme_file))
+            logger.debug('Load theme from %s', theme_file)
         else:
             theme_dir = self.site_dir.join('themes', theme_name)
             theme_file = theme_dir.join(THEME_FILE)
-            logger.debug('Load theme {} from {}'.format(repr(theme_name), theme_file))
+            logger.debug('Load theme %s from %s', repr(theme_name), theme_file)
         theme = load(theme_file)
         return theme_dir, theme
 
@@ -560,19 +557,19 @@ class Website(object):
             except FileNotFoundError:
                 pass
         else:
-            logger.warning('Not found: {}'.format(basename))
+            logger.warning('Not found: %s', basename)
             data = None
         return data
 
     def build_page(self, source_root, source_rel_path):
         url = get_url(source_rel_path)
-        logger.debug('{0} {1} {0}'.format('%' * 60, url))  # Mark page top
-        logger.info("Build page: {}".format(url))
+        logger.debug(DEBUG_SEPARATOR, url)  # Mark page top
+        logger.info("Build page: %s", url)
         source_dir = source_root.join(source_rel_path)
         if not source_dir.check(dir=1):
             raise SourceDirNotFoundError(
                 'Source dir not found: {}'.format(source_dir))
-        logger.debug("Source data is in {}".format(source_dir))
+        logger.debug("Source data is in %s", source_dir)
         target_dir = self.build_dir.join(url)
         page_spec = get_page_spec(url, self.site, self.theme)
         html = get_html(source_dir, page_spec, info=Info(url))
