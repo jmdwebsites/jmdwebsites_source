@@ -9,14 +9,13 @@ from pprint import pformat
 import jinja2
 import mistune
 import py
-import ruamel
-from ruamel.yaml.compat import ordereddict
-from ruamel.yaml.comments import CommentedMap
 import six
+
 
 from jmdwebsites.log import dbgdump, yamldump
 from jmdwebsites.html import prettify
-#TODO: import jmdwebsites.yaml
+from jmdwebsites import orderedyaml
+from orderedyaml import OrderedYaml, CommentedMap
 
 logger = logging.getLogger(__name__)
 
@@ -120,13 +119,14 @@ def load(filepath):
             encoding='ISO-8859-1'
         else:
             encoding='utf-8'
-        data = filepath.read_text(encoding=encoding)
+        data = filepath.read_text(encoding=encoding)  #Dont need this for the yaml case
         if filepath.ext == '.yaml':
-            data = ruamel.yaml.load(data, Loader=ruamel.yaml.RoundTripLoader)
-            data_dump = yamldump(data)
+            yaml = orderedyaml.load(data)
+            data = yaml.commented_map
+            logger.debug('Load data from %s: %s', filepath, yaml)
         else:
             data_dump = dbgdump(data)
-        logger.debug('Load data from %s: %s', filepath, data_dump)
+            logger.debug('Load data from %s: %s', filepath, data_dump)
     else:
         raise FileNotFoundError('Not found: {}'.format(filepath))
     return data
@@ -394,6 +394,7 @@ def get_template(spec, name='doc'):
     template = ensure_unicode(template)
     return template
 
+
 def partial_getter(spec, name='doc'):
     spec = ensure_spec(spec, ['layouts', 'partials'])
     layouts = spec['layouts']
@@ -428,7 +429,7 @@ def get_spec(name, root):
     ancestors = [root[name]] + [anc for anc in inheritor(root[name], root) if anc]
     logger.debug('Inheritance: %s', yamldump(ancestors))
     if not ancestors:
-        return ordereddict()
+        return CommentedMap()
     spec = deepcopy(ancestors[-1])
     for ancestor in reversed(ancestors):
         for key, value in ancestor.items():
