@@ -108,17 +108,23 @@ def protected_remove(path, valid_basenames=None):
     path.remove()
 
 
+def get_default_platform_encoding():
+    system_platform = platform.system()
+    if system_platform == 'Darwin':
+        encoding='MacRoman'
+    elif system_platform == 'Windows':
+        encoding='windows-1252'
+    elif system_platform == 'Linux':
+        encoding='ISO-8859-1'
+    else:
+        encoding='utf-8'
+
+    return encoding
+
+
 def load(filepath):
     if filepath.check(file=1):
-        system_platform = platform.system()
-        if system_platform == 'Darwin':
-            encoding='MacRoman'
-        elif system_platform == 'Windows':
-            encoding='windows-1252'
-        elif system_platform == 'Linux':
-            encoding='ISO-8859-1'
-        else:
-            encoding='utf-8'
+        encoding = get_default_platform_encoding()
         text = filepath.read_text(encoding=encoding) 
         if filepath.ext == '.yaml':
             yaml = orderedyaml.load(text)
