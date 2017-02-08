@@ -13,10 +13,10 @@ class OrderedYaml(object):
             self.commented_map = commented_map
     
     def __unicode__(self):
-        return self.dump().decode()
+        return self.dump().decode('utf-8')
 
     def __str__(self):
-        return self.__unicode__()
+        return self.dump()
 
     def __repr__(self):
         return repr(self.__unicode__())

@@ -8,6 +8,7 @@ import ruamel
 
 STARTSTR = '---- START ----'
 ENDSTR   = '---- END ------'
+WRAPPER = '\n%s\n%s%s' % (STARTSTR, r'%s', ENDSTR)
 
 
 def dbgdump(text, wrap=u'\n{}\n{}\n{}', enc='utf-8'):

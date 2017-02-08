@@ -12,7 +12,7 @@ import py
 import six
 
 
-from jmdwebsites.log import dbgdump, yamldump
+from jmdwebsites.log import dbgdump, WRAPPER
 from jmdwebsites.html import prettify
 from jmdwebsites import orderedyaml
 from orderedyaml import OrderedYaml, CommentedMap
@@ -119,12 +119,13 @@ def load(filepath):
             encoding='ISO-8859-1'
         else:
             encoding='utf-8'
-        data = filepath.read_text(encoding=encoding)  #Dont need this for the yaml case
+        text = filepath.read_text(encoding=encoding) 
         if filepath.ext == '.yaml':
-            yaml = orderedyaml.load(data)
+            yaml = orderedyaml.load(text)
             data = yaml.commented_map
-            logger.debug('Load data from %s: %s', filepath, yaml)
+            logger.debug('Load data from %s:' + WRAPPER, filepath, yaml)
         else:
+            data = text
             data_dump = dbgdump(data)
             logger.debug('Load data from %s: %s', filepath, data_dump)
     else:
@@ -266,23 +267,23 @@ def get_page_spec(url, site_specs, theme_specs):
         page_spec_name = 'page'
     else:
         page_spec_name = 'default'
-    logger.debug('Get subspec: %s: %s', repr('pages'), repr(page_spec_name))
+    logger.debug('Get subspec: %r: %r', 'pages', page_spec_name)
 
     raw_page_spec = get_spec(page_spec_name, page_specs)
     
     page_spec = CommentedMap()
     for type_, name in raw_page_spec.items():
-        logger.debug('Get subspec: %s: %s', repr(type_), repr(name))
+        logger.debug('Get subspec: %r: %r', type_, name)
         page_spec[type_] = get_spec(name, specs[type_])
 
     # Active nav links
     for path, root, key, value in dict_walker(page_spec):
         if value == 'navlink' and page_spec['navlinks'][key] == url:
-            logger.debug('Change %s navlink to activenavlink', repr(key))
+            logger.debug('Change %r navlink to activenavlink', key)
             root[key] = 'activenavlink'
 
-    logger.debug('Show compiled page spec %s for url %s: %s',
-        repr(page_spec_name), repr(url), yamldump(page_spec))
+    logger.debug('Show compiled page spec %r for url %r:' + WRAPPER,
+        page_spec_name, url, OrderedYaml(page_spec))
 
     return page_spec
 
@@ -313,18 +314,18 @@ def render(template, content, info=None, j2=False, **kwargs):
 def ensure_spec(spec, names=['content_group', 'content', 'layouts', 'partials', 'vars', 'navlinks']):
     names = set(names)
     if spec is None:
-        logger.warning('No spec: spec: %s', repr(spec))
+        logger.warning('No spec: spec: %r', spec)
         spec = CommentedMap()
     for name in names:
         try:
             _subspec = spec[name]
         except TypeError:
-            logger.warning('Invalid spec type: spec: %s', repr(spec))
+            logger.warning('Invalid spec type: spec: %r', spec)
             spec = CommentedMap()
             spec[name] = CommentedMap()
             raise TypeError
         except KeyError:
-            logger.warning('Not found in spec: %s', repr(name))
+            logger.warning('Not found in spec: %r', name)
             spec[name] = CommentedMap()
     return spec
 
@@ -427,7 +428,7 @@ def partial_getter(spec, name='doc'):
 
 def get_spec(name, root):
     ancestors = [root[name]] + [anc for anc in inheritor(root[name], root) if anc]
-    logger.debug('Inheritance: %s', yamldump(ancestors))
+    logger.debug('Inheritance:' + WRAPPER, OrderedYaml(ancestors))
     if not ancestors:
         return CommentedMap()
     spec = deepcopy(ancestors[-1])
@@ -469,10 +470,8 @@ def build_page_assets(source_dir, target_dir):
 
 class Website(object):
     def __init__(self, site_dir=None, build_dir=None):
-        logger.debug('Create website: %s(site_dir=%s, build_dir=%s)',
-            self.__class__.__name__, 
-            repr(site_dir),
-            repr(build_dir))
+        logger.debug('Create website: %s(site_dir=%r, build_dir=%r)',
+            self.__class__.__name__, site_dir, build_dir)
         if site_dir is None:
             self.site_dir = get_project_dir()
         else:
@@ -509,7 +508,7 @@ class Website(object):
         else:
             theme_dir = self.site_dir.join('themes', theme_name)
             theme_file = theme_dir.join(THEME_FILE)
-            logger.debug('Load theme %s from %s', repr(theme_name), theme_file)
+            logger.debug('Load theme %r from %s', theme_name, theme_file)
         theme = load(theme_file)
         return theme_dir, theme
 
