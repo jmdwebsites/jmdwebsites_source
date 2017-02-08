@@ -8,41 +8,15 @@ import ruamel
 
 STARTSTR = '---- START ----'
 ENDSTR   = '---- END ------'
-WRAPPER = '\n%s\n%s%s' % (STARTSTR, r'%s', ENDSTR)
+WRAPPER = u'\n%s\n%s%s' % (STARTSTR, r'%s', ENDSTR)
+WRAPPER_NL = u'\n%s\n%s\n%s' % (STARTSTR, r'%s', ENDSTR)
 
 
-def dbgdump(text, wrap=u'\n{}\n{}\n{}', enc='utf-8'):
-    text = unicode(text)
-    if wrap:
-        wrap = unicode(wrap)
-        startstr = unicode(STARTSTR)
-        endstr = unicode(ENDSTR)
-        text = wrap.format(STARTSTR, text, ENDSTR)
+def logdump(text, wrapper=WRAPPER, enc=None):
+    if wrapper:
+        text = WRAPPER % text
     if enc:
         text = text.encode(enc)
-    return text
-
-
-def yamldump(data, wrap='\n{}\n{}{}', enc='utf-8'):
-    text = ruamel.yaml.dump(
-        data, 
-        Dumper=ruamel.yaml.RoundTripDumper, 
-        allow_unicode=True, 
-        default_flow_style=False)
-    # The yaml output is a utf-8 string!
-    if wrap and enc:
-        startstr = unicode(STARTSTR).encode(enc)
-        endstr = unicode(ENDSTR).encode(enc)
-        wrap = unicode(wrap).encode(enc)
-        text = wrap.format(startstr, text, endstr)
-    elif wrap:
-        wrap = unicode(wrap)
-        startstr = unicode(STARTSTR)
-        endstr = unicode(ENDSTR)
-        text = text.decode()
-        text = wrap.format(startstr, text, endstr)
-    elif not enc:
-        text = text.decode()
     return text
 
 

@@ -12,7 +12,7 @@ import py
 import six
 
 
-from jmdwebsites.log import dbgdump, WRAPPER
+from jmdwebsites.log import WRAPPER, WRAPPER_NL
 from jmdwebsites.html import prettify
 from jmdwebsites import orderedyaml
 from orderedyaml import OrderedYaml, CommentedMap
@@ -126,8 +126,7 @@ def load(filepath):
             logger.debug('Load data from %s:' + WRAPPER, filepath, yaml)
         else:
             data = text
-            data_dump = dbgdump(data)
-            logger.debug('Load data from %s: %s', filepath, data_dump)
+            logger.debug('Load data from %s:' + WRAPPER_NL, filepath, data)
     else:
         raise FileNotFoundError('Not found: {}'.format(filepath))
     return data
@@ -292,7 +291,7 @@ def render_html(template, content, **kwargs):
     logger.debug("Render html using template and content")
     rendered = render(template, content, **kwargs)
     html = prettify(rendered)
-    logger.debug('Rendered html: %s', dbgdump(html))
+    logger.debug('Rendered html:' + WRAPPER_NL, html)
     return html
 
 
@@ -307,7 +306,7 @@ def render(template, content, info=None, j2=False, **kwargs):
         rendered_output = ensure_unicode(rendered_output)
     except KeyError as e:
         raise NotFoundError('Missing content: {}'.format(e))
-    logger.debug('Rendered output: %s', dbgdump(rendered_output))
+    logger.debug('Rendered output:' + WRAPPER, rendered_output)
     return rendered_output
 
 
@@ -389,9 +388,9 @@ def get_vars(vars):
 
 def get_template(spec, name='doc'):
     logger.debug('Create template from spec')
-    template = u'\n'.join(partial_getter(spec))
+    template = u'\n'.join(partial_getter(spec)) + u'\n'
     template = ensure_unicode(template)
-    logger.debug('Show template: %s', dbgdump(template))
+    logger.debug('Show template:' + WRAPPER, template)
     template = ensure_unicode(template)
     return template
 
