@@ -55,7 +55,6 @@ class FileNotFoundError(Exception): pass
 class NotFoundError(Exception): pass
 class DictWalkerError(Exception): pass
 class ContentFileError(WebsiteError): pass
-class ThemeNotFoundError(WebsiteError): pass
 
 
 def ensure_unicode(text):
@@ -371,16 +370,16 @@ def get_content(source_dir, spec=None, info=None, fil=None):
 
 def get_source_content(source_dir, fil=None, markdown=mistune.Markdown()):
     source_content = {}
-    for partial_file in source_dir.visit(fil=fil):
-        partial_name = partial_file.purebasename.lstrip('_')
-        text = partial_file.read()
-        if partial_file.ext == '.html':
+    for path in source_dir.visit(fil=fil):
+        part_name = path.purebasename.lstrip('_')
+        text = path.read()
+        if path.ext == '.html':
             html = text
-        elif partial_file.ext == '.md':
+        elif path.ext == '.md':
             html = markdown(text)
         else:
-            raise ContentFileError('Invalid file type: {}'.format(partial_file))
-        source_content[partial_name] = html
+            raise ContentFileError('Invalid file type: {}'.format(path), 2)
+        source_content[part_name] = html
     return source_content
 
 
