@@ -232,9 +232,10 @@ def get_url(rel_page_path):
     return url
 
 
-class Info():
-    def __init__(self, url):
-        #self.url = url
+class PageData():
+    def __init__(self):
+        # Use this as test data to check mechanism 
+        # for passing in data to template/content works
         self.stats = 'Stats=56%'
 
 
@@ -258,7 +259,7 @@ def get_html(source_dir, page_spec, data=None):
     else:
         # No source file detected, so use a template and content partials.
         template = get_template(page_spec)
-        content = get_content(source_dir, page_spec, fil=FileFilter('_', ['.html','.md']), data=data)
+        content = get_content(source_dir, page_spec, fil=FileFilter('_', ['.html','.md']))
         html = render_html(template, content, data=data)
     return html
 
@@ -319,12 +320,13 @@ def render(template, content, data=None, j2=False, **kwargs):
         #TODO:
         #rendered_output = template.render(data=data, **content)
         return
-
     try:
         rendered_output = template.format(data=data, **content)
-        rendered_output = ensure_unicode(rendered_output)
+        # Second pass, to catch variables in content partials
+        rendered_output = rendered_output.format(data=data, **content)
     except KeyError as e:
         raise NotFoundError('Missing content: {}'.format(e))
+    rendered_output = ensure_unicode(rendered_output)
     logger.debug('Rendered output:' + WRAPPER, rendered_output)
     return rendered_output
 
@@ -348,7 +350,7 @@ def ensure_spec(spec, names=['content_group', 'content', 'layouts', 'partials', 
     return spec
 
 
-def get_content(source_dir, spec=None, data=None, fil=None):
+def get_content(source_dir, spec=None, fil=None):
     logger.debug('Get content from %s', source_dir)
     spec = ensure_spec(spec, ['content', 'vars', 'navlinks'])
         
@@ -364,9 +366,6 @@ def get_content(source_dir, spec=None, data=None, fil=None):
     vars = get_vars(spec['vars'])
 
     content = copy(spec['content'])
-    if 1:
-        for key, value in content.items():
-            content[key] = value.format(data=data, **vars)
     logger.debug('content: %s: Initilized with default content from spec', content.keys())
 
     content.update(source_content)
@@ -584,7 +583,7 @@ class Website(object):
         logger.debug(DEBUG_SEPARATOR, url)  # Mark page top
         logger.info("Build page: %s", url)
         page_spec = get_page_spec(url, self.site, self.theme)
-        html = get_html(source_dir, page_spec, data=Info(url))
+        html = get_html(source_dir, page_spec, data=PageData())
         target_dir = self.build_dir.join(url)
         build_html_file(html, target_dir)
         build_page_assets(source_dir, target_dir)
