@@ -11,9 +11,8 @@ import mistune
 import py
 import six
 
-
 from jmdwebsites.log import WRAPPER, WRAPPER_NL
-from jmdwebsites.html import prettify
+from jmdwebsites import html
 from jmdwebsites import orderedyaml
 from orderedyaml import OrderedYaml, CommentedMap
 
@@ -245,23 +244,17 @@ def build_html_file(html, target_dir):
 
 
 def get_html(source_dir, page_spec, data=None):
-    #TODO: Decide how to handle index.php files
     if not source_dir.check(dir=1):
         raise SourceDirNotFoundError(
             'Source dir not found: {}'.format(source_dir))
     logger.debug("Source data is in %s", source_dir)
-    source_file = source_dir.join('index.html')
-    if source_file.check():
-        logger.debug("Get html source file %s", source_file)
-        html = load(source_file)
-        logger.debug('Validate source file: %s', source_file)
-        #TODO: Validate that the file is unicode and that the html is ok
-    else:
+    html_text = html.get_index_page(source_dir)
+    if html_text is None:
         # No source file detected, so use a template and content partials.
         template = get_template(page_spec)
         content = get_content(source_dir, page_spec, fil=FileFilter('_', ['.html','.md']))
-        html = render_html(template, content, data=data)
-    return html
+        html_text = render_html(template, content, data=data)
+    return html_text
 
 
 def get_page_spec(url, site_specs, theme_specs):
@@ -307,10 +300,10 @@ def get_page_spec(url, site_specs, theme_specs):
 
 def render_html(template, content, **kwargs):
     logger.debug("Render html using template and content")
-    rendered = render(template, content, **kwargs)
-    html = prettify(rendered)
-    logger.debug('Rendered html:' + WRAPPER_NL, html)
-    return html
+    rendered_html = render(template, content, **kwargs)
+    pretty_html = html.prettify(rendered_html)
+    logger.debug('Rendered html:' + WRAPPER_NL, pretty_html)
+    return pretty_html
 
 
 def render(template, content, data=None, j2=False, **kwargs):
