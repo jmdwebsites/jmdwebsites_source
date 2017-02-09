@@ -196,7 +196,7 @@ def init_website():
     site_dir.ensure(CONFIG_FILE)
 
 
-def content_dir_getter(site, site_dir):
+def content_finder(site, site_dir):
     site = ensure_spec(site, [])
     if CONTENT_GROUP in site:
         for content_group, dirname in site[CONTENT_GROUP].items():
@@ -204,21 +204,26 @@ def content_dir_getter(site, site_dir):
                 raise InvalidContentGroupError(
                     'Invalid content group: {}'.format(content_group))
             if dirname is None:
-                dirname = os.path.join(CONTENT, content_group)
-            yield content_group, site_dir.join(dirname)
+                group_dir = site_dir.join(CONTENT, content_group)
+            else:
+                group_dir = site_dir.join(dirname)
+            yield content_group, group_dir
     else:
         root, dirs, files = next(os.walk(site_dir.join(CONTENT).strpath))
         for content_group in dirs: 
-            yield content_group, site_dir.join(CONTENT, content_group)
+            group_dir = site_dir.join(CONTENT, content_group)
+            yield content_group, group_dir
 
 
-def page_path_getter(content_group, content_dir):
+def page_finder(content_group, content_dir):
     logger.info('Build content: %s: %s', content_group, content_dir)
     if content_group == HOME:
-        yield content_dir, ''
+        url = '/'
+        yield url, content_dir 
     else:
         for page_path in content_dir.visit(fil=isdir):
-            yield content_dir, page_path.relto(content_dir)
+            url = get_url(page_path.relto(content_dir))
+            yield url, page_path
 
 
 def get_url(rel_page_path):
@@ -542,9 +547,9 @@ class Website(object):
             'Build directory already exists.'.format(self.build_dir)
         self.build_dir.ensure(dir=1)
 
-        for content_group, content_dir in content_dir_getter(self.site, self.site_dir):
-            for page_root, rel_page_path in page_path_getter(content_group, content_dir):
-                self.build_page(page_root, rel_page_path)
+        for content_group, source_dir in content_finder(self.site, self.site_dir):
+            for url, path in page_finder(content_group, source_dir):
+                self.build_page(url, path)
 
         self.build_stylesheets()
 
@@ -565,11 +570,9 @@ class Website(object):
             data = None
         return data
 
-    def build_page(self, source_root, source_rel_path):
-        url = get_url(source_rel_path)
+    def build_page(self, url, source_dir):
         logger.debug(DEBUG_SEPARATOR, url)  # Mark page top
         logger.info("Build page: %s", url)
-        source_dir = source_root.join(source_rel_path)
         if not source_dir.check(dir=1):
             raise SourceDirNotFoundError(
                 'Source dir not found: {}'.format(source_dir))
