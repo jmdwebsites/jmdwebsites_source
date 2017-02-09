@@ -58,7 +58,7 @@ class ContentFileError(WebsiteError): pass
 
 
 def ensure_unicode(text):
-    print('ensure_unicode:', type(text), repr(text))
+    #print('ensure_unicode:', type(text), repr(text))
     #assert isinstance(text, unicode)
     #TODO: Review how to ensure unicode
     return unicode(text)
@@ -234,7 +234,8 @@ def get_url(rel_page_path):
 
 class Info():
     def __init__(self, url):
-        self.url = url
+        #self.url = url
+        self.stats = 'Stats=56%'
 
 
 def build_html_file(html, target_dir):
@@ -242,8 +243,12 @@ def build_html_file(html, target_dir):
     target_file.write_text(html, ensure=True, encoding='utf-8')
 
 
-def get_html(source_dir, page_spec, info=None):
+def get_html(source_dir, page_spec, data=None):
     #TODO: Decide how to handle index.php files
+    if not source_dir.check(dir=1):
+        raise SourceDirNotFoundError(
+            'Source dir not found: {}'.format(source_dir))
+    logger.debug("Source data is in %s", source_dir)
     source_file = source_dir.join('index.html')
     if source_file.check():
         logger.debug("Get html source file %s", source_file)
@@ -253,8 +258,8 @@ def get_html(source_dir, page_spec, info=None):
     else:
         # No source file detected, so use a template and content partials.
         template = get_template(page_spec)
-        content = get_content(source_dir, page_spec, fil=FileFilter('_', ['.html','.md']), info=info)
-        html = render_html(template, content, info=info)
+        content = get_content(source_dir, page_spec, fil=FileFilter('_', ['.html','.md']), data=data)
+        html = render_html(template, content, data=data)
     return html
 
 
@@ -294,6 +299,8 @@ def get_page_spec(url, site_specs, theme_specs):
     logger.debug('Show compiled page spec %r for url %r:' + WRAPPER,
         page_spec_name, url, OrderedYaml(page_spec))
 
+    page_spec['vars']['url'] = url
+
     return page_spec
 
 
@@ -305,14 +312,16 @@ def render_html(template, content, **kwargs):
     return html
 
 
-def render(template, content, info=None, j2=False, **kwargs):
+def render(template, content, data=None, j2=False, **kwargs):
     if j2:
         template = jinja2.Template(template)
         assert 0, "TODO:"
         #TODO:
-        #rendered_output = template.render(info=info, **content)
+        #rendered_output = template.render(data=data, **content)
+        return
+
     try:
-        rendered_output = template.format(info=info, **content)
+        rendered_output = template.format(data=data, **content)
         rendered_output = ensure_unicode(rendered_output)
     except KeyError as e:
         raise NotFoundError('Missing content: {}'.format(e))
@@ -339,7 +348,7 @@ def ensure_spec(spec, names=['content_group', 'content', 'layouts', 'partials', 
     return spec
 
 
-def get_content(source_dir, spec=None, info=None, fil=None):
+def get_content(source_dir, spec=None, data=None, fil=None):
     logger.debug('Get content from %s', source_dir)
     spec = ensure_spec(spec, ['content', 'vars', 'navlinks'])
         
@@ -355,9 +364,9 @@ def get_content(source_dir, spec=None, info=None, fil=None):
     vars = get_vars(spec['vars'])
 
     content = copy(spec['content'])
-    if info:
+    if 1:
         for key, value in content.items():
-            content[key] = value.format(info=info)
+            content[key] = value.format(data=data, **vars)
     logger.debug('content: %s: Initilized with default content from spec', content.keys())
 
     content.update(source_content)
@@ -369,6 +378,7 @@ def get_content(source_dir, spec=None, info=None, fil=None):
     if 'navlinks' in spec:
         content.update(spec['navlinks'])
         logger.debug('content: %s: Updated with navlinks', content.keys())
+    logger.debug('content:' + WRAPPER, OrderedYaml(content))
 
     return content
 
@@ -573,13 +583,9 @@ class Website(object):
     def build_page(self, url, source_dir):
         logger.debug(DEBUG_SEPARATOR, url)  # Mark page top
         logger.info("Build page: %s", url)
-        if not source_dir.check(dir=1):
-            raise SourceDirNotFoundError(
-                'Source dir not found: {}'.format(source_dir))
-        logger.debug("Source data is in %s", source_dir)
-        target_dir = self.build_dir.join(url)
         page_spec = get_page_spec(url, self.site, self.theme)
-        html = get_html(source_dir, page_spec, info=Info(url))
+        html = get_html(source_dir, page_spec, data=Info(url))
+        target_dir = self.build_dir.join(url)
         build_html_file(html, target_dir)
         build_page_assets(source_dir, target_dir)
 
