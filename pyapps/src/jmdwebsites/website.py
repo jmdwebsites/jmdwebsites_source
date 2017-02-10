@@ -252,7 +252,8 @@ def get_html(source_dir, page_spec, data=None):
     if html_text is None:
         # No source file detected, so use a template and content partials.
         template = get_template(page_spec)
-        content = get_content(source_dir, page_spec, fil=FileFilter('_', ['.html','.md']))
+        source_content = get_content(source_dir)
+        content = merge_content(source_content, page_spec)
         html_text = render_html(template, content, data=data)
     return html_text
 
@@ -343,12 +344,26 @@ def ensure_spec(spec, names=['content_group', 'content', 'layouts', 'partials', 
     return spec
 
 
-def get_content(source_dir, spec=None, fil=None):
+def get_content(source_dir,
+                       fil=FileFilter('_', ['.html','.md']),
+                       markdown=mistune.Markdown()):
     logger.debug('Get content from %s', source_dir)
-    spec = ensure_spec(spec, ['content', 'vars', 'navlinks'])
-        
-    source_content = get_source_content(source_dir, fil=fil)
+    source_content = {}
+    for path in source_dir.visit(fil=fil):
+        part_name = path.purebasename.lstrip('_')
+        text = path.read()
+        if path.ext == '.html':
+            html = text
+        elif path.ext == '.md':
+            html = markdown(text)
+        else:
+            raise ContentFileError('Invalid file type: {}'.format(path), 2)
+        source_content[part_name] = html
+    return source_content
 
+
+def merge_content(source_content, spec=None):
+    spec = ensure_spec(spec, ['content', 'vars', 'navlinks'])
     missing_content = {key:value for key, value in spec['content'].items() if value is None and key not in source_content}
     if missing_content:
         raise MissingContentError('Not found: {}'.format(missing_content.keys()))
@@ -373,21 +388,6 @@ def get_content(source_dir, spec=None, fil=None):
     logger.debug('content:' + WRAPPER, OrderedYaml(content))
 
     return content
-
-
-def get_source_content(source_dir, fil=None, markdown=mistune.Markdown()):
-    source_content = {}
-    for path in source_dir.visit(fil=fil):
-        part_name = path.purebasename.lstrip('_')
-        text = path.read()
-        if path.ext == '.html':
-            html = text
-        elif path.ext == '.md':
-            html = markdown(text)
-        else:
-            raise ContentFileError('Invalid file type: {}'.format(path), 2)
-        source_content[part_name] = html
-    return source_content
 
 
 def get_vars(vars):
@@ -576,9 +576,9 @@ class Website(object):
         logger.debug(DEBUG_SEPARATOR, url)  # Mark page top
         logger.info("Build page: %s", url)
         page_spec = get_page_spec(url, self.site, self.theme)
-        html = get_html(source_dir, page_spec, data=PageData())
+        html_page = get_html(source_dir, page_spec, data=PageData())
         target_dir = self.build_dir.join(url)
-        build_html_file(html, target_dir)
+        build_html_file(html_page, target_dir)
         build_page_assets(source_dir, target_dir)
 
     def build_stylesheets(self):
