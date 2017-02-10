@@ -351,7 +351,7 @@ def get_content(source_dir,
     source_content = {}
     for path in source_dir.visit(fil=fil):
         part_name = path.purebasename.lstrip('_')
-        text = path.read()
+        text = path.read_text(encoding='utf-8')
         if path.ext == '.html':
             html = text
         elif path.ext == '.md':
