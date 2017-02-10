@@ -1,20 +1,14 @@
 from __future__ import print_function
 
-from copy import copy, deepcopy
 import logging
 import os
-import platform
-from pprint import pformat
 
-import jinja2
-import mistune
 import py
-import six
 
-from jmdwebsites.log import WRAPPER, WRAPPER_NL
-from jmdwebsites import html
-from jmdwebsites import orderedyaml
-from orderedyaml import OrderedYaml, CommentedMap
+from jmdwebsites import html, orderedyaml
+from jmdwebsites.page import get_html
+from jmdwebsites.spec import ensure_spec, get_page_spec
+from jmdwebsites.error import JmdwebsitesError
 
 logger = logging.getLogger(__name__)
 
@@ -30,38 +24,21 @@ PAGES = 'pages'
 POSTS = 'posts'
 DEBUG_SEPARATOR = '%%' * 60 + ' %s ' + '%%' * 60
 
-class FatalError(Exception): pass
-class NonFatalError(Exception): pass
-class WebsiteError(Exception): pass
+class FatalError(JmdwebsitesError): pass
+class NonFatalError(JmdwebsitesError): pass
+
+class WebsiteError(JmdwebsitesError): pass
 # For get_project_dir()
 class ProjectNotFoundError(WebsiteError): pass
 # For protected_remove()
 class ProtectedRemoveError(WebsiteError): pass
 class PathNotAllowedError(ProtectedRemoveError): pass
 class BasenameNotAllowedError(ProtectedRemoveError): pass
-class PathNotFoundError(ProtectedRemoveError): pass
+class PathNotFoundError(WebsiteError): pass
 class PathAlreadyExists(WebsiteError): pass
 class WebsiteProjectAlreadyExists(WebsiteError): pass
-class SourceDirNotFoundError(WebsiteError): pass
-class AncestorNotFoundError(WebsiteError): pass
-class PartialNotFoundError(WebsiteError): pass
-class MissingContentError(WebsiteError): pass
-class UnusedContentError(WebsiteError): pass
-class MissingVarsError(WebsiteError): pass
-class FileFilterError(Exception): pass
-class InvalidContentGroupError(Exception): pass
-class FileNotFoundError(Exception): pass
-class NotFoundError(Exception): pass
-class DictWalkerError(Exception): pass
-class ContentFileError(WebsiteError): pass
+class InvalidContentGroupError(WebsiteError): pass
 class BuildStylesheetsError(WebsiteError): pass
-
-
-def ensure_unicode(text):
-    #print('ensure_unicode:', type(text), repr(text))
-    #assert isinstance(text, unicode)
-    #TODO: Review how to ensure unicode
-    return unicode(text)
 
 
 def isdir(path): 
@@ -105,41 +82,6 @@ def protected_remove(path, valid_basenames=None):
             'Remove: Path not found: {}'.format(path))
     logger.info('Remove %s', path)
     path.remove()
-
-
-class FileFilter:
-
-    def __init__(self, startswith=None, extensions=None):
-        if extensions is None:
-            self.extensions = extensions
-        elif isinstance(extensions, six.string_types):
-            self.extensions = set(extensions.split())
-        else:
-            self.extensions = set(extensions)
-        if isinstance(startswith, six.string_types):
-            self.startswith = startswith
-        else:
-            raise FileFilterError('Not a string: startswith: {}'.format(repr(startswith)))
-
-    def __call__(self, path):
-        allow = True
-        if self.extensions is not None and path.ext not in self.extensions:
-            allow = False
-        if allow and not path.basename.startswith(self.startswith):
-            allow = False
-        return allow
-
-
-def dict_walker(parent, parent_path=''):
-    if not isinstance(parent, dict):
-        raise DictWalkerError('Not a dictionary: {}'.format(root))
-    for key, value in parent.items():
-        path = os.path.join(parent_path, key)
-        root = parent
-        yield path, root, key, value
-        if isinstance(value, dict):
-            for path, root, key, value in dict_walker(value, parent_path=path):
-                yield path, root, key, value
 
 
 def new_website(site_dirname = ''):
@@ -209,234 +151,6 @@ class PageData():
         self.stats = 'Stats=56%'
 
 
-def get_html(source_dir, page_spec, data=None):
-    if not source_dir.check(dir=1):
-        raise SourceDirNotFoundError(
-            'Source dir not found: {}'.format(source_dir))
-    logger.debug("Source data is in %s", source_dir)
-    html_text = html.get_index_page(source_dir)
-    if html_text is None:
-        # No source file detected, so use a template and content partials.
-        template = get_template(page_spec)
-        source_content = get_content(source_dir)
-        content = merge_content(source_content, page_spec)
-        html_text = render_html(template, content, data=data)
-    return html_text
-
-
-def get_page_spec(url, site_specs, theme_specs):
-    specs = CommentedMap()
-    if isinstance(theme_specs, dict):
-        specs.update(theme_specs)
-    if isinstance(site_specs, dict):
-        specs.update(site_specs)
-
-    try:
-        page_specs = specs['pages']
-    except (KeyError, TypeError):
-        return None
-
-    if url in page_specs:
-        page_spec_name = url
-    elif 'page' in page_specs:
-        page_spec_name = 'page'
-    else:
-        page_spec_name = 'default'
-    logger.debug('Get subspec: %r: %r', 'pages', page_spec_name)
-
-    raw_page_spec = get_spec(page_spec_name, page_specs)
-    
-    page_spec = CommentedMap()
-    for type_, name in raw_page_spec.items():
-        logger.debug('Get subspec: %r: %r', type_, name)
-        page_spec[type_] = get_spec(name, specs[type_])
-
-    # Active nav links
-    for path, root, key, value in dict_walker(page_spec):
-        if value == 'navlink' and page_spec['navlinks'][key] == url:
-            logger.debug('Change %r navlink to activenavlink', key)
-            root[key] = 'activenavlink'
-
-    logger.debug('Show compiled page spec %r for url %r:' + WRAPPER,
-        page_spec_name, url, OrderedYaml(page_spec))
-
-    page_spec['vars']['url'] = url
-
-    return page_spec
-
-
-def render_html(template, content, **kwargs):
-    logger.debug("Render html using template and content")
-    rendered_html = render(template, content, **kwargs)
-    pretty_html = html.prettify(rendered_html)
-    logger.debug('Rendered html:' + WRAPPER_NL, pretty_html)
-    return pretty_html
-
-
-def render(template, content, data=None, j2=False, **kwargs):
-    if j2:
-        template = jinja2.Template(template)
-        assert 0, "TODO:"
-        #TODO:
-        #rendered_output = template.render(data=data, **content)
-        return
-    try:
-        rendered_output = template.format(data=data, **content)
-        # Second pass, to catch variables in content partials
-        rendered_output = rendered_output.format(data=data, **content)
-    except KeyError as e:
-        raise NotFoundError('Missing content: {}'.format(e))
-    rendered_output = ensure_unicode(rendered_output)
-    logger.debug('Rendered output:' + WRAPPER, rendered_output)
-    return rendered_output
-
-
-def ensure_spec(spec, names=['content_group', 'content', 'layouts', 'partials', 'vars', 'navlinks']):
-    names = set(names)
-    if spec is None:
-        logger.warning('No spec: spec: %r', spec)
-        spec = CommentedMap()
-    for name in names:
-        try:
-            _subspec = spec[name]
-        except TypeError:
-            logger.warning('Invalid spec type: spec: %r', spec)
-            spec = CommentedMap()
-            spec[name] = CommentedMap()
-            raise TypeError
-        except KeyError:
-            logger.warning('Not found in spec: %r', name)
-            spec[name] = CommentedMap()
-    return spec
-
-
-def get_content(source_dir,
-                       fil=FileFilter('_', ['.html','.md']),
-                       markdown=mistune.Markdown()):
-    logger.debug('Get content from %s', source_dir)
-    source_content = {}
-    for path in source_dir.visit(fil=fil):
-        part_name = path.purebasename.lstrip('_')
-        text = path.read_text(encoding='utf-8')
-        if path.ext == '.html':
-            html = text
-        elif path.ext == '.md':
-            html = markdown(text)
-        else:
-            raise ContentFileError('Invalid file type: {}'.format(path), 2)
-        source_content[part_name] = html
-    return source_content
-
-
-def merge_content(source_content, spec=None):
-    spec = ensure_spec(spec, ['content', 'vars', 'navlinks'])
-    missing_content = {key:value for key, value in spec['content'].items() if value is None and key not in source_content}
-    if missing_content:
-        raise MissingContentError('Not found: {}'.format(missing_content.keys()))
-    unused_content = [key for key in source_content if key not in spec['content']]
-    if unused_content:
-        raise UnusedContentError('Unused content: {}'.format(unused_content))
-
-    vars = get_vars(spec['vars'])
-
-    content = copy(spec['content'])
-    logger.debug('content: %s: Initilized with default content from spec', content.keys())
-
-    content.update(source_content)
-    logger.debug('content: %s: Updated with source content', content.keys())
-
-    content.update(vars)
-    logger.debug('content: %s: Updated with vars', content.keys())
-
-    if 'navlinks' in spec:
-        content.update(spec['navlinks'])
-        logger.debug('content: %s: Updated with navlinks', content.keys())
-    logger.debug('content:' + WRAPPER, OrderedYaml(content))
-
-    return content
-
-
-def get_vars(vars):
-    logger.debug('vars: %s', vars.keys())
-    missing_vars = {var:value for var, value in vars.items() if value is None}
-    if missing_vars:
-        raise MissingVarsError('Not found: {}'.format(missing_vars.keys()))
-    return vars
-
-
-def get_template(spec, name='doc'):
-    logger.debug('Create template from spec')
-    template = u'\n'.join(partial_getter(spec)) + u'\n'
-    template = ensure_unicode(template)
-    logger.debug('Show template:' + WRAPPER, template)
-    template = ensure_unicode(template)
-    return template
-
-
-def partial_getter(spec, name='doc'):
-    spec = ensure_spec(spec, ['layouts', 'partials'])
-    layouts = spec['layouts']
-    try:
-        top = layouts[name]
-    except KeyError:
-        return
-    logger.debug('Get partial: stem: %s', name)
-    if top:
-        for child_name, partial_name in top.items():
-            if partial_name is None:
-                partial_name = child_name
-            try:
-                fmt = spec['partials'][partial_name]
-                fmt = ensure_unicode(fmt)
-            except KeyError:
-                raise PartialNotFoundError('Partial not found: {}'.format(partial_name))
-            if child_name in layouts and layouts[child_name]:
-                child = u'\n'.join(partial_getter(spec, name=child_name))
-                child = u'\n{}\n'.format(child)
-            else:
-                logger.debug('Get partial: leaf: %s', child_name)
-                child = u'{{{0}}}'.format(child_name)
-            fmt = ensure_unicode(fmt)
-            child_name = ensure_unicode(child_name)
-            child = ensure_unicode(child)
-            partial = fmt.format(**{'partialname': child_name, 'partial': child})
-            yield partial
-
-
-def get_spec(name, root):
-    ancestors = [root[name]] + [anc for anc in inheritor(root[name], root) if anc]
-    logger.debug('Inheritance:' + WRAPPER, OrderedYaml(ancestors))
-    if not ancestors:
-        return CommentedMap()
-    spec = deepcopy(ancestors[-1])
-    for ancestor in reversed(ancestors):
-        for key, value in ancestor.items():
-            value_copy = deepcopy(value)
-            if isinstance(value, dict) and 'inherit' in value:
-                spec.setdefault(key, CommentedMap())
-                spec[key].update(value_copy)
-                del spec[key]['inherit']
-            else:
-                spec[key] = value_copy
-    del spec['inherit']
-    return spec
-
-
-def inheritor(current, root):
-    while(current):
-        try:
-            inherited = current['inherit']
-        except KeyError:
-            break
-        if not inherited:
-            break
-        try:
-            current = root[inherited]
-        except KeyError:
-            raise AncestorNotFoundError('Not found: inherited: {}'.format(inherited))
-        yield current
-
-
 def build_page_assets(source_dir, target_dir):
     for asset in source_dir.visit(fil=str('*.css')):
         logger.info('Get asset %s from %s',
@@ -472,7 +186,7 @@ class Website(object):
             if filepath.check():
                 break
         else:
-            raise NotFoundError()
+            raise PathNotFoundError()
         return dirpath, filepath
 
     def get_theme(self):

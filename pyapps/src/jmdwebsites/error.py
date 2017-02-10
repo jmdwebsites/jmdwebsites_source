@@ -1,0 +1,1 @@
+class JmdwebsitesError(Exception): pass
