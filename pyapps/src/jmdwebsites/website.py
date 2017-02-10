@@ -209,11 +209,6 @@ class PageData():
         self.stats = 'Stats=56%'
 
 
-def build_html_file(html, target_dir):
-    target_file = target_dir.join('index.html') 
-    target_file.write_text(html, ensure=True, encoding='utf-8')
-
-
 def get_html(source_dir, page_spec, data=None):
     if not source_dir.check(dir=1):
         raise SourceDirNotFoundError(
@@ -548,7 +543,7 @@ class Website(object):
         page_spec = get_page_spec(url, self.site, self.theme)
         html_page = get_html(source_dir, page_spec, data=PageData())
         target_dir = self.build_dir.join(url)
-        build_html_file(html_page, target_dir)
+        html.dump(html_page, target_dir)
         build_page_assets(source_dir, target_dir)
 
     def build_stylesheets(self):

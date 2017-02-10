@@ -45,3 +45,10 @@ def get_index_page(source_dir):
         #      May need to check charset and reload with different encoding
         return html_text
     return None
+
+
+def dump(html_text, target_dir):
+    target_file = target_dir.join('index.html') 
+    target_file.write_text(html_text, ensure=True, encoding='utf-8')
+
+
