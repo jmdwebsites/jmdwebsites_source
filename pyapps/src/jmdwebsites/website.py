@@ -54,6 +54,7 @@ class FileNotFoundError(Exception): pass
 class NotFoundError(Exception): pass
 class DictWalkerError(Exception): pass
 class ContentFileError(WebsiteError): pass
+class BuildStylesheetsError(WebsiteError): pass
 
 
 def ensure_unicode(text):
@@ -104,36 +105,6 @@ def protected_remove(path, valid_basenames=None):
             'Remove: Path not found: {}'.format(path))
     logger.info('Remove %s', path)
     path.remove()
-
-
-def get_default_platform_encoding():
-    system_platform = platform.system()
-    if system_platform == 'Darwin':
-        encoding='MacRoman'
-    elif system_platform == 'Windows':
-        encoding='windows-1252'
-    elif system_platform == 'Linux':
-        encoding='ISO-8859-1'
-    else:
-        encoding='utf-8'
-
-    return encoding
-
-
-def load(filepath):
-    if filepath.check(file=1):
-        encoding = get_default_platform_encoding()
-        text = filepath.read_text(encoding=encoding) 
-        if filepath.ext == '.yaml':
-            yaml = orderedyaml.load(text)
-            data = yaml.commented_map
-            logger.debug('Load data from %s:' + WRAPPER, filepath, yaml)
-        else:
-            data = text
-            logger.debug('Load data from %s:' + WRAPPER_NL, filepath, data)
-    else:
-        raise FileNotFoundError('Not found: {}'.format(filepath))
-    return data
 
 
 class FileFilter:
@@ -520,7 +491,8 @@ class Website(object):
             theme_dir = self.site_dir.join('themes', theme_name)
             theme_file = theme_dir.join(THEME_FILE)
             logger.debug('Load theme %r from %s', theme_name, theme_file)
-        theme = load(theme_file)
+        theme = orderedyaml.load(theme_file).commented_map
+
         return theme_dir, theme
 
     def clean(self):
@@ -562,11 +534,9 @@ class Website(object):
         ]
         for dirpath in locations:
             filepath = dirpath.join(basename)
-            try:
-                data = load(filepath)
+            if filepath.check(file=1):
+                data = orderedyaml.load(filepath).commented_map
                 break
-            except FileNotFoundError:
-                pass
         else:
             logger.warning('Not found: %s', basename)
             data = None
@@ -584,6 +554,9 @@ class Website(object):
     def build_stylesheets(self):
         logger.info('Build stylesheets')
         src = self.theme_dir.join('stylesheets/page.scss')
-        tgt = self.build_dir.join('page.css')
-        sass_cmdline = "sass {0} {1}".format(src, tgt)
-        os.system(sass_cmdline)
+        if py.path.local(src).check(file=1):
+            tgt = self.build_dir.join('page.css')
+            sass_cmdline = "sass {0} {1}".format(src, tgt)
+            error_code = os.system(sass_cmdline)
+            if error_code:
+                raise BuildStylesheetsError

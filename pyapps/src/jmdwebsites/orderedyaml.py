@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import py
 import ruamel
 from ruamel.yaml.comments import CommentedMap
 
@@ -22,7 +23,18 @@ class OrderedYaml(object):
         return repr(self.__unicode__())
 
     def load(self, stream, Loader=ruamel.yaml.RoundTripLoader, **kwargs):
-        self.commented_map = ruamel.yaml.load(stream, Loader=Loader, **kwargs)
+        '''Convert a YAML document to a Python object. 
+        
+        A byte string or a file must be encoded with utf-8, utf-16-be or 
+        utf-16-le encoding. The encoding is detected by checking the 
+        BOM (byte order mark) sequence at the beginning of the string/file. 
+        If no BOM is present, utf-8 encoding is assumed.
+        '''
+        if isinstance(stream, py._path.local.LocalPath):
+            with stream.open() as fileobj:
+                self.commented_map = ruamel.yaml.load(fileobj, Loader=Loader, **kwargs)
+        else:
+            self.commented_map = ruamel.yaml.load(stream, Loader=Loader, **kwargs)
         return self
         
     def dump(self, stream=None):

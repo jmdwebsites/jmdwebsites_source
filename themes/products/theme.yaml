@@ -100,7 +100,7 @@ content:
     base:
         header: '<hr>HEADER: Page URL = {url} {data.stats} <br><br><hr>'
         article: '<hr>Default article text ...'
-        footer: '<p><em>©jmdwebsites</em></p>'
+        footer: '<p><em>Â©jmdwebsites</em></p>'
     default:
         inherit: base
     page:
