@@ -1,0 +1,61 @@
+content:
+    base:
+        header: '<hr>HEADER: Page URL = {url} {data.stats} <br><br><hr>'
+        article: '<hr>Default article text ...'
+        footer: '<p><em>©jmdwebsites</em></p>'
+    default:
+        inherit: base
+    page:
+        inherit: default
+    home_page:
+        inherit: page
+        headlines: ''
+        cards: ''
+        article: ''
+    headlines_page:
+        inherit: page
+        headlines: ''
+    products_page:
+        inherit: headlines_page
+    test_page:
+        header: '<hr>HEADER: Page URL = {url} {data.stats} <br><br><hr>'
+        navbar: '<hr>NAVBAR: <br><br><hr>'
+        headlines: '<hr>HEADLINES: <br><br><hr>'
+        cards: '<hr>CARDS: <br><br><hr>'
+        article: '<hr>ARTICLE: <br><br><hr>'
+        footer: '<hr>FOOTER: <br><br><hr>'
+vars:
+    base:
+        lang: 'en'
+        charset: 'utf-8'
+        author: 'jmdwebsites'
+        robots: 'noindex'
+        stylesheet: '/page.css'
+        title: 'Web Page'
+        website: 'My Web Site'
+    html4:
+        inherit: base
+        doctype: 'HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"'
+    html5:
+        inherit: base
+        doctype: 'html'
+        html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
+    default:
+        inherit: html5
+    page:
+        inherit: default
+    /:
+        inherit: page
+        title: 'Home Page'
+    /testpage:
+        inherit: default
+        title: 'Test Page'
+    /about:
+        inherit: page
+        title: 'About Page'
+    /contact:
+        inherit: page
+        title: 'Contact Page'
+    /products:
+        inherit: page
+        title: 'Products Page'

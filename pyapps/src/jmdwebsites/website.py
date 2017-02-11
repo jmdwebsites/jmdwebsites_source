@@ -10,6 +10,7 @@ from jmdwebsites.page import get_html
 from jmdwebsites.spec import ensure_spec, get_page_spec
 from jmdwebsites.error import JmdwebsitesError, PathNotFoundError
 from jmdwebsites.utils import find_path
+from jmdwebsites.orderedyaml import CommentedMap
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ CONTENT = 'content'
 CONTENT_GROUP = 'content_group'
 CONFIG_FILE = 'site.yaml'
 THEME_FILE = 'theme.yaml'
+CONTENT_SPEC = 'content.yaml'
 PAGE_SPECS_FILE = 'pagespecs.yaml'
 PROJDIR = '.jmdwebsite'
 HOME = 'home'
@@ -161,8 +163,12 @@ def build_page_assets(source_dir, target_dir):
 
 def load_spec(basename, locations=None):
     filepath = find_path(basename, locations=locations)
-    data = orderedyaml.load(filepath)
-    return data.commented_map
+    logger.debug('Load spec %r: %s' % (basename, filepath))
+    if filepath:
+        data = orderedyaml.load(filepath).commented_map
+    else:
+        data = CommentedMap()
+    return data
 
 
 class Website(object):
@@ -186,6 +192,7 @@ class Website(object):
         ]
         self.site = load_spec(CONFIG_FILE, self.locations)
         self.theme_dir, self.theme = self.get_theme()
+        self.content_spec = load_spec(CONTENT_SPEC, self.locations)
 
     def get_theme(self):
         try:
@@ -237,7 +244,7 @@ class Website(object):
     def build_page(self, url, source_dir):
         logger.debug(DEBUG_SEPARATOR, url)  # Mark page top
         logger.info("Build page: %s", url)
-        page_spec = get_page_spec(url, self.site, self.theme)
+        page_spec = get_page_spec(url, self.site, self.theme, self.content_spec)
         html_page = get_html(source_dir, page_spec, data=PageData())
         target_dir = self.build_dir.join(url)
         html.dump(html_page, target_dir)

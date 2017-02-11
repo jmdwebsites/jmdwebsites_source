@@ -38,38 +38,76 @@ pages:
         layouts: products_page
         content: products_page
         vars:    /products
-vars:
+layouts:
     base:
-        lang: 'en'
-        charset: 'utf-8'
-        author: 'jmdwebsites'
-        robots: 'noindex'
-        stylesheet: '/page.css'
-        title: 'Web Page'
-        website: 'My Web Site'
-    html4:
-        inherit: base
-        doctype: 'HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"'
-    html5:
-        inherit: base
-        doctype: 'html'
-        html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
+        inherit:
+        doc:
+            doctype:
+            html:
+        html:
+            head:
+            body:
+        head:
+            charset:
+            title:
+            author:
+            robots:
+            stylesheet:
+            html5shiv:
+        body:
+            header:
+            navbar:
+            main:
+            footer:
+        header:
+        navbar:
+            navs:
+            navs2: navs
+        navs:
+            'Home': navlink
+            'About Us': navlink
+            'Contact Us': navlink
+            'Products': navlink
+            'Test Page': navlink
+        navs2:
+            'Login': navlink
+            'Sign Up': navlink
+        main:
+            article:
     default:
-        inherit: html5
+        inherit: base
     page:
         inherit: default
-    /:
+    home_page:
         inherit: page
-        title: 'Home Page'
-    /testpage:
+        main:
+            headlines:
+            cards:
+            article:
+    headlines_page:
+        inherit: page
+        main:
+            headlines:
+            article:
+    products_page:
+        inherit: headlines_page
+    test_page:
         inherit: default
-        title: 'Test Page'
-    /about:
-        inherit: page
-        title: 'About Page'
-    /contact:
-        inherit: page
-        title: 'Contact Page'
-    /products:
-        inherit: page
-        title: 'Products Page'
+        header:
+        navbar:
+        main:
+            headlines:
+            cards:
+            article:
+        footer:
+navlinks:
+    default:
+        'Home': '/'
+        'About Us': '/about'
+        'Contact Us': '/contact'
+        'Products': '/products'
+        'Test Page': '/testpage'
+        'Login': '#'
+        'Sign Up': '#'
+    page:
+        inherit: default

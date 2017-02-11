@@ -1,7 +1,10 @@
+import logging
 import os
 import py
 
 from .error import PathNotFoundError
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_LOCATIONS = [
     os.getcwd(),
@@ -14,7 +17,8 @@ def find_path(basename, locations=DEFAULT_LOCATIONS):
         if filepath.check():
             return filepath
     logger.warning('Not found: %s', basename)
-    raise PathNotFoundError
+    #raise PathNotFoundError
+    return None
 
 
 def find_root(basename, locations=DEFAULT_LOCATIONS):

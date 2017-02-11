@@ -45,12 +45,14 @@ def ensure_spec(spec, names=['content_group', 'content', 'layouts', 'partials', 
     return spec
 
 
-def get_page_spec(url, site_specs, theme_specs):
+def get_page_spec(url, site_spec, theme_spec, content_spec):
     specs = CommentedMap()
-    if isinstance(theme_specs, dict):
-        specs.update(theme_specs)
-    if isinstance(site_specs, dict):
-        specs.update(site_specs)
+    if isinstance(theme_spec, dict):
+        specs.update(theme_spec)
+    if isinstance(site_spec, dict):
+        specs.update(site_spec)
+    if isinstance(content_spec, dict):
+        specs.update(content_spec)
 
     try:
         page_specs = specs['pages']
