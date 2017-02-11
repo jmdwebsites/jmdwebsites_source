@@ -8,7 +8,8 @@ import py
 from jmdwebsites import html, orderedyaml
 from jmdwebsites.page import get_html
 from jmdwebsites.spec import ensure_spec, get_page_spec
-from jmdwebsites.error import JmdwebsitesError
+from jmdwebsites.error import JmdwebsitesError, PathNotFoundError
+from jmdwebsites.utils import find_path
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,6 @@ class ProjectNotFoundError(WebsiteError): pass
 class ProtectedRemoveError(WebsiteError): pass
 class PathNotAllowedError(ProtectedRemoveError): pass
 class BasenameNotAllowedError(ProtectedRemoveError): pass
-class PathNotFoundError(WebsiteError): pass
 class PathAlreadyExists(WebsiteError): pass
 class WebsiteProjectAlreadyExists(WebsiteError): pass
 class InvalidContentGroupError(WebsiteError): pass
@@ -159,7 +159,14 @@ def build_page_assets(source_dir, target_dir):
         asset.copy(target_dir)
 
 
+def load_spec(basename, locations=None):
+    filepath = find_path(basename, locations=locations)
+    data = orderedyaml.load(filepath)
+    return data.commented_map
+
+
 class Website(object):
+
     def __init__(self, site_dir=None, build_dir=None):
         logger.debug('Create website: %s(site_dir=%r, build_dir=%r)',
             self.__class__.__name__, site_dir, build_dir)
@@ -173,35 +180,26 @@ class Website(object):
         else:
             self.build_dir = py.path.local(build_dir)
         logger.info('Build website in %s', self.build_dir)
-        self.site = self.get_specs(CONFIG_FILE)
-        self.theme_dir, self.theme = self.get_theme()
-
-    def get_fallback(self, basename):
-        locations = [
+        self.locations = [
             self.site_dir,  
             py.path.local(__file__).dirpath()
         ]
-        for dirpath in locations:
-            filepath = dirpath.join(basename)
-            if filepath.check():
-                break
-        else:
-            raise PathNotFoundError()
-        return dirpath, filepath
+        self.site = load_spec(CONFIG_FILE, self.locations)
+        self.theme_dir, self.theme = self.get_theme()
 
     def get_theme(self):
         try:
             theme_name = self.site['theme']['name']
         except:
             logger.warning('%s: Theme not specified, use fallback', CONFIG_FILE)
-            theme_dir, theme_file = self.get_fallback(THEME_FILE)
+            theme_file = find_path(THEME_FILE, locations=self.locations)
+            theme_dir = theme_file.dirpath()
             logger.debug('Load theme from %s', theme_file)
         else:
             theme_dir = self.site_dir.join('themes', theme_name)
             theme_file = theme_dir.join(THEME_FILE)
             logger.debug('Load theme %r from %s', theme_name, theme_file)
         theme = orderedyaml.load(theme_file).commented_map
-
         return theme_dir, theme
 
     def clean(self):
@@ -235,21 +233,6 @@ class Website(object):
                 self.build_page(url, path)
 
         self.build_stylesheets()
-
-    def get_specs(self, basename):
-        locations = [
-            self.site_dir,  
-            py.path.local(__file__).dirpath()
-        ]
-        for dirpath in locations:
-            filepath = dirpath.join(basename)
-            if filepath.check(file=1):
-                data = orderedyaml.load(filepath).commented_map
-                break
-        else:
-            logger.warning('Not found: %s', basename)
-            data = None
-        return data
 
     def build_page(self, url, source_dir):
         logger.debug(DEBUG_SEPARATOR, url)  # Mark page top

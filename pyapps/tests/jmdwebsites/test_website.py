@@ -84,7 +84,7 @@ class TestWebsite:
         tmpdir.ensure('.jmdwebsite')
         with tmpdir.as_cwd():
             website = Website()
-            with pytest.raises(jmdwebsites.website.PathNotFoundError):
+            with pytest.raises(jmdwebsites.error.PathNotFoundError):
                 website.clobber()
 
     def test_clobber(self, tmpdir):
