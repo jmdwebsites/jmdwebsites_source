@@ -1,12 +1,13 @@
 content:
-    base:
-        header: '<hr>HEADER: Page URL = {url} {data.stats} <br><br><hr>'
-        article: '<hr>Default article text ...'
-        footer: '<p><em>©jmdwebsites</em></p>'
-    default:
-        inherit: base
+    defaults:
+        default_header: '<hr>HEADER: Page URL = {url} {data.stats} <br><br><hr>'
+        default_article: '<hr>Default article text ...'
+        default_footer: '<p><em>©jmdwebsites</em></p>'
     page:
-        inherit: default
+        inherit: defaults
+        header: '{default_header}'
+        article: '{default_article}'
+        footer: '{default_footer}'
     home_page:
         inherit: page
         headlines: ''
@@ -17,7 +18,9 @@ content:
         headlines: ''
     products_page:
         inherit: headlines_page
+        article: ''
     test_page:
+        inherit: defaults
         header: '<hr>HEADER: Page URL = {url} {data.stats} <br><br><hr>'
         navbar: '<hr>NAVBAR: <br><br><hr>'
         headlines: '<hr>HEADLINES: <br><br><hr>'
