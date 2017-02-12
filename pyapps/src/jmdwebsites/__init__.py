@@ -13,7 +13,5 @@ __license__ = "BSD 3-Clause"
 
 from .website import Website, init_website, new_website
 from .htmlpage import HtmlPage
-import log
-import dircmp
 
 __all__ = ['Website', 'HtmlPage']

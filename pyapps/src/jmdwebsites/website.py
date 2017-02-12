@@ -1,16 +1,16 @@
 from __future__ import print_function
-
 import logging
 import os
 
 import py
 
-from jmdwebsites import html, orderedyaml
-from jmdwebsites.page import get_html
-from jmdwebsites.spec import ensure_spec, get_page_spec
-from jmdwebsites.error import JmdwebsitesError, PathNotFoundError
-from jmdwebsites.utils import find_path
-from jmdwebsites.orderedyaml import CommentedMap
+from . import html
+from . import orderedyaml
+from .page import get_html
+from .spec import ensure_spec, get_page_spec
+from .error import JmdwebsitesError, PathNotFoundError
+from .utils import find_path
+from .orderedyaml import CommentedMap
 
 logger = logging.getLogger(__name__)
 

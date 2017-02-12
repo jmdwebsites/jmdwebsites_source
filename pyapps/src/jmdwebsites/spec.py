@@ -2,10 +2,10 @@ from copy import deepcopy
 import logging
 import os
 
-from jmdwebsites.orderedyaml import CommentedMap
-from jmdwebsites.log import WRAPPER
-from jmdwebsites.orderedyaml import OrderedYaml, CommentedMap
-from jmdwebsites.error import JmdwebsitesError
+from .orderedyaml import CommentedMap
+from .log import WRAPPER
+from .orderedyaml import OrderedYaml, CommentedMap
+from .error import JmdwebsitesError
 
 class SpecError(JmdwebsitesError): pass
 class DictWalkerError(SpecError): pass

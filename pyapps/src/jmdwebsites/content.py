@@ -4,10 +4,10 @@ import logging
 import mistune
 import six
 
-from jmdwebsites.spec import ensure_spec
-from jmdwebsites.log import WRAPPER
-from jmdwebsites.orderedyaml import OrderedYaml
-from jmdwebsites.error import JmdwebsitesError
+from .spec import ensure_spec
+from .log import WRAPPER
+from .orderedyaml import OrderedYaml
+from .error import JmdwebsitesError
 
 class ContentError(JmdwebsitesError): pass
 class MissingVarsError(ContentError): pass

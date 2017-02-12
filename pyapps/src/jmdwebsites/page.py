@@ -1,11 +1,11 @@
 import logging
 
-from jmdwebsites import html
-from jmdwebsites.template import get_template
-from jmdwebsites.data import get_data, get_object
-from jmdwebsites.content import get_content, merge_content
-from jmdwebsites.log import WRAPPER, WRAPPER_NL
-from jmdwebsites.error import JmdwebsitesError
+from . import html
+from .content import get_content, merge_content
+from .data import get_data, get_object
+from .error import JmdwebsitesError
+from .log import WRAPPER, WRAPPER_NL
+from .template import get_template
 
 class PageError(JmdwebsitesError): pass
 class SourceDirNotFoundError(PageError): pass

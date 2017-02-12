@@ -1,10 +1,13 @@
 from __future__ import print_function
-import pytest
-import jmdwebsites
 import logging
+
 import py
+import pytest
+
+import jmdwebsites
 
 _logger = logging.getLogger(__name__)
+
 
 @pytest.fixture(autouse=True)
 def setup():
@@ -14,6 +17,7 @@ def setup():
     yield
     print('\nTear down the test from test_log')
 
+
 pytestmark = [
     # Reloading logging interferes with other test modules'
     # So the tests in this module should be run on their own
@@ -22,6 +26,7 @@ pytestmark = [
         reason = 'need --testlogging to run the test in this module',
     )
 ]
+
 
 def log_to_all(logger):
     ''' Exercise each logging level.
@@ -33,6 +38,7 @@ def log_to_all(logger):
     logger.warning("warning")
     logger.info("info")
     logger.debug("debug")
+
 
 def test_config_logging__root_logger(capsys):
     jmdwebsites.log.config_logging(disable_existing_loggers = False)
@@ -46,6 +52,7 @@ def test_config_logging__root_logger(capsys):
     print("stdout = {}\nstderr = {}".format(repr(out), repr(err)))
     assert out == u'critical\n'
     assert err == u''
+
 
 formats = {
     'empty': '',
@@ -66,6 +73,7 @@ def results(tpl):
         yield lvl, result
         levels.pop()
 expected = {fmt:dict(results(tpl)) for fmt,tpl in formats.iteritems()}
+
 
 @pytest.mark.parametrize('logger_name, args, kargs, expected', [
     ('jmdwebsites.log',   (), {},                               expected['bare']['critical']),

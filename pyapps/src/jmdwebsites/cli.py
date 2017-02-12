@@ -1,13 +1,19 @@
 from __future__ import print_function
 
-import sys
-import click
-from jmdwebsites import Website, init_website, new_website
-import jmdwebsites
 import os
 import logging
+import sys
+
+import click
+
+from . import Website, init_website, new_website
+from .error import PathNotFoundError
+from .log import config_logging
+from .website import NonFatalError, ProjectNotFoundError, \
+                     PathAlreadyExists, WebsiteProjectAlreadyExists
 
 logger = logging.getLogger(__name__)
+
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -25,9 +31,9 @@ def handle_error(e, severity=None):
 def main():
     try:
         cli()
-    except jmdwebsites.website.NonFatalError as e:
+    except NonFatalError as e:
         handle_error(e)
-    except jmdwebsites.website.ProjectNotFoundError as e:
+    except ProjectNotFoundError as e:
         eprint(e)
         sys.exit(1)
     except Exception as e:
@@ -42,7 +48,7 @@ def main():
 @click.option('--level', default=None, help='Turn on INFO messages')
 @click.option('--change-dir', '-C', default=None, help='Change working directory')
 def cli(change_dir, level, info, debug, verbose, logfile):
-    jmdwebsites.log.config_logging(level, info, debug, verbose, logfile)
+    config_logging(level, info, debug, verbose, logfile)
     if logfile:
         logger.info('Logging to %s', logfile)
     if change_dir:
@@ -58,14 +64,14 @@ def cli(change_dir, level, info, debug, verbose, logfile):
 def new(name):
     try:
         new_website(name)
-    except jmdwebsites.website.PathAlreadyExists as e:
+    except PathAlreadyExists as e:
         eprint('new:', e)
 
 @cli.command()
 def init():
     try:
         init_website()
-    except jmdwebsites.website.WebsiteProjectAlreadyExists as e:
+    except WebsiteProjectAlreadyExists as e:
         eprint('new:', e)
 
 @cli.command()
@@ -77,7 +83,7 @@ def clobber():
     try:
         website = Website()
         website.clobber()
-    except jmdwebsites.website.PathNotFoundError as e:
+    except PathNotFoundError as e:
         eprint('clobber: No such build dir: {}'.format(website.build_dir))
         sys.exit(1)
 

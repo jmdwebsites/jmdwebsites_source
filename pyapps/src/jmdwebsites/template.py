@@ -1,8 +1,8 @@
 import logging
 
-from jmdwebsites.spec import ensure_spec
-from jmdwebsites.log import WRAPPER
-from jmdwebsites.error import JmdwebsitesError
+from .error import JmdwebsitesError
+from .spec import ensure_spec
+from .log import WRAPPER
 
 class TemplateError(JmdwebsitesError): pass
 class PartialNotFoundError(TemplateError): pass

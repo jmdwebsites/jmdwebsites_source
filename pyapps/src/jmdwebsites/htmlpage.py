@@ -1,5 +1,6 @@
-import bs4 as bs
 import logging
+
+import bs4 as bs
 
 logger = logging.getLogger(__name__)
 

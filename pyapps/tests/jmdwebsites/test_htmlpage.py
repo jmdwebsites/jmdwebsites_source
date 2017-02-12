@@ -1,8 +1,11 @@
 from __future__ import print_function
-import pytest
-from jmdwebsites import HtmlPage
-import bs4 as bs
 import logging
+
+import bs4 as bs
+import pytest
+
+from jmdwebsites import HtmlPage
+
 
 @pytest.mark.parametrize("html, expected_doctype, parser", [
     ('Good', None, 'html5lib'),

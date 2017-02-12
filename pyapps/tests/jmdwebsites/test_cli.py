@@ -1,6 +1,7 @@
 from __future__ import print_function
-import pytest
 from subprocess import Popen, PIPE
+
+import pytest
 
 
 @pytest.mark.parametrize("cmd", [

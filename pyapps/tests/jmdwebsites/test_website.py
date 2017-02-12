@@ -1,15 +1,18 @@
 from __future__ import print_function
-
-import pytest
-import os
-import py
-from jmdwebsites import Website, HtmlPage, dircmp
-import jmdwebsites
 import filecmp
+import os
+
+import py
+import pytest
+
+import jmdwebsites
+from jmdwebsites import dircmp
+from jmdwebsites import Website, HtmlPage
 
 
 def datapath(stem):
     return py.path.local(__file__).dirpath('data', stem)
+
 
 def test_protected_remove(tmpdir):
     site_dir = tmpdir
@@ -36,6 +39,7 @@ def test_protected_remove(tmpdir):
         jmdwebsites.website.protected_remove(build_dir)
         assert not path.check()
 
+
 def test_init_website(tmpcwd, loginfo):
     site_dir = tmpcwd
     project_dir = site_dir.join('.jmdwebsite')
@@ -43,6 +47,7 @@ def test_init_website(tmpcwd, loginfo):
     jmdwebsites.init_website()
     assert project_dir.check()
     assert site_dir.join('site.yaml').check()
+
 
 def test_new_website(tmpcwd, loginfo):
     site = 'example-site'
@@ -64,6 +69,7 @@ def test_dict_walker(config, expected):
     #result = [path for path, value in jmdwebsites.website.dict_walker1(config)]
     result = [path for path, root, key, value in jmdwebsites.spec.dict_walker(config)]
     assert result == expected
+
 
 class TestWebsite:
     def test_instantiation_with_no_project_root(self, tmpdir):
@@ -111,6 +117,7 @@ class TestWebsite:
         assert not dircmp.diff(website.build_dir, expected_dir), \
             'Build dir not equal to expected dir'
 
+
 expected_html_page = {
     'doctype': 'html',
     'charset': 'utf-8'
@@ -125,11 +132,11 @@ def test_html_page(page, expected):
     assert page.charset() == expected['charset'], \
         'Incorrect charset'
 
+
 expected_html_file = {
     'ext': '.html',
     'page': expected_html_page,
 }
-
 @pytest.mark.parametrize("file, expected", [
     (datapath('simple_home_page_and_stylesheet/expected/index.html'), expected_html_file)
 ])
@@ -139,6 +146,7 @@ def test_html_file(file, expected):
         "Incorrect file extension"
     test_html_page(HtmlPage(file), expected['page'])
 
+
 @pytest.mark.parametrize("input_dir, file_glob, expected", [
     (datapath('simple_home_page_and_stylesheet/expected'), '*.html', expected_html_file),
     (py.path.local('pyapps/tests/data/example_build'), '*.html', expected_html_file)
@@ -146,6 +154,7 @@ def test_html_file(file, expected):
 def test_html_files(input_dir, file_glob, expected):
     for html_file in input_dir.visit(fil = str(file_glob)):
         test_html_file(html_file, expected)
+
 
 @pytest.mark.parametrize("site_dir, expected", [
     (datapath('simple_home_page_and_stylesheet'), expected_html_file)
