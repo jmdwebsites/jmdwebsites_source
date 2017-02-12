@@ -34,3 +34,20 @@ partials:
         inherit: html5
     page:
         inherit: default
+vars:
+    base:
+        lang: 'en'
+        charset: 'utf-8'
+        robots: 'noindex'
+        stylesheet: '/page.css'
+    html4:
+        inherit: base
+        doctype: 'HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"'
+    html5:
+        inherit: base
+        doctype: 'html'
+        html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
+    default:
+        inherit: html5
+    page:
+        inherit: default

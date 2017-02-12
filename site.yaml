@@ -17,28 +17,31 @@ pages:
         vars: page
         content: page
         navlinks: page
-        data: base
+        data: page
+        object: page
     /:
         inherit: page
         layouts: home_page
         content: home_page
-        vars:    /
+        vars:    page
     /testpage:
         inherit: page
         layouts: test_page
         content: test_page
-        vars:    /testpage
+        vars:    page
     /about:
         inherit: page
-        vars:    /about
+        content: about_page
+        vars:    page
     /contact:
         inherit: page
-        vars:    /contact
+        content: contact_page
+        vars:    page
     /products:
         inherit: page
         layouts: products_page
         content: products_page
-        vars:    /products
+        vars:    page
 layouts:
     base:
         inherit:
@@ -112,6 +115,6 @@ navlinks:
         'Sign Up': '#'
     page:
         inherit: default
-data:
-    base:
-        phone: '111'
+object:
+    page:
+        stats: 'Stats=78%'

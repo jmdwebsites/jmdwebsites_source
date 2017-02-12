@@ -1,64 +1,48 @@
 content:
     defaults:
-        default_header: '<hr>HEADER: Page URL = {url} {data.stats} <br><br><hr>'
+        default_title: 'Web Page'
+        default_header: '<hr>HEADER: Page URL = {url} {object.stats} <br><br><hr>'
         default_article: '<hr>Default article text ...'
         default_footer: '<p><em>©jmdwebsites</em></p>'
     page:
         inherit: defaults
+        title: '{default_title}'
         header: '{default_header}'
         article: '{default_article}'
         footer: '{default_footer}'
     home_page:
         inherit: page
+        title: 'Home Page'
         headlines: ''
         cards: ''
         article: ''
     headlines_page:
         inherit: page
         headlines: ''
+    about_page:
+        inherit: page
+        title: 'About Page'
+    contact_page:
+        inherit: page
+        title: 'Contact Page'
     products_page:
         inherit: headlines_page
+        title: 'Products Page'
         article: ''
     test_page:
         inherit: defaults
-        header: '<hr>HEADER: Page URL = {url} {data.stats} <br><br><hr>'
+        title: 'Test Page'
+        header: '<hr>HEADER: Page URL = {url} {object.stats} <br><br><hr>'
         navbar: '<hr>NAVBAR: <br><br><hr>'
         headlines: '<hr>HEADLINES: <br><br><hr>'
         cards: '<hr>CARDS: <br><br><hr>'
         article: '<hr>ARTICLE: <br><br><hr>'
         footer: '<hr>FOOTER: <br><br><hr>'
-vars:
-    base:
-        lang: 'en'
-        charset: 'utf-8'
-        author: 'jmdwebsites'
-        robots: 'noindex'
-        stylesheet: '/page.css'
-        title: 'Web Page'
+data:
+    site:
         website: 'My Web Site'
-    html4:
-        inherit: base
-        doctype: 'HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"'
-    html5:
-        inherit: base
-        doctype: 'html'
-        html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
-    default:
-        inherit: html5
+        author: 'jmdwebsites'
+        phone: '111'
     page:
-        inherit: default
-    /:
-        inherit: page
-        title: 'Home Page'
-    /testpage:
-        inherit: default
-        title: 'Test Page'
-    /about:
-        inherit: page
-        title: 'About Page'
-    /contact:
-        inherit: page
-        title: 'Contact Page'
-    /products:
-        inherit: page
-        title: 'Products Page'
+        inherit: site
+        phone: '111'

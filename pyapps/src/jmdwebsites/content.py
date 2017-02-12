@@ -43,6 +43,7 @@ class FileFilter:
 
 
 def get_vars(spec, name):
+    spec = ensure_spec(spec, [name])
     vars = spec[name]
     logger.debug('vars: %s', vars.keys())
     missing_vars = {var:value for var, value in vars.items() if value is None}
@@ -70,7 +71,7 @@ def get_content(source_dir,
 
 
 def merge_content(source_content, spec=None):
-    spec = ensure_spec(spec, ['content', 'vars', 'navlinks'])
+    spec = ensure_spec(spec, ['content', 'vars', 'data', 'navlinks'])
     missing_content = {key:value for key, value in spec['content'].items() if value is None and key not in source_content}
     if missing_content:
         raise MissingContentError('Not found: {}'.format(missing_content.keys()))
@@ -87,6 +88,10 @@ def merge_content(source_content, spec=None):
     vars = get_vars(spec, 'vars')
     content.update(vars)
     logger.debug('content: %s: Updated with vars', content.keys())
+
+    data = get_vars(spec, 'data')
+    content.update(data)
+    logger.debug('content: %s: Updated with data', content.keys())
 
     if 'navlinks' in spec:
         content.update(spec['navlinks'])

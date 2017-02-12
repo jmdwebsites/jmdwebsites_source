@@ -29,3 +29,8 @@ def get_data(spec):
 
     return data
 
+def get_object(spec):
+    logger.debug("Get 'object' from spec")
+    spec = ensure_spec(spec, ['object'])
+    object = spec['object']
+    return DataObj(object)
