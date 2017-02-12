@@ -27,7 +27,7 @@ def get_template(spec, name='doc'):
 
 
 def description(name, spec):
-    spec = ensure_spec(spec, ['descriptions'])
+    spec = ensure_spec(spec, ('descriptions',))
 
     if 1 or name == 'About us':
         from .orderedyaml import OrderedYaml
@@ -44,7 +44,7 @@ def description(name, spec):
 
     
 def partial_getter(spec, name='doc'):
-    spec = ensure_spec(spec, ['layouts', 'partials',])
+    spec = ensure_spec(spec, ('layouts', 'partials'))
     layouts = spec['layouts']
     try:
         top = layouts[name]

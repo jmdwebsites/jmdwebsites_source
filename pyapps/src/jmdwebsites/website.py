@@ -111,7 +111,7 @@ def init_website():
 
 
 def content_finder(site, site_dir):
-    site = ensure_spec(site, [])
+    site = ensure_spec(site, ())
     if CONTENT_GROUP in site:
         for content_group, dirname in site[CONTENT_GROUP].items():
             if content_group not in set([HOME, PAGES, POSTS]):
