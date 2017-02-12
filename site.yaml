@@ -5,12 +5,6 @@
 theme:
     name: products
 pages:
-    default:
-        layouts: default
-        partials: default
-        vars: default
-        content: default
-        navlinks: default
     page:
         layouts: page
         partials: base
@@ -44,7 +38,7 @@ pages:
         content: products_page
         vars:    page
 layouts:
-    base:
+    page:
         inherit:
         doc:
             doctype:
@@ -79,10 +73,6 @@ layouts:
             nav_signup: navlink
         main:
             article:
-    default:
-        inherit: base
-    page:
-        inherit: default
     home_page:
         inherit: page
         main:
@@ -97,7 +87,7 @@ layouts:
     products_page:
         inherit: headlines_page
     test_page:
-        inherit: default
+        inherit: page
         header:
         navbar:
         main:
@@ -106,7 +96,7 @@ layouts:
             article:
         footer:
 navlinks:
-    default:
+    page:
         nav_home: '/'
         nav_about: '/about'
         nav_contact: '/contact'
@@ -114,8 +104,6 @@ navlinks:
         nav_testpage: '/testpage'
         nav_login: '#'
         nav_signup: '#'
-    page:
-        inherit: default
 object:
     page:
         stats: 'Stats=78%'

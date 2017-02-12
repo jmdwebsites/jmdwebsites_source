@@ -45,7 +45,6 @@ data:
         phone: '111'
     page:
         inherit: site
-        phone: '111'
 descriptions:
     page:
         nav_home: 'Home'

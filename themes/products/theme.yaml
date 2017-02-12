@@ -30,10 +30,8 @@ partials:
         main: '<main>{partial}</main>'
         footer: '<footer>{partial}</footer>'
         article: '<article>{partial}</article>'
-    default:
-        inherit: html5
     page:
-        inherit: default
+        inherit: html5
 vars:
     base:
         lang: 'en'
@@ -47,7 +45,5 @@ vars:
         inherit: base
         doctype: 'html'
         html5shiv: 'https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'
-    default:
-        inherit: html5
     page:
-        inherit: default
+        inherit: html5
