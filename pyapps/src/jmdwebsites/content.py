@@ -45,7 +45,7 @@ class FileFilter:
 def get_vars(spec, name):
     spec = ensure_spec(spec, (name,))
     vars = spec[name]
-    logger.debug('vars: %s', vars.keys())
+    logger.debug('%r: %s', name, vars.keys())
     missing_vars = {var:value for var, value in vars.items() if value is None}
     if missing_vars:
         raise MissingVarsError('Not found: {}'.format(missing_vars.keys()))
