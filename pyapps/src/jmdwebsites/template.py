@@ -28,15 +28,6 @@ def get_template(spec, name='doc'):
 
 def description(name, spec):
     spec = ensure_spec(spec, ('descriptions',))
-
-    if 1 or name == 'About us':
-        from .orderedyaml import OrderedYaml
-        #print('+++++++++++++++')
-        #print(OrderedYaml(spec))
-        #print('+++++++++++++++')
-        #logger.info('NAME>> %r', name)
-        #assert 0
-
     if name in spec['descriptions']:
         return spec['descriptions'][name]
     else:
