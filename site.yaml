@@ -17,6 +17,7 @@ pages:
         vars: page
         content: page
         navlinks: page
+        descriptions: page
         data: page
         object: page
     /:
@@ -68,14 +69,14 @@ layouts:
             navs:
             navs2: navs
         navs:
-            'Home': navlink
-            'About Us': navlink
-            'Contact Us': navlink
-            'Products': navlink
-            'Test Page': navlink
+            nav_home: navlink
+            nav_about: navlink
+            nav_contact: navlink
+            nav_products: navlink
+            nav_testpage: navlink
         navs2:
-            'Login': navlink
-            'Sign Up': navlink
+            nav_login: navlink
+            nav_signup: navlink
         main:
             article:
     default:
@@ -106,13 +107,13 @@ layouts:
         footer:
 navlinks:
     default:
-        'Home': '/'
-        'About Us': '/about'
-        'Contact Us': '/contact'
-        'Products': '/products'
-        'Test Page': '/testpage'
-        'Login': '#'
-        'Sign Up': '#'
+        nav_home: '/'
+        nav_about: '/about'
+        nav_contact: '/contact'
+        nav_products: '/products'
+        nav_testpage: '/testpage'
+        nav_login: '#'
+        nav_signup: '#'
     page:
         inherit: default
 object:

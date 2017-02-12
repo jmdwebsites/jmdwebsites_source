@@ -46,3 +46,12 @@ data:
     page:
         inherit: site
         phone: '111'
+descriptions:
+    page:
+        nav_home: 'Home'
+        nav_about: 'About Us'
+        nav_contact: 'Contact Us'
+        nav_products: 'Products'
+        nav_testpage: 'Test Page'
+        nav_login: 'Login'
+        nav_signup: 'Sign Up'

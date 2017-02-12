@@ -26,8 +26,25 @@ def get_template(spec, name='doc'):
     return template
 
 
+def description(name, spec):
+    spec = ensure_spec(spec, ['descriptions'])
+
+    if 1 or name == 'About us':
+        from .orderedyaml import OrderedYaml
+        #print('+++++++++++++++')
+        #print(OrderedYaml(spec))
+        #print('+++++++++++++++')
+        #logger.info('NAME>> %r', name)
+        #assert 0
+
+    if name in spec['descriptions']:
+        return spec['descriptions'][name]
+    else:
+        return name
+
+    
 def partial_getter(spec, name='doc'):
-    spec = ensure_spec(spec, ['layouts', 'partials'])
+    spec = ensure_spec(spec, ['layouts', 'partials',])
     layouts = spec['layouts']
     try:
         top = layouts[name]
@@ -52,7 +69,9 @@ def partial_getter(spec, name='doc'):
             fmt = ensure_unicode(fmt)
             child_name = ensure_unicode(child_name)
             child = ensure_unicode(child)
-            partial = fmt.format(**{'partialname': child_name, 'partial': child})
+            partial = fmt.format(**{'partialname': child_name, 
+                                    'partialdescription': description(child_name, spec), 
+                                    'partial': child})
             yield partial
 
 
