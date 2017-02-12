@@ -2,6 +2,7 @@ import logging
 
 from jmdwebsites import html
 from jmdwebsites.template import get_template
+from jmdwebsites.data import get_data, DataObj
 from jmdwebsites.content import get_content, merge_content
 from jmdwebsites.log import WRAPPER, WRAPPER_NL
 from jmdwebsites.error import JmdwebsitesError
@@ -13,7 +14,7 @@ class NotFoundError(PageError): pass
 logger = logging.getLogger(__name__)
 
 
-def get_html(source_dir, page_spec, data=None):
+def get_html(source_dir, page_spec):
     if not source_dir.check(dir=1):
         raise SourceDirNotFoundError(
             'Source dir not found: {}'.format(source_dir))
@@ -24,7 +25,8 @@ def get_html(source_dir, page_spec, data=None):
         template = get_template(page_spec)
         page_content = get_content(source_dir)
         page_content = merge_content(page_content, page_spec)
-        html_text = render_html(template, page_content, data=data)
+        data = get_data(page_spec)
+        html_text = render_html(template, page_content, data=DataObj(data))
     return html_text
 
 

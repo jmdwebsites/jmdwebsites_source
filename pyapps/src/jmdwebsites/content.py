@@ -42,7 +42,8 @@ class FileFilter:
         return allow
 
 
-def get_vars(vars):
+def get_vars(spec, name):
+    vars = spec[name]
     logger.debug('vars: %s', vars.keys())
     missing_vars = {var:value for var, value in vars.items() if value is None}
     if missing_vars:
@@ -77,14 +78,13 @@ def merge_content(source_content, spec=None):
     if unused_content:
         raise UnusedContentError('Unused content: {}'.format(unused_content))
 
-    vars = get_vars(spec['vars'])
-
     content = copy(spec['content'])
     logger.debug('content: %s: Initilized with default content from spec', content.keys())
 
     content.update(source_content)
     logger.debug('content: %s: Updated with source content', content.keys())
 
+    vars = get_vars(spec, 'vars')
     content.update(vars)
     logger.debug('content: %s: Updated with vars', content.keys())
 

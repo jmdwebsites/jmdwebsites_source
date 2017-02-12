@@ -17,6 +17,7 @@ pages:
         vars: page
         content: page
         navlinks: page
+        data: base
     /:
         inherit: page
         layouts: home_page
@@ -111,3 +112,6 @@ navlinks:
         'Sign Up': '#'
     page:
         inherit: default
+data:
+    base:
+        phone: '111'

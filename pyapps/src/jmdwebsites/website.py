@@ -146,13 +146,6 @@ def get_url(rel_page_path):
     return url
 
 
-class PageData():
-    def __init__(self):
-        # Use this as test data to check mechanism 
-        # for passing in data to template/content works
-        self.stats = 'Stats=56%'
-
-
 def build_page_assets(source_dir, target_dir):
     for asset in source_dir.visit(fil=str('*.css')):
         logger.info('Get asset %s from %s',
@@ -245,7 +238,7 @@ class Website(object):
         logger.debug(DEBUG_SEPARATOR, url)  # Mark page top
         logger.info("Build page: %s", url)
         page_spec = get_page_spec(url, self.site, self.theme, self.content_spec)
-        html_page = get_html(source_dir, page_spec, data=PageData())
+        html_page = get_html(source_dir, page_spec)
         target_dir = self.build_dir.join(url)
         html.dump(html_page, target_dir)
         build_page_assets(source_dir, target_dir)
