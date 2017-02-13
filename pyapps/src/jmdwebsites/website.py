@@ -8,12 +8,14 @@ from . import html
 from . import orderedyaml
 from .error import JmdwebsitesError, PathNotFoundError
 from .page import get_page_spec, get_html
-from .project import load_specs
+from .project import protected_remove, get_project_dir, \
+                     init_project, new_project, load_specs
 from .spec import ensure_spec
 from .utils import find_path
 
 logger = logging.getLogger(__name__)
 
+PROJDIR = '.jmdwebsite'
 BUILD = 'build'
 CONTENT = 'content'
 CONTENT_GROUP = 'content_group'
@@ -21,93 +23,18 @@ CONFIG_FILE = 'site.yaml'
 THEME_FILE = 'theme.yaml'
 CONTENT_FILE = 'content.yaml'
 PAGE_SPECS_FILE = 'pagespecs.yaml'
-PROJDIR = '.jmdwebsite'
 HOME = 'home'
 PAGES = 'pages'
 POSTS = 'posts'
 DEBUG_SEPARATOR = '%%' * 60 + ' %s ' + '%%' * 60
 
-class FatalError(JmdwebsitesError): pass
-class NonFatalError(JmdwebsitesError): pass
-
 class WebsiteError(JmdwebsitesError): pass
-# For get_project_dir()
-class ProjectNotFoundError(WebsiteError): pass
-# For protected_remove()
-class ProtectedRemoveError(WebsiteError): pass
-class PathNotAllowedError(ProtectedRemoveError): pass
-class BasenameNotAllowedError(ProtectedRemoveError): pass
-class PathAlreadyExists(WebsiteError): pass
-class WebsiteProjectAlreadyExists(WebsiteError): pass
 class InvalidContentGroupError(WebsiteError): pass
 class BuildStylesheetsError(WebsiteError): pass
 
 
 def isdir(path): 
     return path.check(dir=1)
-
-
-def get_project_dir(config_basename=PROJDIR):
-    # Check for project file in this dir and ancestor dirs
-    for dirpath in py.path.local().parts(reverse=True):
-        for path in dirpath.listdir():
-            if path.basename == config_basename:
-                return path.dirpath()
-    raise ProjectNotFoundError(
-        'Not a website project (or any parent directories): {} not found'.format(
-            config_basename))
-
- 
-def protected_remove(path, valid_basenames=None):
-    if valid_basenames is None:
-        valid_basenames = set([BUILD])
-    for disallowed in [os.getcwd(), __file__]:
-        if path in py.path.local(disallowed).parts():
-            raise PathNotAllowedError(
-                'Remove: {}: Path not allowed, protecting: {}'.format(
-                    path, 
-                    disallowed))
-    if valid_basenames and path.basename not in valid_basenames:
-        raise BasenameNotAllowedError(
-            'Remove: {}: Basename not allowed: {}: Must be one of: {}'.format(
-                path, 
-                path.basename, 
-                valid_basenames))
-    try:
-        #Check that path has a .jmdwebsites file somewhere in one of its 
-        #parent directories, thus indicating it is part of a website project.
-        get_project_dir()
-    except ProjectNotFoundError as e:
-        raise ProjectNotFoundError('Remove: {}'.format(e))
-    if not path.check():
-        raise PathNotFoundError(
-            'Remove: Path not found: {}'.format(path))
-    logger.info('Remove %s', path)
-    path.remove()
-
-
-def new_website(site_dirname = ''):
-    """New website."""
-    site_dir = py.path.local(site_dirname)
-    logger.info('Create new website %s', site_dir.strpath)
-    if site_dir.check():
-        raise PathAlreadyExists(
-            'Already exists: {}'.format(site_dir))
-    site_dir.ensure(PROJDIR)
-    logger.error('TODO:')
-
-
-def init_website():
-    """Initialize website."""
-    site_dir = py.path.local()
-    logger.info('Init website %s', site_dir.strpath)
-    project_dir = py.path.local(PROJDIR)
-    if project_dir.check():
-        raise WebsiteProjectAlreadyExists(
-            'Website project already exists: {}'.format(project_dir))
-    logger.info('Create proj dir %s', project_dir.strpath)
-    project_dir.ensure(dir=1)
-    site_dir.ensure(CONFIG_FILE)
 
 
 def content_finder(site, site_dir):
@@ -154,13 +81,27 @@ def build_page_assets(source_dir, target_dir):
         asset.copy(target_dir)
 
 
+def init_website():
+    """Initialize website.
+    """
+    init_project(PROJDIR)
+    site_dir = py.path.local()
+    site_dir.ensure(CONFIG_FILE, file=1)
+
+
+def new_website(site_pathname):
+    """New website.
+    """
+    new_project(site_pathname)
+
+
 class Website(object):
 
     def __init__(self, site_dir=None, build_dir=None):
         logger.debug('Create website: %s(site_dir=%r, build_dir=%r)',
             self.__class__.__name__, site_dir, build_dir)
         if site_dir is None:
-            self.site_dir = get_project_dir()
+            self.site_dir = get_project_dir(PROJDIR)
         else:
             self.site_dir = py.path.local(site_dir)
         logger.info('Site root directory: %s', self.site_dir)

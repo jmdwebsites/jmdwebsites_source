@@ -21,16 +21,16 @@ def test_protected_remove(tmpdir):
 
     with site_dir.as_cwd():
         # Check we're in a jmdwebsite project tree
-        with pytest.raises(jmdwebsites.website.ProjectNotFoundError) as e:
-            jmdwebsites.website.protected_remove(build_dir)
-        assert str(e.value) == 'Remove: Not a website project (or any parent directories): .jmdwebsite not found'
+        with pytest.raises(jmdwebsites.project.ProjectNotFoundError) as e:
+            jmdwebsites.website.protected_remove(build_dir, projectdir=jmdwebsites.website.PROJDIR)
+        assert str(e.value) == 'Remove: Not a project (or any parent directories): .jmdwebsite not found'
         site_dir.ensure('.jmdwebsite', dir=1)
         # Check we cant remove the path if we're in a subdir of that directory
         with build_dir.as_cwd():
-            with pytest.raises(jmdwebsites.website.PathNotAllowedError) as e:
+            with pytest.raises(jmdwebsites.project.PathNotAllowedError) as e:
                 jmdwebsites.website.protected_remove(build_dir)
-        # Check that only a build dir can ber removed
-        with pytest.raises(jmdwebsites.website.BasenameNotAllowedError) as e:
+        # Check that only a build dir can be removed
+        with pytest.raises(jmdwebsites.project.BasenameNotAllowedError) as e:
             jmdwebsites.website.protected_remove(path)
 
         # Check the build dir to be removed actually exists
@@ -73,7 +73,7 @@ def test_spec_walker(config, expected):
 class TestWebsite:
     def test_instantiation_with_no_project_root(self, tmpdir):
         with tmpdir.join('mysite').ensure(dir=1).as_cwd():
-            with pytest.raises(jmdwebsites.website.ProjectNotFoundError):
+            with pytest.raises(jmdwebsites.project.ProjectNotFoundError):
                 Website()
     
     def test_instantiation_in_empty_project(self, tmpdir):

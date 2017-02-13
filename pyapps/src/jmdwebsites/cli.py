@@ -7,10 +7,10 @@ import sys
 import click
 
 from . import Website, init_website, new_website
-from .error import PathNotFoundError
+from .error import NonFatalError, PathNotFoundError
 from .log import config_logging
-from .website import NonFatalError, ProjectNotFoundError, \
-                     PathAlreadyExists, WebsiteProjectAlreadyExists
+from .project import ProjectNotFoundError, PathAlreadyExists, \
+                     WebsiteProjectAlreadyExists
 
 logger = logging.getLogger(__name__)
 

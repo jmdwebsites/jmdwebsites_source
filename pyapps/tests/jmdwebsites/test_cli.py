@@ -16,7 +16,7 @@ def test_projdir_not_detected(tmpdir, cmd):
         #print("returncode: {}\nstdout: {}\nstderr: {}".format(p.returncode, repr(out), repr(err)))
         assert p.returncode == 1
         assert out == ''
-        assert err == 'Not a website project (or any parent directories): .jmdwebsite not found\n'
+        assert err == 'Not a project (or any parent directories): .jmdwebsite not found\n'
 
 
 class TestClobber:
