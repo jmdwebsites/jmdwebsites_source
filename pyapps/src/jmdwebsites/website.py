@@ -6,11 +6,11 @@ import py
 
 from . import html
 from . import orderedyaml
-from .page import get_page_spec, get_html
-from .spec import ensure_spec
 from .error import JmdwebsitesError, PathNotFoundError
+from .page import get_page_spec, get_html
+from .project import load_specs
+from .spec import ensure_spec
 from .utils import find_path
-from .orderedyaml import CommentedMap
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ def isdir(path):
     return path.check(dir=1)
 
 
-def get_project_dir(config_basename =  PROJDIR):
+def get_project_dir(config_basename=PROJDIR):
     # Check for project file in this dir and ancestor dirs
     for dirpath in py.path.local().parts(reverse=True):
         for path in dirpath.listdir():
@@ -93,7 +93,7 @@ def new_website(site_dirname = ''):
     if site_dir.check():
         raise PathAlreadyExists(
             'Already exists: {}'.format(site_dir))
-    site_dir.ensure( PROJDIR)
+    site_dir.ensure(PROJDIR)
     logger.error('TODO:')
 
 
@@ -101,7 +101,7 @@ def init_website():
     """Initialize website."""
     site_dir = py.path.local()
     logger.info('Init website %s', site_dir.strpath)
-    project_dir = py.path.local( PROJDIR)
+    project_dir = py.path.local(PROJDIR)
     if project_dir.check():
         raise WebsiteProjectAlreadyExists(
             'Website project already exists: {}'.format(project_dir))
@@ -154,16 +154,6 @@ def build_page_assets(source_dir, target_dir):
         asset.copy(target_dir)
 
 
-def load_spec(basename, locations=None):
-    filepath = find_path(basename, locations=locations)
-    logger.debug('Load spec %r: %s' % (basename, filepath))
-    if filepath:
-        data = orderedyaml.load(filepath).commented_map
-    else:
-        data = CommentedMap()
-    return data
-
-
 class Website(object):
 
     def __init__(self, site_dir=None, build_dir=None):
@@ -183,9 +173,9 @@ class Website(object):
             self.site_dir,  
             py.path.local(__file__).dirpath()
         ]
-        self.site_specs = load_spec(CONFIG_FILE, self.locations)
+        self.site_specs = load_specs(CONFIG_FILE, self.locations)
         self.theme_dir, self.theme_specs = self.get_theme()
-        self.content_specs = load_spec(CONTENT_FILE, self.locations)
+        self.content_specs = load_specs(CONTENT_FILE, self.locations)
 
     def get_theme(self):
         try:
