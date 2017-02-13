@@ -19,7 +19,7 @@ def get_html(source_dir, page_spec):
         raise SourceDirNotFoundError(
             'Source dir not found: {}'.format(source_dir))
     logger.debug("Source data is in %s", source_dir)
-    html_text = html.get_index_page(source_dir)
+    html_text = html.load(source_dir)
     if html_text is None:
         # No source file detected, so use a template and content partials.
         template = get_template(page_spec)
@@ -31,29 +31,18 @@ def get_html(source_dir, page_spec):
     return html_text
 
 
-def render_html(template, content, **kwargs):
+def render_html(template, content, object=None, j2=False, **kwargs):
     logger.debug("Render html using template and content")
-    rendered_html = render(template, content, **kwargs)
-    pretty_html = html.prettify(rendered_html)
-    logger.debug('Rendered html:' + WRAPPER_NL, pretty_html)
-    return pretty_html
-
-
-def render(template, content, object=None, j2=False, **kwargs):
-    if j2:
-        template = jinja2.Template(template)
-        assert 0, "TODO:"
-        #TODO:
-        #rendered_output = template.render(data=data, **content)
-        return
+    #rendered_html = render(template, content, **kwargs)
     try:
-        rendered_output = template.format(object=object, **content)
+        rendered_html = template.format(object=object, **content)
         # Second pass, to catch variables in content partials
-        rendered_output = rendered_output.format(object=object, **content)
+        rendered_html = rendered_html.format(object=object, **content)
     except KeyError as e:
         raise NotFoundError('Missing content: {}'.format(e))
-    assert isinstance(rendered_output, unicode)
-    logger.debug('Rendered output:' + WRAPPER, rendered_output)
-    return rendered_output
-
+    assert isinstance(rendered_html, unicode)
+    logger.debug('Rendered html:' + WRAPPER, rendered_html)
+    pretty_html = html.prettify(rendered_html)
+    logger.debug('Pretty html:' + WRAPPER_NL, pretty_html)
+    return pretty_html
 

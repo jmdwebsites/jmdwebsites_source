@@ -35,7 +35,7 @@ def prettify(html_doc, start_tag_name=None, partial=False, indent=2):
         return soup.prettify()
 
 
-def get_index_page(source_dir):
+def load(source_dir):
     #TODO: Decide how to handle index.php files
     filepath = source_dir.join('index.html')
     if filepath.check(file=1):
