@@ -65,9 +65,8 @@ def test_new_website(tmpcwd, loginfo):
         ['/', '/blog', '/first-post', '/about', '/about/tmp.html', '/contact']
     )
 ])
-def test_dict_walker(config, expected):
-    #result = [path for path, value in jmdwebsites.website.dict_walker1(config)]
-    result = [path for path, root, key, value in jmdwebsites.spec.dict_walker(config)]
+def test_spec_walker(config, expected):
+    result = [path for path, root, key, value in jmdwebsites.spec.spec_walker(config)]
     assert result == expected
 
 

@@ -6,8 +6,8 @@ import py
 
 from . import html
 from . import orderedyaml
-from .page import get_html
-from .spec import ensure_spec, get_page_spec
+from .page import get_page_spec, get_html
+from .spec import ensure_spec
 from .error import JmdwebsitesError, PathNotFoundError
 from .utils import find_path
 from .orderedyaml import CommentedMap
