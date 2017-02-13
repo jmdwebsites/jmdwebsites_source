@@ -26,22 +26,23 @@ def dict_walker(parent, parent_path=''):
                 yield path, root, key, value
 
 
-def ensure_spec(spec, names=('content_group', 'content', 'layouts', 'partials', 'vars', 'navlinks')):
+def ensure_spec(spec, names=None):
     names = set(names)
     if spec is None:
-        logger.warning('No spec: spec: %r', spec)
+        logger.warning('No spec: %r', spec)
         spec = CommentedMap()
-    for name in names:
-        try:
-            _subspec = spec[name]
-        except TypeError:
-            logger.warning('Invalid spec type: spec: %r', spec)
-            spec = CommentedMap()
-            spec[name] = CommentedMap()
-            raise TypeError
-        except KeyError:
-            logger.warning('Not found in spec: %r', name)
-            spec[name] = CommentedMap()
+    if names is not None:
+        for name in names:
+            try:
+                _subspec = spec[name]
+            except TypeError:
+                logger.warning('Invalid spec type: spec: %r', spec)
+                spec = CommentedMap()
+                spec[name] = CommentedMap()
+                raise TypeError
+            except KeyError:
+                logger.warning('Not found in spec: %r', name)
+                spec[name] = CommentedMap()
     return spec
 
 
