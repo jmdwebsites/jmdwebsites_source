@@ -6,6 +6,7 @@ content:
         footer: '<p><em>©jmdwebsites</em></p>'
     page:
         inherit: defaults
+        header: 'HEADER: Page URL = {url} {object.stats}'
         title:
     home_page:
         inherit: page

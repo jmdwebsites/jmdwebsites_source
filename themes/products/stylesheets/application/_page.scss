@@ -1,4 +1,16 @@
-////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
+// Setup base-spacing
+
+//.header, .navbar, .hero, .headlines, .main-article, .footer {
+.header, .navbar {
+    @include padding($small-spacing $small-spacing $small-spacing $small-spacing);
+    @include media($small-screen-up) {
+        @include padding($base-spacing $base-spacing $base-spacing $base-spacing);
+    }
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////
 // Site sections
 
 

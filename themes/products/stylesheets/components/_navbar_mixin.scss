@@ -1,4 +1,5 @@
 @mixin navbar($background, $action_color) {
+    //@include outer-container(100%);
     background: $background;
     //margin: 0 1em;
     .navs, .navs2 {

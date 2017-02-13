@@ -1,0 +1,38 @@
+@import "../libraries/neat/neat-helpers";
+
+// Neat Overrides
+// $column: 90px;
+// $gutter: 30px;
+$grid-columns: 12;  // Mobile first, then progress to larger screens
+$max-width: 1280px;
+$visual-grid: true;
+$visual-grid-index: front;
+
+// ------------------------------------------------------------
+// Set Bourbon's flex-grid variables to match what Neat is doing
+// http://bourbon.io/docs/#flex-grid
+// ------------------------------------------------------------
+$fg-column: $column;
+$fg-gutter: $gutter;
+
+// ------------------------------------------------------------
+// Omega Reset
+// ------------------------------------------------------------
+@mixin omega-reset($nth) {
+  &:nth-child(#{$nth}) { margin-right: flex-gutter(); }
+  &:nth-child(#{$nth}+1) { clear: none }
+}
+
+// Neat Breakpoints
+$small-screen: em(480);   // 30em     if 1em=16px
+$medium-screen: em(750);  // 46.875em if 1em=16px
+$large-screen: em(900);   // 56.25em  if 1em=16px
+
+$smallest-screen_up: new-breakpoint(min-width 0 12);
+$small-screen-up: new-breakpoint(min-width $small-screen 12);
+$medium-screen-up: new-breakpoint(min-width $medium-screen 12);
+$large-screen-up: new-breakpoint(min-width $large-screen 12);
+
+$large-screen-down: new-breakpoint(max-width $large-screen 12);
+$medium-screen-down: new-breakpoint(max-width $medium-screen 12);
+$small-screen-down: new-breakpoint(max-width $small-screen 12);
