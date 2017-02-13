@@ -19,7 +19,7 @@ CONTENT = 'content'
 CONTENT_GROUP = 'content_group'
 CONFIG_FILE = 'site.yaml'
 THEME_FILE = 'theme.yaml'
-CONTENT_SPEC = 'content.yaml'
+CONTENT_FILE = 'content.yaml'
 PAGE_SPECS_FILE = 'pagespecs.yaml'
 PROJDIR = '.jmdwebsite'
 HOME = 'home'
@@ -74,8 +74,8 @@ def protected_remove(path, valid_basenames=None):
                 path.basename, 
                 valid_basenames))
     try:
-        #Check that file/dir is a child of a dir containing a .jmdwebsites file, 
-        # thus indicating it is part of a website project.
+        #Check that path has a .jmdwebsites file somewhere in one of its 
+        #parent directories, thus indicating it is part of a website project.
         get_project_dir()
     except ProjectNotFoundError as e:
         raise ProjectNotFoundError('Remove: {}'.format(e))
@@ -183,15 +183,16 @@ class Website(object):
             self.site_dir,  
             py.path.local(__file__).dirpath()
         ]
-        self.site = load_spec(CONFIG_FILE, self.locations)
-        self.theme_dir, self.theme = self.get_theme()
-        self.content_spec = load_spec(CONTENT_SPEC, self.locations)
+        self.site_specs = load_spec(CONFIG_FILE, self.locations)
+        self.theme_dir, self.theme_specs = self.get_theme()
+        self.content_specs = load_spec(CONTENT_FILE, self.locations)
 
     def get_theme(self):
         try:
-            theme_name = self.site['theme']['name']
+            theme_name = self.site_specs['theme']['name']
         except:
-            logger.warning('%s: Theme not specified, use fallback', CONFIG_FILE)
+            logger.warning('%s: Theme not specified, use fallback', 
+                           CONFIG_FILE)
             theme_file = find_path(THEME_FILE, locations=self.locations)
             theme_dir = theme_file.dirpath()
             logger.debug('Load theme from %s', theme_file)
@@ -228,7 +229,7 @@ class Website(object):
             'Build directory already exists.'.format(self.build_dir)
         self.build_dir.ensure(dir=1)
 
-        for content_group, source_dir in content_finder(self.site, self.site_dir):
+        for content_group, source_dir in content_finder(self.site_specs, self.site_dir):
             for url, path in page_finder(content_group, source_dir):
                 self.build_page(url, path)
 
@@ -237,7 +238,8 @@ class Website(object):
     def build_page(self, url, source_dir):
         logger.debug(DEBUG_SEPARATOR, url)  # Mark page top
         logger.info("Build page: %s", url)
-        page_spec = get_page_spec(url, self.site, self.theme, self.content_spec)
+        page_spec = get_page_spec(url, self.site_specs, 
+                                  self.theme_specs, self.content_specs)
         html_page = get_html(source_dir, page_spec)
         target_dir = self.build_dir.join(url)
         html.dump(html_page, target_dir)

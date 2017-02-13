@@ -16,14 +16,14 @@ class NotFoundError(PageError): pass
 logger = logging.getLogger(__name__)
 
 
-def get_page_spec(url, site_spec, theme_spec, content_spec):
+def get_page_spec(url, site_specs, theme_specs, content_specs):
     specs = CommentedMap()
-    if isinstance(theme_spec, dict):
-        specs.update(theme_spec)
-    if isinstance(site_spec, dict):
-        specs.update(site_spec)
-    if isinstance(content_spec, dict):
-        specs.update(content_spec)
+    if isinstance(theme_specs, dict):
+        specs.update(theme_specs)
+    if isinstance(site_specs, dict):
+        specs.update(site_specs)
+    if isinstance(content_specs, dict):
+        specs.update(content_specs)
 
     try:
         page_specs = specs['pages']
@@ -76,7 +76,7 @@ def get_html(source_dir, page_spec):
     return html_text
 
 
-def render_html(template, content, object=None, j2=False, **kwargs):
+def render_html(template, content, object=None, **kwargs):
     logger.debug("Render html using template and content")
     #rendered_html = render(template, content, **kwargs)
     try:
