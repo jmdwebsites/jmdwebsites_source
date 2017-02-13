@@ -33,10 +33,6 @@ class InvalidContentGroupError(WebsiteError): pass
 class BuildStylesheetsError(WebsiteError): pass
 
 
-def isdir(path): 
-    return path.check(dir=1)
-
-
 def content_finder(site, site_dir):
     site = ensure_spec(site, ())
     if CONTENT_GROUP in site:
@@ -62,7 +58,7 @@ def page_finder(content_group, content_dir):
         url = '/'
         yield url, content_dir 
     else:
-        for page_path in content_dir.visit(fil=isdir):
+        for page_path in content_dir.visit(fil=lambda path: path.check(dir=1)):
             url = get_url(page_path.relto(content_dir))
             yield url, page_path
 
