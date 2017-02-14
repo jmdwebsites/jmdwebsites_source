@@ -78,7 +78,21 @@ def build_page_assets(source_dir, target_dir):
         asset.copy(target_dir)
 
 
-def get_theme(site_specs, site_dir, locations):
+def get_specs(locations):
+    site_specs = load_specs(CONFIG_FILE, locations)
+    theme_specs = load_specs(THEME_FILE, locations)
+    content_specs = load_specs(CONTENT_FILE, locations)
+    specs = CommentedMap()
+    if isinstance(site_specs, dict):
+        specs.update(site_specs)
+    if isinstance(theme_specs, dict):
+        specs.update(theme_specs)
+    if isinstance(content_specs, dict):
+        specs.update(content_specs)
+    return specs
+
+
+def get_theme_dir(site_specs, site_dir, locations):
     try:
         theme_name = site_specs['theme']['name']
     except:
@@ -86,13 +100,10 @@ def get_theme(site_specs, site_dir, locations):
                        CONFIG_FILE)
         theme_file = find_path(THEME_FILE, locations=locations)
         theme_dir = theme_file.dirpath()
-        logger.debug('Load theme from %s', theme_file)
     else:
         theme_dir = site_dir.join('themes', theme_name)
-        theme_file = theme_dir.join(THEME_FILE)
-        logger.debug('Load theme %r from %s', theme_name, theme_file)
-    theme = orderedyaml.load(theme_file).commented_map
-    return theme, theme_dir 
+    logger.debug('Theme dir: %s', theme_dir)
+    return theme_dir 
 
 
 def init_website():
@@ -128,20 +139,8 @@ class Website(object):
             self.site_dir,  
             py.path.local(__file__).dirpath()
         ]
-        self.specs = self.get_specs()
-
-    def get_specs(self):
-        site_specs = load_specs(CONFIG_FILE, self.locations)
-        theme_specs, self.theme_dir  = get_theme(site_specs, self.site_dir, self.locations)
-        content_specs = load_specs(CONTENT_FILE, self.locations)
-        specs = CommentedMap()
-        if isinstance(site_specs, dict):
-            specs.update(site_specs)
-        if isinstance(theme_specs, dict):
-            specs.update(theme_specs)
-        if isinstance(content_specs, dict):
-            specs.update(content_specs)
-        return specs
+        self.specs = get_specs(self.locations)
+        self.theme_dir  = get_theme_dir(self.specs, self.site_dir, self.locations)
 
     def clean(self):
         """Clean up the build."""
