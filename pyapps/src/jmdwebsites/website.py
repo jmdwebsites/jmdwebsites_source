@@ -7,6 +7,7 @@ import py
 from . import html
 from . import orderedyaml
 from .error import JmdwebsitesError, PathNotFoundError
+from .orderedyaml import CommentedMap
 from .page import get_page_spec, get_html
 from .project import protected_remove, get_project_dir, \
                      init_project, new_project, load_specs
@@ -77,6 +78,23 @@ def build_page_assets(source_dir, target_dir):
         asset.copy(target_dir)
 
 
+def get_theme(site_specs, site_dir, locations):
+    try:
+        theme_name = site_specs['theme']['name']
+    except:
+        logger.warning('%s: Theme not specified, use fallback', 
+                       CONFIG_FILE)
+        theme_file = find_path(THEME_FILE, locations=locations)
+        theme_dir = theme_file.dirpath()
+        logger.debug('Load theme from %s', theme_file)
+    else:
+        theme_dir = site_dir.join('themes', theme_name)
+        theme_file = theme_dir.join(THEME_FILE)
+        logger.debug('Load theme %r from %s', theme_name, theme_file)
+    theme = orderedyaml.load(theme_file).commented_map
+    return theme, theme_dir 
+
+
 def init_website():
     """Initialize website.
     """
@@ -110,25 +128,20 @@ class Website(object):
             self.site_dir,  
             py.path.local(__file__).dirpath()
         ]
-        self.site_specs = load_specs(CONFIG_FILE, self.locations)
-        self.theme_dir, self.theme_specs = self.get_theme()
-        self.content_specs = load_specs(CONTENT_FILE, self.locations)
+        self.specs = self.get_specs()
 
-    def get_theme(self):
-        try:
-            theme_name = self.site_specs['theme']['name']
-        except:
-            logger.warning('%s: Theme not specified, use fallback', 
-                           CONFIG_FILE)
-            theme_file = find_path(THEME_FILE, locations=self.locations)
-            theme_dir = theme_file.dirpath()
-            logger.debug('Load theme from %s', theme_file)
-        else:
-            theme_dir = self.site_dir.join('themes', theme_name)
-            theme_file = theme_dir.join(THEME_FILE)
-            logger.debug('Load theme %r from %s', theme_name, theme_file)
-        theme = orderedyaml.load(theme_file).commented_map
-        return theme_dir, theme
+    def get_specs(self):
+        site_specs = load_specs(CONFIG_FILE, self.locations)
+        theme_specs, self.theme_dir  = get_theme(site_specs, self.site_dir, self.locations)
+        content_specs = load_specs(CONTENT_FILE, self.locations)
+        specs = CommentedMap()
+        if isinstance(site_specs, dict):
+            specs.update(site_specs)
+        if isinstance(theme_specs, dict):
+            specs.update(theme_specs)
+        if isinstance(content_specs, dict):
+            specs.update(content_specs)
+        return specs
 
     def clean(self):
         """Clean up the build."""
@@ -156,7 +169,7 @@ class Website(object):
             'Build directory already exists.'.format(self.build_dir)
         self.build_dir.ensure(dir=1)
 
-        for content_group, source_dir in content_finder(self.site_specs, self.site_dir):
+        for content_group, source_dir in content_finder(self.specs, self.site_dir):
             for url, path in page_finder(content_group, source_dir):
                 self.build_page(url, path)
 
@@ -165,8 +178,7 @@ class Website(object):
     def build_page(self, url, source_dir):
         logger.debug(DEBUG_SEPARATOR, url)  # Mark page top
         logger.info("Build page: %s", url)
-        page_spec = get_page_spec(url, self.site_specs, 
-                                  self.theme_specs, self.content_specs)
+        page_spec = get_page_spec(url, self.specs)
         html_page = get_html(source_dir, page_spec)
         target_dir = self.build_dir.join(url)
         html.dump(html_page, target_dir)

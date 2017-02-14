@@ -16,15 +16,7 @@ class NotFoundError(PageError): pass
 logger = logging.getLogger(__name__)
 
 
-def get_page_spec(url, site_specs, theme_specs, content_specs):
-    specs = CommentedMap()
-    if isinstance(theme_specs, dict):
-        specs.update(theme_specs)
-    if isinstance(site_specs, dict):
-        specs.update(site_specs)
-    if isinstance(content_specs, dict):
-        specs.update(content_specs)
-
+def get_page_spec(url, specs):
     try:
         page_specs = specs['pages']
     except (KeyError, TypeError):
@@ -78,7 +70,6 @@ def get_html(source_dir, page_spec):
 
 def render_html(template, content, object=None, **kwargs):
     logger.debug("Render html using template and content")
-    #rendered_html = render(template, content, **kwargs)
     try:
         rendered_html = template.format(object=object, **content)
         # Second pass, to catch variables in content partials
