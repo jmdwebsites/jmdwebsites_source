@@ -14,32 +14,6 @@ def datapath(stem):
     return py.path.local(__file__).dirpath('data', stem)
 
 
-def test_protected_remove(tmpdir):
-    site_dir = tmpdir
-    build_dir = site_dir.join('build')
-    path = build_dir.join('readme.txt').ensure()
-
-    with site_dir.as_cwd():
-        # Check we're in a jmdwebsite project tree
-        with pytest.raises(jmdwebsites.project.ProjectNotFoundError) as e:
-            jmdwebsites.website.protected_remove(build_dir, projectdir=jmdwebsites.website.PROJDIR)
-        assert str(e.value) == 'Remove: Not a project (or any parent directories): .jmdwebsite not found'
-        site_dir.ensure('.jmdwebsite', dir=1)
-        # Check we cant remove the path if we're in a subdir of that directory
-        with build_dir.as_cwd():
-            with pytest.raises(jmdwebsites.project.PathNotAllowedError) as e:
-                jmdwebsites.website.protected_remove(build_dir)
-        # Check that only a build dir can be removed
-        with pytest.raises(jmdwebsites.project.BasenameNotAllowedError) as e:
-            jmdwebsites.website.protected_remove(path)
-
-        # Check the build dir to be removed actually exists
-        assert path.check()
-        # Check the file is removed successfully
-        jmdwebsites.website.protected_remove(build_dir)
-        assert not path.check()
-
-
 def test_init_website(tmpcwd, loginfo):
     site_dir = tmpcwd
     project_dir = site_dir.join('.jmdwebsite')
@@ -57,17 +31,6 @@ def test_new_website(tmpcwd, loginfo):
     assert site_dir.check(), \
         'No new site has been created: {}'.format(site_dir)
     #assert site_dir.join('index').check()
-
-
-@pytest.mark.parametrize("config, expected", [
-    (
-        { '/': {'blog': {'/first-post': None}, 'contact': None, 'about':{'tmp.html': None }}},
-        ['/', '/blog', '/first-post', '/about', '/about/tmp.html', '/contact']
-    )
-])
-def test_spec_walker(config, expected):
-    result = [path for path, root, key, value in jmdwebsites.spec.spec_walker(config)]
-    assert result == expected
 
 
 class TestWebsite:
