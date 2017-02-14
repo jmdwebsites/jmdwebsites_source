@@ -15,6 +15,8 @@ class NotFoundError(PageError): pass
 
 logger = logging.getLogger(__name__)
 
+DEBUG_SEPARATOR = '%%' * 60 + ' %s ' + '%%' * 60
+
 
 def get_page_spec(url, specs):
     try:
@@ -51,6 +53,16 @@ def get_page_spec(url, specs):
     return page_spec
 
 
+def build_page(url, specs, source_dir, build_dir):
+    logger.debug(DEBUG_SEPARATOR, url)  # Mark page top
+    logger.info("Build page: %s", url)
+    page_spec = get_page_spec(url, specs)
+    html_page = get_html(source_dir, page_spec)
+    target_dir = build_dir.join(url)
+    html.dump(html_page, target_dir)
+    build_page_assets(source_dir, target_dir)
+
+
 def get_html(source_dir, page_spec):
     if not source_dir.check(dir=1):
         raise SourceDirNotFoundError(
@@ -82,3 +94,10 @@ def render_html(template, content, object=None, **kwargs):
     logger.debug('Pretty html:' + WRAPPER_NL, pretty_html)
     return pretty_html
 
+
+def build_page_assets(source_dir, target_dir):
+    for asset in source_dir.visit(fil=str('*.css')):
+        logger.info('Get asset %s from %s',
+            target_dir.relto(target_dir).join(asset.basename), 
+            asset)
+        asset.copy(target_dir)

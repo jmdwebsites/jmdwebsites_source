@@ -8,7 +8,7 @@ from . import html
 from . import orderedyaml
 from .error import JmdwebsitesError, PathNotFoundError
 from .orderedyaml import CommentedMap
-from .page import get_page_spec, get_html
+from .page import get_page_spec, build_page
 from .project import protected_remove, get_project_dir, \
                      init_project, new_project, load_specs
 from .spec import ensure_spec
@@ -27,7 +27,6 @@ PAGE_SPECS_FILE = 'pagespecs.yaml'
 HOME = 'home'
 PAGES = 'pages'
 POSTS = 'posts'
-DEBUG_SEPARATOR = '%%' * 60 + ' %s ' + '%%' * 60
 
 class WebsiteError(JmdwebsitesError): pass
 class InvalidContentGroupError(WebsiteError): pass
@@ -68,14 +67,6 @@ def get_url(rel_page_path):
     #TODO: Check site config to get slugs and relpagepath to url mappings.
     url = os.path.join('/', rel_page_path)
     return url
-
-
-def build_page_assets(source_dir, target_dir):
-    for asset in source_dir.visit(fil=str('*.css')):
-        logger.info('Get asset %s from %s',
-            target_dir.relto(target_dir).join(asset.basename), 
-            asset)
-        asset.copy(target_dir)
 
 
 def get_specs(locations):
@@ -167,21 +158,13 @@ class Website(object):
         assert self.build_dir.check() == False, \
             'Build directory already exists.'.format(self.build_dir)
         self.build_dir.ensure(dir=1)
-
-        for content_group, source_dir in content_finder(self.specs, self.site_dir):
-            for url, path in page_finder(content_group, source_dir):
-                self.build_page(url, path)
-
+        self.build_pages()
         self.build_stylesheets()
 
-    def build_page(self, url, source_dir):
-        logger.debug(DEBUG_SEPARATOR, url)  # Mark page top
-        logger.info("Build page: %s", url)
-        page_spec = get_page_spec(url, self.specs)
-        html_page = get_html(source_dir, page_spec)
-        target_dir = self.build_dir.join(url)
-        html.dump(html_page, target_dir)
-        build_page_assets(source_dir, target_dir)
+    def build_pages(self):
+        for content_group, source_dir in content_finder(self.specs, self.site_dir):
+            for url, page_dir in page_finder(content_group, source_dir):
+                build_page(url, self.specs, page_dir, self.build_dir)
 
     def build_stylesheets(self):
         logger.info('Build stylesheets')
