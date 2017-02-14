@@ -2,16 +2,21 @@ from __future__ import print_function
 
 import py
 import ruamel
-from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.comments import CommentedMap, ordereddict
+import six
 
 
 class OrderedYaml(object):
 
-    def __init__(self, commented_map=None):
-        if commented_map is None:
+    def __init__(self, data=None):
+        if data is None:
             self.commented_map = CommentedMap()
+        elif isinstance(data, CommentedMap):
+            self.commented_map = data
+        elif isinstance(data, six.string_types):
+            self.load(data)
         else:
-            self.commented_map = commented_map
+            self.load(dump(data))
     
     def __unicode__(self):
         return self.dump().decode('utf-8')
@@ -48,4 +53,12 @@ class OrderedYaml(object):
 
 def load(stream, **kwargs):
     return OrderedYaml().load(stream, **kwargs)
+
+def dump(data, stream=None, **kwargs):
+    return ruamel.yaml.dump(
+        data,
+        stream,
+        Dumper=ruamel.yaml.RoundTripDumper, 
+        allow_unicode=True, 
+        default_flow_style=False)
     
