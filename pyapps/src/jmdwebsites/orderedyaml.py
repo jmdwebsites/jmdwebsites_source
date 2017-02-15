@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import py
 import ruamel
-from ruamel.yaml.comments import CommentedMap, ordereddict
+from ruamel.yaml.comments import CommentedMap, CommentedSeq, ordereddict
 import six
 
 
@@ -11,7 +11,7 @@ class OrderedYaml(object):
     def __init__(self, data=None):
         if data is None:
             self.commented_map = CommentedMap()
-        elif isinstance(data, CommentedMap):
+        elif isinstance(data, (CommentedMap, CommentedSeq)):
             self.commented_map = data
         elif isinstance(data, six.string_types):
             self.load(data)
@@ -53,6 +53,7 @@ class OrderedYaml(object):
 
 def load(stream, **kwargs):
     return OrderedYaml().load(stream, **kwargs)
+
 
 def dump(data, stream=None, **kwargs):
     return ruamel.yaml.dump(

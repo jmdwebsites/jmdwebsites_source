@@ -1,3 +1,7 @@
+'''\
+Changing this file may impact multiple tests! Be careful.
+'''
+
 from jmdwebsites.orderedyaml import CommentedMap
 
 
