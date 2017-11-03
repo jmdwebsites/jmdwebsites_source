@@ -93,6 +93,7 @@ ENV/
 .sass-cache
 
 # Other
+_build/
 *(Autosaved)
 __project_notes.md
 __ignore

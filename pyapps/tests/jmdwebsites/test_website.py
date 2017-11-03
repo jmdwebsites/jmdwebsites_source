@@ -111,7 +111,8 @@ def test_html_file(file, expected):
 
 @pytest.mark.parametrize("input_dir, file_glob, expected", [
     (datapath('simple_home_page_and_stylesheet/expected'), '*.html', expected_html_file),
-    (py.path.local('pyapps/tests/data/example_build'), '*.html', expected_html_file)
+    #(py.path.local('pyapps/tests/data/example_build'), '*.html', expected_html_file)
+    (py.path.local(__file__).dirpath('../data/example_build'), '*.html', expected_html_file)
 ])
 def test_html_files(input_dir, file_glob, expected):
     for html_file in input_dir.visit(fil = str(file_glob)):
