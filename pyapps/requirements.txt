@@ -1,0 +1,14 @@
+beautifulsoup4==4.6.0
+bs4==0.0.1
+click==6.7
+html5lib==0.999999999
+Jinja2==2.9.6
+-e git+https://github.com/jmdwebsites/jmdwebsites_source.git@68bc0f7476d2bc257254871e570ec1933aa5be1c#egg=jmdwebsites&subdirectory=pyapps
+MarkupSafe==1.0
+mistune==0.8
+py==1.4.34
+pytest==3.2.3
+ruamel.ordereddict==0.4.13
+ruamel.yaml==0.15.34
+six==1.11.0
+webencodings==0.5.1
