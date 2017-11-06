@@ -5,6 +5,16 @@ import pytest
 import jmdwebsites
 
 
+def test_init_project(tmpdir):
+    import os
+    import py
+    with tmpdir.as_cwd():
+        PROJ = '.jmdwebsite'
+        jmdwebsites.project.init_project(PROJ)
+        assert os.listdir('.') == [PROJ]
+        assert py.path.local(PROJ).check(dir=1)
+
+
 def test_protected_remove(tmpdir):
     site_dir = tmpdir
     build_dir = site_dir.join('build')
