@@ -72,7 +72,7 @@ def init():
     try:
         init_website()
     except WebsiteProjectAlreadyExists as e:
-        eprint('new:', e)
+        eprint('init:', e)
 
 @cli.command()
 def clean():
