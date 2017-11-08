@@ -5,6 +5,11 @@ import pytest
 import jmdwebsites
 
 
+def test_load_specs(tmpdir):
+    SPEC_FILE = 'site.yaml'
+    #TODO# jmdwebsites.project.load_specs(SPEC_FILE)
+    
+
 def test_init_project(tmpdir):
     import os
     import py
