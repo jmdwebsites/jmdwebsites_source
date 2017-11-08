@@ -92,6 +92,9 @@ ENV/
 # Sass
 .sass-cache
 
+# Mac Osx
+.DS_Store
+
 # Other
 _build/
 *(Autosaved)
