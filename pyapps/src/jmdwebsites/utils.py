@@ -16,9 +16,7 @@ def find_path(basename, locations=DEFAULT_LOCATIONS):
         filepath = dirpath.join(basename)
         if filepath.check():
             return filepath
-    logger.warning('Not found: %s', basename)
-    #raise PathNotFoundError
-    return None
+    raise PathNotFoundError('{}: Not found'.format(basename))
 
 
 def find_root(basename, locations=DEFAULT_LOCATIONS):
@@ -26,7 +24,6 @@ def find_root(basename, locations=DEFAULT_LOCATIONS):
         filepath = dirpath.join(basename)
         if filepath.check():
             return dirpath
-    logger.warning('Not found: %s', basename)
-    raise PathNotFoundError
+    raise PathNotFoundError('{}: Not found'.format(basename))
 
 

@@ -23,12 +23,14 @@ class WebsiteProjectAlreadyExists(ProjectError): pass
 
 
 def load_specs(basename, locations=None):
-    filepath = find_path(basename, locations=locations)
-    logger.debug('Load specs %r: %s' % (basename, filepath))
-    if filepath:
-        data = orderedyaml.load(filepath).commented_map
-    else:
+    try:
+        filepath = find_path(basename, locations=locations)
+    except PathNotFoundError as e:
+        logger.warning('Load specs: %s' % e)
         data = CommentedMap()
+    else:
+        logger.info('Load specs: %s: %s' % (basename, filepath))
+        data = orderedyaml.load(filepath).commented_map
     return data
 
 
