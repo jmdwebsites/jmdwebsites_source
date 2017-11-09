@@ -80,9 +80,10 @@ def logopt(request):
 def website(tmpdir, request):
     print('fixture: website: tmpdir: {}'.format(tmpdir))
     site_dir = request.getfuncargvalue('site_dir')
-    with site_dir.as_cwd():
+    build_dir = tmpdir.join('build')
+    with tmpdir.as_cwd():
         print('cwd: {}'.format(os.getcwd()))
-        yield Website(build_dir = tmpdir.join('build'))
+        yield Website(site_dir=site_dir, build_dir=build_dir)
     print('\ncwd: {}'.format(os.getcwd()), end='')
 
 
