@@ -47,6 +47,16 @@ class TestWebsite:
             with pytest.raises(jmdwebsites.project.ProjectNotFoundError):
                 website = Website(**params)
     
+    @pytest.mark.parametrize("site_dir", [
+        datapath('test_website/test_build'),
+        datapath('simple_home_page_and_stylesheet'),
+        datapath('brochure')
+    ])
+    def test_instantiation_of_test_projects(self, logopt, tmpdir, site_dir):
+        with tmpdir.as_cwd():
+            website = Website(site_dir=site_dir, build_dir=tmpdir.join('build').ensure(dir=1))
+            assert website.site_dir.join(jmdwebsites.website.PROJDIR).check()
+
     def test_instantiation_in_empty_project(self, tmpdir):
         site_dir = tmpdir.join('mysite').ensure(dir=1)
         site_dir.join('.jmdwebsite').ensure(dir=1)
