@@ -35,6 +35,7 @@ def load_specs(basename, locations=None):
 
 
 def get_project_dir(basename):
+    logger.info('get_project_dir(%r): cwd: %s:' % (basename, os.getcwd()))
     # Check for project file in this dir and ancestor dirs
     for dirpath in py.path.local().parts(reverse=True):
         for path in dirpath.listdir():
