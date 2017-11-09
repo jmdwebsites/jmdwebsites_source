@@ -34,10 +34,23 @@ def test_new_website(tmpcwd, loginfo):
 
 
 class TestWebsite:
-    def test_instantiation_with_no_project_root(self, tmpdir):
+    def test_instantiation_with_no_project_root__old(self, tmpdir):
         with tmpdir.join('mysite').ensure(dir=1).as_cwd():
             with pytest.raises(jmdwebsites.project.ProjectNotFoundError):
                 Website()
+    
+    @pytest.mark.parametrize("params", [
+        ({}),
+        ({'site_dir':None}),
+        ({'site_dir':None, 'build_dir':None}),
+    ])
+    def test_instantiation_with_no_project_root(self, logopt, tmpdir, params):
+        with tmpdir.as_cwd():
+            with pytest.raises(jmdwebsites.project.ProjectNotFoundError):
+                website = Website(**params)
+        with tmpdir.join('mysite').ensure(dir=1).as_cwd():
+            with pytest.raises(jmdwebsites.project.ProjectNotFoundError):
+                website = Website(**params)
     
     def test_instantiation_in_empty_project(self, tmpdir):
         site_dir = tmpdir.join('mysite').ensure(dir=1)
