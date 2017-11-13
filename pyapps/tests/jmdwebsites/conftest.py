@@ -53,7 +53,7 @@ def tmpcwd(tmpdir):
 @pytest.fixture()
 def loginfo():
     print('Setup loginfo')
-    jmdwebsites.log.config_logging(info = True, verbose = 1)
+    jmdwebsites.log.config_logging(info = True, verbose = 3)
     yield
     print('\nTear down loginfo')
     jmdwebsites.log.reset_logging()
@@ -61,7 +61,7 @@ def loginfo():
 @pytest.fixture()
 def logdebug():
     print('Setup logdebug')
-    jmdwebsites.log.config_logging(debug = True, verbose = 1)
+    jmdwebsites.log.config_logging(debug = True)
     yield
     print('\nTear down logdebug')
     jmdwebsites.log.reset_logging()
@@ -71,7 +71,10 @@ def logopt(request):
     print('Setup logopt')
     jmddbg = request.config.getoption("--jmddbg")
     jmdinfo = request.config.getoption("--jmdinfo")
-    jmdwebsites.log.config_logging(debug = jmddbg, info = jmdinfo, verbose = 1)
+    if jmdinfo and not jmddbg:
+        jmdwebsites.log.config_logging(info = jmdinfo, verbose = 3)
+    else:
+        jmdwebsites.log.config_logging(debug = jmddbg, info = jmdinfo)
     yield
     print('\nTear down logdebug')
     jmdwebsites.log.reset_logging()
