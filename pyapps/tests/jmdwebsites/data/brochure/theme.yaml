@@ -102,9 +102,8 @@ vars:
 content:
     default:
         header: ''
-        article: ''
+        article:
         footer: ''
-        headlines: ''
     page:
         inherit: default
     about_page:

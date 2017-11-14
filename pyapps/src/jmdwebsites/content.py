@@ -66,6 +66,7 @@ def get_content(source_dir,
             html = markdown(text)
         else:
             raise ContentFileError('Invalid file type: {}'.format(path), 2)
+        logger.info("Get content from file: %s", path)
         source_content[part_name] = html
     return source_content
 
@@ -75,8 +76,11 @@ def merge_content(source_content, spec=None):
     missing_content = {key:value for key, value in spec['content'].items() if value is None and key not in source_content}
     if missing_content:
         raise MissingContentError('Not found: {}'.format(missing_content.keys()))
+    #TODO: Delete when sure this is not needed (might want to check content against page spec)
     unused_content = [key for key in source_content if key not in spec['content']]
     if unused_content:
+        logger.error("spec['content'] = %s", spec['content'])
+        logger.error("source_content = %s", source_content)
         raise UnusedContentError('Unused content: {}'.format(unused_content))
 
     content = copy(spec['content'])

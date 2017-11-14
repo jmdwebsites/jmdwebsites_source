@@ -87,7 +87,7 @@ def render_html(template, content, object=None, **kwargs):
         # Second pass, to catch variables in content partials
         rendered_html = rendered_html.format(object=object, **content)
     except KeyError as e:
-        raise NotFoundError('Missing content: {}'.format(e))
+        raise NotFoundError('{}: Content missing for url {}'.format(e, content['url']))
     assert isinstance(rendered_html, unicode)
     logger.debug('Rendered html:' + WRAPPER, rendered_html)
     pretty_html = html.prettify(rendered_html)
