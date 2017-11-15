@@ -6,12 +6,14 @@ import py
 
 from . import html
 from . import orderedyaml
+from . import stylesheet
 from .error import JmdwebsitesError, PathNotFoundError
 from .orderedyaml import CommentedMap
 from .page import get_page_spec, build_page
 from .project import protected_remove, get_project_dir, \
                      init_project, new_project, load_specs
 from .spec import ensure_spec
+from .stylesheet import SassError
 from .utils import find_path
 
 logger = logging.getLogger(__name__)
@@ -29,7 +31,6 @@ POSTS = 'posts'
 
 class WebsiteError(JmdwebsitesError): pass
 class InvalidContentGroupError(WebsiteError): pass
-class BuildStylesheetsError(WebsiteError): pass
 
 
 def content_finder(site, site_dir):
@@ -170,7 +171,4 @@ class Website(object):
         src = self.theme_dir.join('stylesheets/page.scss')
         if py.path.local(src).check(file=1):
             tgt = self.build_dir.join('page.css')
-            sass_cmdline = "sass {0} {1}".format(src, tgt)
-            error_code = os.system(sass_cmdline)
-            if error_code:
-                raise BuildStylesheetsError
+            stylesheet.build_css(src, tgt)
