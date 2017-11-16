@@ -52,7 +52,7 @@ $tiny-spacing: $base-spacing/4;
 // Body
 $light: white;
 $html-background: if($debug, red, $light);
-$body-background: if($debug, purple, $light);
+$body-background: if($debug, lighten(purple, 40%), $light);
 
 // Header
 $header-background: if($debug, yellow, yellow);
@@ -82,11 +82,11 @@ $headlines-background: if($debug, lighten(green, 40%), $light);
 //$card-image-background: lighten($cards-background, 12%);
 
 // Main Article
-$main-article-background: if($debug, turquoise, $light);
+$main-article-background: if($debug, lighten(turquoise, 20%), $light);
 
 // Footer
-$footer-background: if($debug, black, black);
-$footer_color: lightgrey;
+$footer-background: if($debug, lighten(blue, 25%), black);
+$footer-color: if($debug, white, lightgrey);
 
 // Other
 $border-break: black;

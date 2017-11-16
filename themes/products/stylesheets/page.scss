@@ -4,8 +4,11 @@
 @import "libraries/neat/neat";
 
 // Mixins
-@import "components/navbar_mixin";
 @import "components/header_mixin";
+@import "components/navbar_mixin";
+@import "components/main_mixin";
+@import "components/article_mixin";
+@import "components/footer_mixin";
 
 // Application
 @import "application/page";

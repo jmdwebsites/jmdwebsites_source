@@ -1,8 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // Setup base-spacing
 
-//.header, .navbar, .hero, .headlines, .main-article, .footer {
-.header, .navbar {
+.header, .navbar, .hero, .headlines, .article, .footer, body {
     @include padding($small-spacing $small-spacing $small-spacing $small-spacing);
     @include media($small-screen-up) {
         @include padding($base-spacing $base-spacing $base-spacing $base-spacing);
@@ -33,6 +32,23 @@ body {
 .navbar {
     @include outer-container(100%);
     @include navbar($navbar-background, $navbar_action_color);
+}
+
+
+.main {
+    @include main($main-background);
+}
+
+
+.article {
+    @include outer-container(100%);
+    @include article($main-article-background);
+}
+
+
+.footer {
+    @include outer-container(100%);
+    @include footer($footer-background, $footer-color);
 }
 
 
