@@ -68,8 +68,10 @@ def get_content(source_dir,
             raise ContentFileError('Invalid file type: {}'.format(path), 2)
         logger.info("Get content from file: %s", path)
         source_content[part_name] = html
-    if not source_content:
-        raise MissingContentError('No content found in {}'.format(source_dir))
+    # Make sure there is at lease one file in the content source directory
+    # because git will not track empty directories
+    if not source_dir.listdir():
+        raise MissingContentError('No files found in {}'.format(source_dir))
     return source_content
 
 

@@ -29,9 +29,8 @@ def test_get_vars(spec, name, expected):
 def test_get_content_with_no_content(tmpdir):
     with pytest.raises(MissingContentError):
         get_content(tmpdir)
-    tmpdir.join('tmp.md').ensure(file=1)
-    with pytest.raises(MissingContentError):
-        get_content(tmpdir)
+    tmpdir.join('tmp.txt').ensure(file=1)
+    get_content(tmpdir)
 
 
 def test_get_content(tmpdir):
