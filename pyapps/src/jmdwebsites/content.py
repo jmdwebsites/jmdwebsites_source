@@ -68,6 +68,8 @@ def get_content(source_dir,
             raise ContentFileError('Invalid file type: {}'.format(path), 2)
         logger.info("Get content from file: %s", path)
         source_content[part_name] = html
+    if not source_content:
+        raise MissingContentError('No content found in {}'.format(source_dir))
     return source_content
 
 
