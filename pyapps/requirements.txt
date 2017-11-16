@@ -3,7 +3,8 @@ bs4==0.0.1
 click==6.7
 html5lib==0.999999999
 Jinja2==2.9.6
--e git+https://github.com/jmdwebsites/jmdwebsites_source.git@68bc0f7476d2bc257254871e570ec1933aa5be1c#egg=jmdwebsites&subdirectory=pyapps
+-e git+https://github.com/jmdwebsites/jmdwebsites_source.git@2e1070aa5b8ccb0a47f7cdbffc4691a027ad3c49#egg=jmdwebsites&subdirectory=pyapps
+libsass==0.13.3
 MarkupSafe==1.0
 mistune==0.8
 py==1.4.34
