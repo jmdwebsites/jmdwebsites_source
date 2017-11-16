@@ -53,7 +53,7 @@ Create a pyapps directory, a setup.py, and a jmdwebsites/cli.py file with a main
 
 ## 2. Now create some skeleton code and website files
 
-	Create directoryies *content* and *presentation*. Add some initial test code too. Run the skeleton app.
+Create directories *content* and *presentation*. Add some initial test code too. Run the skeleton app.
 
 	$ jmdwebsites clean build
 	Clean up the build.
