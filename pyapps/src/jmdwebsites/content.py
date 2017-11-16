@@ -16,6 +16,7 @@ class MissingContentError(ContentError): pass
 class ContentFileError(ContentError): pass
 class UnusedContentError(ContentError): pass
 
+KEEP_FILE = '.keep'
 logger = logging.getLogger(__name__)
 
 
@@ -70,8 +71,7 @@ def get_content(source_dir,
         source_content[part_name] = html
     # Make sure there is at lease one file in the content source directory
     # because git will not track empty directories
-    if not source_dir.listdir():
-        raise MissingContentError('No files found in {}'.format(source_dir))
+    source_dir.join(KEEP_FILE).ensure(file=1)
     return source_content
 
 

@@ -2,7 +2,8 @@ from __future__ import print_function
 
 import pytest
 
-from jmdwebsites.content import get_vars, get_content, MissingContentError
+from jmdwebsites.content import get_vars, get_content, \
+                                MissingContentError, KEEP_FILE
 from jmdwebsites.orderedyaml import CommentedMap
 
 from .generic_test_data import spec
@@ -27,8 +28,8 @@ def test_get_vars(spec, name, expected):
 
 
 def test_get_content_with_no_content(tmpdir):
-    with pytest.raises(MissingContentError):
-        get_content(tmpdir)
+    get_content(tmpdir)
+    assert tmpdir.join(KEEP_FILE).check(file=1)
     tmpdir.join('tmp.txt').ensure(file=1)
     get_content(tmpdir)
 
