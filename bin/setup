@@ -1,0 +1,36 @@
+#!/bin/bash
+
+
+check_dir_exists()
+{
+	DIR=$1
+	if [ -d $DIR ]
+	then
+		echo "Directory '$(basename $DIR)' already exists in '$(dirname $(realpath $DIR))'"
+        return 1
+	fi
+}
+
+
+run() {
+    cmdline="$@"
+    $cmdline
+    error=$?
+    [ "$error" != "0" ] && echo "fail:$error: $cmdline" >&2;
+    return "$error"
+}
+
+
+main() {
+    local proj_dir=$(realpath $(dirname $(realpath $BASH_SOURCE))/..)
+    local pyapps_dir="$proj_dir"/pyapps
+
+    run check_dir_exists $pyapps_dir/venv || return $error
+    run virtualenv "$pyapps_dir"/venv || return $error
+    run source "$pyapps_dir"/venv/bin/activate || return $error
+    run pip install --upgrade pip || return $error
+    run pip install -r "$pyapps_dir"/dev_requirements.txt || return $error
+    echo Finished setup
+}
+
+main
